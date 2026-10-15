@@ -26,9 +26,6 @@ export const Hero = ({ onOpenReceiptModal }) => {
             <div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#382719] leading-[1.15] tracking-tight font-hindi-heading">
                 {t.hero.title}
-                <span className="text-primary block text-2xl sm:text-3xl md:text-4xl lg:text-5xl mt-1">
-                  {t.hero.trustSuffix}
-                </span>
               </h1>
             </div>
 
