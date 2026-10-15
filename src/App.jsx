@@ -51,13 +51,13 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
-      {/* Sticky Header Navigation */}
-      <Navbar onOpenReceiptModal={handleOpenReceipt} />
+      {/* Top Screen: Navbar & Hero unified on identical Warm Ivory #FFF8EF */}
+      <div className="bg-[#FFF8EF] relative">
+        <Navbar onOpenReceiptModal={handleOpenReceipt} />
+        <Hero onOpenReceiptModal={handleOpenReceipt} />
+      </div>
 
       <main className="flex-1">
-        {/* 1. Hero */}
-        <Hero onOpenReceiptModal={handleOpenReceipt} />
-
         {/* 2. About Us & Leadership */}
         <About />
 

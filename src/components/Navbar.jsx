@@ -35,10 +35,10 @@ export const Navbar = ({ onOpenReceiptModal }) => {
 
   return (
     <header 
-      className={`sticky top-0 z-50 w-full transition-all duration-300 border-b border-[#E9B44C]/30 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         isScrolled 
-          ? 'bg-[#FFF8EF]/95 backdrop-blur-md shadow-md' 
-          : 'bg-[#FFF8EF]'
+          ? 'bg-[#FFF8EF]/95 backdrop-blur-md shadow-sm border-b border-[#E9B44C]/30' 
+          : 'bg-transparent border-b border-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
