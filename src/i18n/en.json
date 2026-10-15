@@ -393,7 +393,7 @@
         "name": "Kusumlata Dubey",
         "role": "National President / Trustee (राष्ट्रीय अध्यक्ष/न्यासी)",
         "phone": "+91 9336378327",
-        "img": "/images/avatars/logo_rsssst.jpg",
+        "img": null,
         "desc": "Leading the institutional governance, women empowerment, and foundational trust administration."
       },
       {
@@ -414,14 +414,14 @@
         "name": "D. B. Pandey",
         "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
         "phone": "+91 9935218839",
-        "img": "/images/avatars/logo_rsssst.jpg",
+        "img": null,
         "desc": "Coordinating neighborhood temple outreach, field events, and member registration desk."
       },
       {
         "name": "J. N. Upadhyay",
         "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
         "phone": "+91 9044179509",
-        "img": "/images/avatars/logo_rsssst.jpg",
+        "img": null,
         "desc": "Overseeing Vedic education workshops, community relations, and public information flow."
       }
     ],

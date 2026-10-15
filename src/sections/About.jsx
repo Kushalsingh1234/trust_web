@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Target, Eye, Quote, MapPin, Building, ShieldCheck } from 'lucide-react';
+import { Target, Eye, Quote, MapPin, Building, ShieldCheck, User, UserCheck } from 'lucide-react';
 
 export const About = () => {
   const { lang, t } = useLanguage();
@@ -149,11 +149,9 @@ export const About = () => {
             {/* National President Card */}
             <div className="bg-[#FFF8EF] p-4 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <img
-                  src="/images/avatars/logo_rsssst.jpg"
-                  alt="RSSSST Trust Logo"
-                  className="w-12 h-12 rounded-full border-2 border-[#E9B44C] object-cover shadow-sm flex-shrink-0 bg-white"
-                />
+                <div className="w-11 h-11 rounded-full border-2 border-[#E9B44C]/70 bg-white text-primary flex items-center justify-center shadow-sm flex-shrink-0 ring-2 ring-[#E9B44C]/25">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
                 <div>
                   <span className="text-[10px] font-extrabold text-secondary uppercase tracking-wider block">
                     {lang === 'hi' ? 'राष्ट्रीय अध्यक्ष/न्यासी' : 'National President / Trustee'}

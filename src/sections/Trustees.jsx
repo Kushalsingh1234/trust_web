@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Phone, Shield, UserCheck, Users } from 'lucide-react';
+import { Phone, Shield, UserCheck, Users, User } from 'lucide-react';
 
 export const Trustees = () => {
   const { lang, t } = useLanguage();
@@ -33,11 +33,17 @@ export const Trustees = () => {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative">
-                    <img
-                      src={member.img}
-                      alt={member.name}
-                      className="w-16 h-16 rounded-full border-2 border-primary object-cover object-top shadow-sm group-hover:scale-105 transition-transform bg-white ring-2 ring-primary/20"
-                    />
+                    {member.img ? (
+                      <img
+                        src={member.img}
+                        alt={member.name}
+                        className="w-16 h-16 rounded-full border-2 border-primary object-cover object-top shadow-sm group-hover:scale-105 transition-transform bg-white ring-2 ring-primary/20"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full border-2 border-[#E9B44C]/70 bg-[#FFF8EF] text-primary flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform ring-2 ring-[#E9B44C]/25">
+                        <User className="w-8 h-8 text-primary/80" />
+                      </div>
+                    )}
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-trust-green text-white flex items-center justify-center text-[10px] font-bold shadow">
                       ✓
                     </div>
