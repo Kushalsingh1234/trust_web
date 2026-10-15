@@ -36,7 +36,7 @@ export const Trustees = () => {
                     <img
                       src={member.img}
                       alt={member.name}
-                      className="w-16 h-16 rounded-full border-2 border-primary object-cover shadow-sm group-hover:scale-105 transition-transform"
+                      className="w-16 h-16 rounded-full border-2 border-primary object-cover object-top shadow-sm group-hover:scale-105 transition-transform bg-white ring-2 ring-primary/20"
                     />
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-trust-green text-white flex items-center justify-center text-[10px] font-bold shadow">
                       ✓

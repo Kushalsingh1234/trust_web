@@ -104,7 +104,7 @@ export const About = () => {
                 <img
                   src="/images/avatars/bajrangi_dubey.jpg"
                   alt="Bajrangi Dubey"
-                  className="w-16 h-16 rounded-full border-2 border-primary object-cover shadow-md"
+                  className="w-16 h-16 rounded-full border-2 border-primary object-cover object-top shadow-md ring-2 ring-primary/20 bg-white"
                 />
                 <div>
                   <h4 className="font-black text-lg text-[#382719] font-hindi-heading">
@@ -129,7 +129,7 @@ export const About = () => {
               <img
                 src="/images/avatars/kn_sharma.jpg"
                 alt="K. N. Sharma"
-                className="w-14 h-14 rounded-full border-2 border-secondary object-cover shadow-sm flex-shrink-0"
+                className="w-14 h-14 rounded-full border-2 border-secondary object-cover object-top shadow-sm flex-shrink-0 ring-2 ring-secondary/20 bg-white"
               />
               <div>
                 <h4 className="font-extrabold text-base text-[#382719] font-hindi-heading">
@@ -147,18 +147,28 @@ export const About = () => {
             </div>
 
             {/* National President Card */}
-            <div className="bg-[#FFF8EF] p-4 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-extrabold text-[#666666] uppercase tracking-wider block">
-                  {lang === 'hi' ? 'राष्ट्रीय अध्यक्ष/न्यासी' : 'National President / Trustee'}
-                </span>
-                <span className="font-black text-base text-[#382719] font-hindi-heading">
-                  {t.about.presidentName}
-                </span>
+            <div className="bg-[#FFF8EF] p-4 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/images/avatars/logo_rsssst.jpg"
+                  alt="RSSSST Trust Logo"
+                  className="w-12 h-12 rounded-full border-2 border-[#E9B44C] object-cover shadow-sm flex-shrink-0 bg-white"
+                />
+                <div>
+                  <span className="text-[10px] font-extrabold text-secondary uppercase tracking-wider block">
+                    {lang === 'hi' ? 'राष्ट्रीय अध्यक्ष/न्यासी' : 'National President / Trustee'}
+                  </span>
+                  <span className="font-black text-base text-[#382719] font-hindi-heading">
+                    {t.about.presidentName}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs font-mono font-black text-primary bg-white px-3 py-1 rounded-full border border-[#E9B44C]/40 shadow-sm">
+              <a
+                href="tel:9336378327"
+                className="text-xs font-mono font-black text-primary hover:text-white bg-white hover:bg-primary px-3 py-1.5 rounded-full border border-[#E9B44C]/40 shadow-sm transition-colors flex-shrink-0"
+              >
                 मो. 9336378327
-              </span>
+              </a>
             </div>
 
           </div>
