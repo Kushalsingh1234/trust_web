@@ -1,8 +1,8 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Heart, UserPlus, ShieldCheck, MapPin, Award, ArrowDown } from 'lucide-react';
+import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart } from 'lucide-react';
 
-export const Hero = ({ onOpenReceiptModal }) => {
+export const Hero = ({ onOpenReceiptModal, onOpenHelpModal }) => {
   const { lang, t } = useLanguage();
 
   return (
@@ -49,13 +49,16 @@ export const Hero = ({ onOpenReceiptModal }) => {
                 <span>{t.hero.joinBtn}</span>
               </button>
 
-              <a
-                href="#programs"
-                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full text-xs sm:text-sm font-bold text-[#382719] hover:text-primary transition-colors bg-white/90 border border-[#E9B44C]/40"
+              <button
+                type="button"
+                id="hero-ask-help-btn"
+                aria-label="Ask for Help"
+                onClick={onOpenHelpModal}
+                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full text-xs sm:text-sm font-bold text-[#382719] hover:text-primary transition-all bg-white hover:bg-[#FFF8EF] border-2 border-[#E9B44C] shadow-sm hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                <span>{t.hero.exploreWork}</span>
-                <ArrowDown className="w-4 h-4 text-primary" />
-              </a>
+                <HandHeart className="w-4 h-4 text-primary" />
+                <span>{t.hero.askHelpBtn || (lang === 'hi' ? 'सहायता मांगें (Ask Help)' : 'Ask for Help')}</span>
+              </button>
             </div>
 
             {/* Small Trust Verification Badges */}

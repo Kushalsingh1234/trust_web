@@ -17,16 +17,24 @@ import Contact from './sections/Contact';
 import Footer from './sections/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import ReceiptGeneratorModal from './components/ReceiptGeneratorModal';
+import HelpRequestModal from './components/HelpRequestModal';
 import ImageLightboxModal from './components/ImageLightboxModal';
 
 function AppContent() {
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(() => {
+    return typeof window !== 'undefined' && window.location.search.includes('modal=help');
+  });
   const [activeLightbox, setActiveLightbox] = useState(null);
   const [lightboxList, setLightboxList] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleOpenReceipt = () => {
     setReceiptModalOpen(true);
+  };
+
+  const handleOpenHelp = () => {
+    setHelpModalOpen(true);
   };
 
   const handleSelectImage = (img, index, list) => {
@@ -54,7 +62,7 @@ function AppContent() {
       {/* Top Screen: Navbar & Hero unified on identical Warm Ivory #FFF8EF */}
       <div className="bg-[#FFF8EF] relative">
         <Navbar onOpenReceiptModal={handleOpenReceipt} />
-        <Hero onOpenReceiptModal={handleOpenReceipt} />
+        <Hero onOpenReceiptModal={handleOpenReceipt} onOpenHelpModal={handleOpenHelp} />
       </div>
 
       <main className="flex-1">
@@ -105,6 +113,11 @@ function AppContent() {
       <ReceiptGeneratorModal
         isOpen={receiptModalOpen}
         onClose={() => setReceiptModalOpen(false)}
+      />
+
+      <HelpRequestModal
+        isOpen={helpModalOpen}
+        onClose={() => setHelpModalOpen(false)}
       />
 
       <ImageLightboxModal
