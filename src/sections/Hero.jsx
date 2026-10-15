@@ -6,12 +6,12 @@ export const Hero = ({ onOpenReceiptModal }) => {
   const { lang, t } = useLanguage();
 
   return (
-    <section className="relative overflow-hidden bg-hero-ivory pt-6 pb-16 lg:pt-10 lg:pb-24 border-b border-[#E9B44C]/30">
+    <section className="relative overflow-hidden bg-hero-ivory min-h-[calc(100vh-68px)] lg:min-h-[calc(100vh-76px)] flex flex-col justify-center py-8 sm:py-12 lg:py-16 border-b border-[#E9B44C]/30">
       {/* Decorative Sunburst Golden Glow Elements */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#E9B44C]/15 rounded-full blur-3xl pointer-events-none -mt-20"></div>
       <div className="absolute bottom-0 left-10 w-96 h-96 bg-[#E87516]/10 rounded-full blur-3xl pointer-events-none -mb-20"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* Left Column: Heading, Mission, Badges & CTAs */}

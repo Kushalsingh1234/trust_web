@@ -31,11 +31,13 @@ export const Navbar = ({ onOpenReceiptModal }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 px-2 sm:px-4 lg:px-6 py-2 transition-all duration-300">
+    <header className={`sticky top-0 z-50 px-2 sm:px-4 lg:px-6 py-2 transition-all duration-300 ${
+      isScrolled ? 'bg-white/85 backdrop-blur-md shadow-sm' : 'bg-[#FFF8EF]'
+    }`}>
       <div className={`max-w-7xl mx-auto rounded-full transition-all duration-300 ${
         isScrolled
           ? 'bg-white/95 backdrop-blur-md shadow-card border border-[#E9B44C]/40 py-2 px-3 sm:px-5'
-          : 'bg-[#FFF8EF]/95 backdrop-blur-md shadow-card border border-[#E9B44C]/30 py-2 px-3 sm:px-5'
+          : 'bg-[#FFF8EF] shadow-card border border-[#E9B44C]/30 py-2 px-3 sm:px-5'
       }`}>
         <div className="flex items-center justify-between gap-2">
           
