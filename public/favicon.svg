@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="60%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#B91C1C" />
+    </radialGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#991B1B" />
+  <!-- Sunburst Rays -->
+  <g stroke="#FDE68A" stroke-width="2.5" opacity="0.9">
+    <line x1="50" y1="12" x2="50" y2="24" />
+    <line x1="50" y1="88" x2="50" y2="76" />
+    <line x1="12" y1="50" x2="24" y2="50" />
+    <line x1="88" y1="50" x2="76" y2="50" />
+    <line x1="23" y1="23" x2="31" y2="31" />
+    <line x1="77" y1="77" x2="69" y2="69" />
+    <line x1="23" y1="77" x2="31" y2="69" />
+    <line x1="77" y1="23" x2="69" y2="31" />
+  </g>
+  <!-- Inner Circle -->
+  <circle cx="50" cy="50" r="26" fill="url(#sunGrad)" stroke="#FEF08A" stroke-width="2" />
+  <!-- Devanagari OM Symbol -->
+  <text x="50" y="58" font-family="'Noto Sans Devanagari', sans-serif" font-weight="bold" font-size="24" text-anchor="middle" fill="#FFFFFF">ॐ</text>
+</svg>

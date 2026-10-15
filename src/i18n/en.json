@@ -1,0 +1,609 @@
+{
+  "brand": {
+    "name": "Rashtriya Sanatan Sanskar Seva Sansthan (Trust)",
+    "shortName": "RSSSST",
+    "tagline": "",
+    "subTagline": "Registered Public Charitable Trust • Gorakhpur, UP"
+  },
+  "nav": {
+    "about": "About Us",
+    "sanskars": "16 Sanskars",
+    "programs": "Our Work",
+    "guidelines": "12 Guidelines",
+    "gallery": "Gallery",
+    "team": "Trustees & Team",
+    "transparency": "Transparency",
+    "news": "Events",
+    "contact": "Contact",
+    "donate": "Donate / Member Join",
+    "language": "हिंदी"
+  },
+  "hero": {
+    "badge": "Public Charitable Trust • Gorakhpur, UP",
+    "title": "Rashtriya Sanatan Sanskar Seva Sansthan",
+    "trustSuffix": "(Trust)",
+    "subtitle": "Dedicated to preserving the sacred 16 Vedic Sanskars, scriptural wisdom, grassroots laborer welfare, and moral empowerment of families.",
+    "donateBtn": "Donate / समर्पण निधि",
+    "joinBtn": "Join as Member / स्वयंसेवक बनें",
+    "exploreWork": "Explore Our Work",
+    "badges": {
+      "reg": "Registered Public Trust",
+      "regNo": "Reg: [ADD TRUST REGISTRATION NO.]",
+      "taxStatus": "80G / 12A Filing: In Process",
+      "location": "Rustampur, Gorakhpur (U.P.)"
+    }
+  },
+  "about": {
+    "tag": "About the Sansthan",
+    "title": "Preserving Timeless Vedic Heritage & Upholding Social Harmony",
+    "desc1": "Rashtriya Sanatan Sanskar Seva Sansthan (Trust) was established with a sacred pledge: to counter the cultural alienation and moral erosion weakening Sanatan families under unstructured westernization, while building a resilient, self-reliant, and united community.",
+    "desc2": "Our foundation bridges timeless spiritual values with tangible humanitarian service. Through widespread awareness of the 16 Vedic Sanskars, scriptural education, community temple hubs, and direct labor welfare outreach, we empower every segment of society.",
+    "missionTitle": "Our Mission",
+    "missionDesc": "To place national interest and Sanatan values paramount, conducting multi-faceted initiatives that make families self-reliant, eradicate ostentatious expenditure, and restore cultural pride.",
+    "visionTitle": "Our Vision",
+    "visionDesc": "A harmonious society where the 16 Vedic Sanskars are practiced accessible to all regardless of economic status, strengthening joint families and nurturing future generations with timeless character.",
+    "leadershipTitle": "Guiding Message from Leadership",
+    "leadershipQuote": "\"Our aim is to empower the economically vulnerable, awaken spiritual discipline, and unite every Sanatani on a common platform for nation and dharma. With your dedication of time, mind, and resources, this noble mission touches every home.\"",
+    "leaderName": "Bajrangi Dubey",
+    "leaderRole": "National General Secretary / Manager",
+    "advisorName": "K. N. Sharma",
+    "advisorRole": "All-India Advisor",
+    "presidentName": "Kusumlata Dubey",
+    "presidentRole": "National President / Trustee"
+  },
+  "sanskars": {
+    "tag": "Vedic Foundation",
+    "title": "The 16 Sacred Sanskars (षोडश संस्कार)",
+    "subtitle": "According to Sanatan scriptures, 16 sacred Sanskars are performed to purify, refine, and elevate human life from before birth through liberation.",
+    "benefitTitle": "Benefits of Sanskars",
+    "benefitDesc": "Adhering to the 16 Sanskars brings spiritual peace, prosperity to the family, emotional bonding among members, and societal virtue.",
+    "ctaText": "Would you like to organize any of the 16 Sanskars or sacred Pujas at minimal cost? Contact the Sansthan.",
+    "ctaBtn": "Request Sanskar / Puja Support",
+    "items": [
+      {
+        "id": 1,
+        "name": "Garbhadhan Sanskar",
+        "hiName": "गर्भाधान संस्कार",
+        "desc": "Conception ceremony performed with sacred intent and auspicious timing for healthy, morally elevated progeny."
+      },
+      {
+        "id": 2,
+        "name": "Punsavan Sanskar",
+        "hiName": "पुंसवन संस्कार",
+        "desc": "Performed after the 3rd month of pregnancy for fetal safety, physical health, and wholesome growth."
+      },
+      {
+        "id": 3,
+        "name": "Seemantonnayan Sanskar",
+        "hiName": "सीमन्तोन्नयन संस्कार",
+        "desc": "Performed between the 6th and 8th month for maternal mental serenity and fetal neurological/intellectual well-being."
+      },
+      {
+        "id": 4,
+        "name": "Jatkarma Sanskar",
+        "hiName": "जातकर्म संस्कार",
+        "desc": "Performed immediately upon childbirth; newborn is fed a touch of honey and ghee with prayers for longevity."
+      },
+      {
+        "id": 5,
+        "name": "Namkaran Sanskar",
+        "hiName": "नामकरण संस्कार",
+        "desc": "Naming ceremony conducted on the 10th to 12th day after birth according to Vedic astrological calculations."
+      },
+      {
+        "id": 6,
+        "name": "Nishkraman Sanskar",
+        "hiName": "निष्क्रमण संस्कार",
+        "desc": "Carried out in the 3rd to 4th month when the infant is first brought outdoors into gentle sunlight and fresh air."
+      },
+      {
+        "id": 7,
+        "name": "Annaprashan Sanskar",
+        "hiName": "अन्नप्राशन संस्कार",
+        "desc": "First solid food offering to the infant in the 6th month, praying for health, vitality, and purity of senses."
+      },
+      {
+        "id": 8,
+        "name": "Chudakarma / Mundan Sanskar",
+        "hiName": "चूड़ाकर्म / मुंडन संस्कार",
+        "desc": "First tonsure of head hair between the ages of 1 and 3 for purification, mental sharpness, and health."
+      },
+      {
+        "id": 9,
+        "name": "Karnavedha Sanskar",
+        "hiName": "कर्णवेध संस्कार",
+        "desc": "Ear piercing performed between ages 3 and 5 for holistic health, acupuncture benefits, and aesthetic grace."
+      },
+      {
+        "id": 10,
+        "name": "Vidyarambha Sanskar",
+        "hiName": "विद्यारंभ संस्कार",
+        "desc": "Initiation into literacy and basic learning around age 5 with Saraswati Vandana and auspicious writing."
+      },
+      {
+        "id": 11,
+        "name": "Upanayana / Yajnopaveet Sanskar",
+        "hiName": "उपनयन / यज्ञोपवीत संस्कार",
+        "desc": "Sacred thread investiture ceremony between ages 8 and 12, marking initiation into discipline and Brahmacharya."
+      },
+      {
+        "id": 12,
+        "name": "Vedarambha Sanskar",
+        "hiName": "वेदारंभ संस्कार",
+        "desc": "Commencement of formal study of Vedas, Upanishads, and sacred scriptures under an enlightened Guru."
+      },
+      {
+        "id": 13,
+        "name": "Keshanta Sanskar",
+        "hiName": "केशान्त संस्कार",
+        "desc": "First shaving of beard and hair upon completion of Brahmacharya phase with Guru Dakshina."
+      },
+      {
+        "id": 14,
+        "name": "Samavartana Sanskar",
+        "hiName": "समावर्तन संस्कार",
+        "desc": "Convocation ceremony marking successful completion of education and transition into societal responsibility."
+      },
+      {
+        "id": 15,
+        "name": "Vivaha Sanskar",
+        "hiName": "विवाह संस्कार",
+        "desc": "Holy matrimonial vows entering the Grihastha Ashram, celebrated as the most foundational social sacrament."
+      },
+      {
+        "id": 16,
+        "name": "Antyeshti Sanskar",
+        "hiName": "अंत्येष्टि संस्कार",
+        "desc": "Final rites and sacred cremation for spiritual liberation and peace of the departing soul."
+      }
+    ]
+  },
+  "guidelines": {
+    "tag": "Social Reformation",
+    "title": "12 Core Principles for Sanatan Families",
+    "subtitle": "Drawn directly from our founding manifesto to build self-reliant, debt-free, and morally upright households.",
+    "items": [
+      {
+        "no": 1,
+        "title": "Avoid Ostentation",
+        "desc": "Strive to avoid all forms of show-off, lavish display, and financial extravagance in domestic and community events."
+      },
+      {
+        "no": 2,
+        "title": "Sanatan Attire & Dignity",
+        "desc": "Embrace decent, traditional Sanatan and modest full attire for yourself and family members with cultural pride."
+      },
+      {
+        "no": 3,
+        "title": "Mutual Community Brotherhood",
+        "desc": "Prioritize mutual exchange of services, daily commerce, and supportive closeness within the Sanatan community."
+      },
+      {
+        "no": 4,
+        "title": "Preserve Ancestral Occupations",
+        "desc": "Alongside public/private employment, revive and preserve traditional ancestral trades to foster economic self-reliance."
+      },
+      {
+        "no": 5,
+        "title": "Debt-Free Living",
+        "desc": "Perform social and family obligations strictly within economic capacity to prevent harmful debt traps."
+      },
+      {
+        "no": 6,
+        "title": "Plant a Tree on Celebrations",
+        "desc": "Celebrate auspicious family milestones by planting at least one tree and presenting useful gifts to those in need."
+      },
+      {
+        "no": 7,
+        "title": "Weekly Temple Gathering",
+        "desc": "Organize weekly community gatherings at local neighborhood/village temples to strengthen neighborhood unity."
+      },
+      {
+        "no": 8,
+        "title": "Temples as Community & Spiritual Centers",
+        "desc": "Ensure every ward/village has an active temple and develop temple premises into vibrant spiritual and skill-sharing centers."
+      },
+      {
+        "no": 9,
+        "title": "De-addiction & Screen Discipline",
+        "desc": "Abstain strictly from intoxicants, narcotics, and tobacco; regulate excessive smartphone and screen addiction."
+      },
+      {
+        "no": 10,
+        "title": "Nurture Joint Family Harmony",
+        "desc": "Uphold joint family values with weekly family gatherings, meals, or video conferences to keep emotional bonds unbreakable."
+      },
+      {
+        "no": 11,
+        "title": "Conduct Events in Auspicious Muhurat",
+        "desc": "Perform ceremonies on auspicious dates (Shubh Tithi/Muhurat) for spiritual benefits, and assist underprivileged families."
+      },
+      {
+        "no": 12,
+        "title": "Donate Dashansh (One-Tenth)",
+        "desc": "As prescribed in ancient scriptures, dedicate one-tenth (Dashansh) of earnings towards societal welfare, dharma, and family upliftment."
+      }
+    ]
+  },
+  "programs": {
+    "tag": "Ground Action",
+    "title": "Our Key Programs & Service Pillars",
+    "subtitle": "Practical initiatives addressing cultural preservation, economic dignity, and social welfare.",
+    "list": [
+      {
+        "id": "sanskars",
+        "title": "Affordable 16 Sanskars & Puja Helpdesk",
+        "desc": "Organizing and guiding families through Vedic 16 Sanskars at nominal expenditure with certified Pandits and authentic rites.",
+        "icon": "Sun"
+      },
+      {
+        "id": "shramik",
+        "title": "Laborer Awareness & Welfare Schemes",
+        "desc": "Educating unorganized workers on UP BOCW board benefits—maternity aid, scholarships, pensions, and PM Shram Yogi Maandhan.",
+        "icon": "HardHat"
+      },
+      {
+        "id": "scriptures",
+        "title": "Scriptural Study & Veda Propagation",
+        "desc": "Encouraging regular recitation and study circles of Shriramcharitmanas, Bhagavad Gita, Upanishads, and Vedas in homes and temples.",
+        "icon": "BookOpen"
+      },
+      {
+        "id": "temple",
+        "title": "Temple Community Hubs",
+        "desc": "Transforming neighborhood temples into local centres of spiritual learning, youth character building, and community cohesion.",
+        "icon": "Landmark"
+      },
+      {
+        "id": "marriage",
+        "title": "Marriage Assistance for Underprivileged",
+        "desc": "Providing logistical, ceremonial, and financial support for the marriage ceremonies of economically disadvantaged daughters and sons.",
+        "icon": "HeartHandshake"
+      },
+      {
+        "id": "family",
+        "title": "Family Harmony & De-addiction Camps",
+        "desc": "Protecting elder rights, reducing reliance on old age homes, and counseling youth against tobacco and chemical substance abuse.",
+        "icon": "Users"
+      }
+    ]
+  },
+  "impact": {
+    "tag": "Our Commitment",
+    "title": "Impact in Service & Awareness",
+    "subtitle": "Real numbers from our field activities and campaigns across Gorakhpur and Uttar Pradesh.",
+    "stats": [
+      {
+        "value": 16,
+        "suffix": "",
+        "label": "Vedic Sanskars Systematized",
+        "sub": "Complete lifecycle spiritual guidance"
+      },
+      {
+        "value": 8,
+        "suffix": "+",
+        "label": "State Labor Schemes Promoted",
+        "sub": "UP BOCW, Atal Residential, Pension"
+      },
+      {
+        "value": 200,
+        "prefix": "₹",
+        "suffix": "",
+        "label": "Annual Membership for ID & Calendar",
+        "sub": "Democratized civic & dharmic membership"
+      },
+      {
+        "value": 1000,
+        "suffix": "+",
+        "label": "Families Reached in Campaigns",
+        "sub": "Estimated [ADD VERIFIED FIELD METRIC]"
+      }
+    ]
+  },
+  "gallery": {
+    "tag": "Photographic Evidence",
+    "title": "Field Action, Banners & Documents",
+    "subtitle": "Authentic records from our Shramik Jagrookta rallies, executive meetings, receipts, and public campaigns in Gorakhpur.",
+    "all": "All Photos",
+    "events": "Events & Meetings",
+    "banners": "Banners & Posters",
+    "documents": "Receipts & Letters",
+    "items": [
+      {
+        "src": "/images/gallery/shramik_camp_collage.jpg",
+        "title": "Labor Awareness Camp (Collage)",
+        "caption": "All India General Secretary Bajrangi Dubey addressing the unorganized labor gathering on government welfare boards in Gorakhpur.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/community_gathering_azad_chowk.jpg",
+        "title": "Community Gathering at Azad Chowk",
+        "caption": "Public meeting at Chandra Shekhar Azad Chauraha, Rustampur Gorakhpur with local workers and community members.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/campaign_banner_office.jpg",
+        "title": "Trust Field Banner & Contact Office",
+        "caption": "Yellow campaign banner placed at Saket Nagar, opposite Madhur Shehnai Lawn, Rustampur.",
+        "category": "banners"
+      },
+      {
+        "src": "/images/gallery/trust_manifesto_advisor.jpg",
+        "title": "12 Guidelines & Advisor Manifesto",
+        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform resolutions.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/sanskars_chart.jpg",
+        "title": "16 Vedic Sanskars Detailed Chart",
+        "caption": "Institutional chart documenting each of the 16 Sanskars, their developmental purpose, and contact lines.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/receipt_samarpan_nidhi.jpg",
+        "title": "Samarpan Nidhi (Donation) Receipt",
+        "caption": "Official Bank of India account receipt form with watermark India map and manager endorsement.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/receipt_sadasyata_nidhi.jpg",
+        "title": "Sadasyata Nidhi (Membership) Receipt",
+        "caption": "Formal annual membership fee receipt form with Bank of India account 135820110000012.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/official_letterhead.jpg",
+        "title": "Official Trust Letterhead",
+        "caption": "Official letterhead displaying National President Kusumlata Dubey and Manager Bajrangi Dubey.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/bms_labor_awareness_white.jpg",
+        "title": "BMS & RSSSST Welfare Poster (White)",
+        "caption": "Listing of 8 vital construction worker benefits including maternity aid, scholarship, and marriage grant.",
+        "category": "banners"
+      },
+      {
+        "src": "/images/gallery/bms_labor_awareness_yellow.jpg",
+        "title": "BMS & RSSSST Welfare Poster (Yellow)",
+        "caption": "Mass awareness poster for laborer social security registration held at Chandra Shekhar Azad Chowk.",
+        "category": "banners"
+      },
+      {
+        "src": "/images/gallery/admin_police_letter.jpg",
+        "title": "Police Intimation Letter",
+        "caption": "Official communication to Chowki Azad Chowk, Ramgarhtal Police Station for organizing labor awareness camp.",
+        "category": "documents"
+      },
+      {
+        "src": "/images/gallery/trust_banner_services.jpg",
+        "title": "Spiritual Services Banner",
+        "caption": "Board outlining study of scriptures, Yoga instruction, Vastu Dosha rectifications, and 16 Sanskar conduct.",
+        "category": "banners"
+      }
+    ]
+  },
+  "team": {
+    "tag": "Leadership",
+    "title": "Trustees & Executive Council",
+    "subtitle": "Dedicated community leaders guiding the mission of Rashtriya Sanatan Sanskar Seva Sansthan.",
+    "members": [
+      {
+        "name": "Kusumlata Dubey",
+        "role": "National President / Trustee (राष्ट्रीय अध्यक्ष/न्यासी)",
+        "phone": "+91 9336378327",
+        "img": "/images/avatars/logo_rsssst.jpg",
+        "desc": "Leading the institutional governance, women empowerment, and foundational trust administration."
+      },
+      {
+        "name": "Bajrangi Dubey",
+        "role": "National General Secretary / Manager (राष्ट्रीय महामंत्री/प्रबन्धक)",
+        "phone": "+91 9794590044",
+        "img": "/images/avatars/bajrangi_dubey.jpg",
+        "desc": "Founder organizer, District President of BMS Gorakhpur, driving ground programs, worker rights, and Sanskar propagation."
+      },
+      {
+        "name": "K. N. Sharma",
+        "role": "All-India Advisor (अखिल भारतीय सलाहकार)",
+        "phone": "+91 9026734887",
+        "img": "/images/avatars/kn_sharma.jpg",
+        "desc": "Senior ideologue and institutional mentor steering cultural vision, 12 family guidelines, and educational strategy."
+      },
+      {
+        "name": "D. B. Pandey",
+        "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
+        "phone": "+91 9935218839",
+        "img": "/images/avatars/logo_rsssst.jpg",
+        "desc": "Coordinating neighborhood temple outreach, field events, and member registration desk."
+      },
+      {
+        "name": "J. N. Upadhyay",
+        "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
+        "phone": "+91 9044179509",
+        "img": "/images/avatars/logo_rsssst.jpg",
+        "desc": "Overseeing Vedic education workshops, community relations, and public information flow."
+      }
+    ],
+    "associatesNote": "Supported by the Council of Convenors (निवेदक गण) across Gorakhpur and Purvanchal: 9794342292, 8126739211, 9794359991, 9696356032, 7007181977, 9838594702, +91 94547 47545, +91 98388 95843."
+  },
+  "howToHelp": {
+    "tag": "Get Involved",
+    "title": "How You Can Participate & Help",
+    "subtitle": "Every contribution of devotion, time, and resources brings strength to the community.",
+    "cards": [
+      {
+        "title": "Samarpan Nidhi (Donation)",
+        "desc": "Make a voluntary financial contribution to support needy families, girl child marriages, and scriptural learning.",
+        "action": "Donate Now"
+      },
+      {
+        "title": "Annual Membership (₹200/-)",
+        "desc": "Become an active enrolled member of the trust. Receive an official ID card and institutional annual calendar.",
+        "action": "Join Online"
+      },
+      {
+        "title": "Volunteer Your Time",
+        "desc": "Join as an active awareness volunteer (प्रचारक) to connect families, organize temple events, and assist workers.",
+        "action": "Register as Volunteer"
+      },
+      {
+        "title": "Spread the Message",
+        "desc": "Circulate our 16 Sanskars guide, share the 12 family principles on WhatsApp, and inspire your neighborhood.",
+        "action": "Share on WhatsApp"
+      }
+    ]
+  },
+  "donate": {
+    "tag": "Sacred Contribution",
+    "title": "Samarpan Nidhi & Bank Transfer Details",
+    "subtitle": "Support our charitable works with full accountability. Directly transfer to the official Bank of India trust account.",
+    "bankTitle": "Official Bank Account Details",
+    "bankName": "Bank Name",
+    "bankNameVal": "Bank of India (बैंक ऑफ़ इण्डिया)",
+    "accNo": "Account Number",
+    "accNoVal": "135820110000012",
+    "accType": "Account Type",
+    "accTypeVal": "Public Trust Savings Account",
+    "ifsc": "IFSC Code",
+    "ifscVal": "[ADD BOI IFSC CODE - GORAKHPUR BRANCH]",
+    "branch": "Branch",
+    "branchVal": "Rustampur / Gorakhpur Branch, Uttar Pradesh",
+    "upiId": "UPI ID",
+    "upiIdVal": "boim-135883270012@boi",
+    "copyAcc": "Copy Account Number",
+    "copyUpi": "Copy UPI ID",
+    "copied": "Copied to Clipboard!",
+    "scanQr": "Scan & Pay via any UPI App (GPay, PhonePe, Paytm, BHIM)",
+    "taxNoteTitle": "Tax Exemption Status (80G / 12A)",
+    "taxNoteDesc": "As stated by trust management: The complete executive team is being nominated, and the official 80G tax exemption filing is underway. We maintain complete transparency and public accountability for every rupee received.",
+    "fundUsageTitle": "How Funds are Utilized",
+    "fundUsage": [
+      "Assisting impoverished families with ritual Sanskars and daughter marriages",
+      "Organizing free labor awareness and e-Shram facilitation camps",
+      "Printing and distributing Vedic study material, calendars, and member IDs",
+      "Developing temple-centric youth education and de-addiction programs"
+    ],
+    "receiptGenTitle": "Generate Your Digital Receipt",
+    "receiptGenDesc": "As requested by our founder, you can fill in your contribution details and generate an instant, verified digital receipt for Samarpan or Membership.",
+    "openReceiptModal": "Generate Official Receipt"
+  },
+  "receiptModal": {
+    "title": "Official Trust Receipt Generator",
+    "chooseType": "Select Receipt Type",
+    "typeSamarpan": "Sanatan Sanrakshan - Samarpan Nidhi (Donation)",
+    "typeSadasyata": "Sanatan Sansthan - Sadasyata Nidhi (Annual Membership ₹200)",
+    "fullName": "Full Name",
+    "fatherHusbandName": "Father / Husband Name",
+    "address": "Village / Mohalla / Ward",
+    "postOffice": "Post Office",
+    "block": "Development Block (विकास खण्ड)",
+    "district": "District",
+    "state": "State",
+    "mobile": "Mobile / WhatsApp Number",
+    "amount": "Contribution Amount (₹)",
+    "amountWords": "Amount in Words",
+    "memberCategory": "Your Engagement Category",
+    "catA": "Category A - Seeking trust assistance & support (सहयोग पाना चाहते हैं)",
+    "catB": "Category B - Affluent/Professional providing economic support (आर्थिक सहयोग करना चाहते हैं)",
+    "catC": "Category C - Volunteer with time to awaken and unite society (जागरूक करने वाले)",
+    "generateBtn": "Generate & Print Official Receipt",
+    "previewTitle": "Your Official Receipt Preview",
+    "close": "Close",
+    "print": "Print / Save as PDF",
+    "downloadNotice": "Receipt generated with Trust Watermark, Bank of India Verification & General Secretary Endorsement."
+  },
+  "transparency": {
+    "tag": "Accountability",
+    "title": "Governance, Certificates & Transparency",
+    "subtitle": "Rashtriya Sanatan Sanskar Seva Sansthan believes in complete openness in all affairs.",
+    "cards": [
+      {
+        "title": "Trust Registration",
+        "status": "Registered",
+        "detail": "Public Charitable Trust registered under Indian Trusts Act, Gorakhpur.",
+        "placeholder": "[ADD TRUST REGISTRATION CERTIFICATE LINK / NO.]",
+        "icon": "FileCheck"
+      },
+      {
+        "title": "80G / 12A Status",
+        "status": "In Process",
+        "detail": "Application under process pursuant to finalization of all executive trustees.",
+        "placeholder": "[ADD 80G APPROVAL NO. WHEN ISSUED]",
+        "icon": "Clock"
+      },
+      {
+        "title": "Bank Account Verification",
+        "status": "Active & Verified",
+        "detail": "Bank of India A/C 135820110000012 dedicated for institutional donations.",
+        "placeholder": "Bank of India Account Certified",
+        "icon": "ShieldCheck"
+      },
+      {
+        "title": "Annual Audits & Accounts",
+        "status": "Audited Annually",
+        "detail": "Maintained by authorized Chartered Accountants in Gorakhpur.",
+        "placeholder": "[ADD AUDIT REPORT DOWNLOAD LINK]",
+        "icon": "FileSpreadsheet"
+      }
+    ]
+  },
+  "news": {
+    "tag": "Latest Updates",
+    "title": "News & Grassroots Events",
+    "subtitle": "Recent activities conducted by the Sansthan in Gorakhpur.",
+    "items": [
+      {
+        "date": "June 2026",
+        "title": "Labor Awareness Campaign at Azad Chowk",
+        "desc": "Conducted in collaboration with Bharatiya Mazdoor Sangh Gorakhpur, informing construction laborers regarding 8 state welfare schemes, Atal schools, and pensions.",
+        "location": "Amar Shaheed Chandra Shekhar Azad Chowk, Rustampur, Gorakhpur"
+      },
+      {
+        "date": "Ongoing",
+        "title": "Vedic 16 Sanskar Orientation Drive",
+        "desc": "Community campaign to educate families against lavish loans and promote spiritual purity through authentic Vedic ceremonies.",
+        "location": "Purvanchal & Gorakhpur Ward Units"
+      },
+      {
+        "date": "Weekly",
+        "title": "Sunday Satsang & Scripture Recitation",
+        "desc": "Weekly study circles of Shriramcharitmanas and Shrimad Bhagavad Gita to instill moral grounding in youth.",
+        "location": "Saket Nagar Contact Office & Local Mandirs"
+      }
+    ]
+  },
+  "contact": {
+    "tag": "Get in Touch",
+    "title": "Connect with Our Office",
+    "subtitle": "Have questions, want to join the trust, or need Sanskar services? Reach out directly.",
+    "headOfficeTitle": "Head Office (मुख्य कार्यालय)",
+    "headOffice": "Shivaji Nagar Sector-2 (Bagrani), Mahuisugharpur, Rustampur, Gorakhpur, Uttar Pradesh - 273016",
+    "contactOfficeTitle": "Contact & Support Office (सम्पर्क एवं सहयोग कार्यस्थल)",
+    "contactOffice": "Saket Nagar, (In front of Madhur Shehnai Lawn), Rustampur, Gorakhpur, Uttar Pradesh",
+    "phonesTitle": "Direct Contact Numbers",
+    "emailTitle": "Official Email",
+    "email": "[ADD TRUST OFFICIAL EMAIL]",
+    "formTitle": "Send a Message / Join Inquiry",
+    "name": "Your Full Name",
+    "phone": "Mobile (WhatsApp) Number",
+    "interest": "I am interested in",
+    "interestOpt1": "Becoming a Member (₹200/year)",
+    "interestOpt2": "Making a Donation (Samarpan Nidhi)",
+    "interestOpt3": "Conducting 16 Sanskars or Puja",
+    "interestOpt4": "Labor / Government Scheme Guidance",
+    "interestOpt5": "Volunteering & General Query",
+    "message": "Your Message",
+    "sendBtn": "Send Message via WhatsApp / Email",
+    "mapPlaceholder": "Gorakhpur, Uttar Pradesh Location Map",
+    "mapNotice": "[Map coordinates: Rustampur, Gorakhpur - 273016]"
+  },
+  "footer": {
+    "desc": "A dedicated public charitable trust working for Vedic cultural preservation, moral family values, and social welfare in India.",
+    "quickLinks": "Quick Links",
+    "legal": "Registration & Trust Info",
+    "regInfo": "Rashtriya Sanatan Sanskar Seva Sansthan (Trust)",
+    "regOffice": "Shivaji Nagar Sector-2, Rustampur, Gorakhpur - 273016",
+    "copyright": "All rights reserved. Dedicated to public welfare and Vedic cultural heritage.",
+    "builtFor": "Bilingual Public Service Portal"
+  }
+}

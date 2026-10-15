@@ -1,0 +1,221 @@
+import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight } from 'lucide-react';
+
+export const Donate = ({ onOpenReceiptModal }) => {
+  const { lang, t } = useLanguage();
+  const [copiedAcc, setCopiedAcc] = useState(false);
+  const [copiedUpi, setCopiedUpi] = useState(false);
+
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    if (type === 'acc') {
+      setCopiedAcc(true);
+      setTimeout(() => setCopiedAcc(false), 2500);
+    } else {
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2500);
+    }
+  };
+
+  return (
+    <section id="donate" className="py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
+            {t.donate.tag}
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-[#382719] mt-3.5 font-hindi-heading">
+            {t.donate.title}
+          </h2>
+          <p className="text-sm sm:text-base text-[#454545] mt-3 leading-relaxed font-medium">
+            {t.donate.subtitle}
+          </p>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary mx-auto mt-4 rounded-full"></div>
+
+          {/* Quick Suggested Slabs */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+            {[
+              { amount: '₹200', label: lang === 'hi' ? 'वार्षिक सदस्यता' : 'Annual Member' },
+              { amount: '₹501', label: lang === 'hi' ? 'शुभ समर्पण' : 'Auspicious' },
+              { amount: '₹1,100', label: lang === 'hi' ? 'संस्कार संकल्प' : 'Vedic Rites' },
+              { amount: '₹2,100', label: lang === 'hi' ? 'श्रमिक सेवा' : 'Labor Support' },
+              { amount: '₹5,100', label: lang === 'hi' ? 'शिविर सहयोग' : 'Camp Sponsor' },
+            ].map((slab, i) => (
+              <div
+                key={i}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#E9B44C]/40 shadow-sm text-xs font-black text-[#382719] hover:border-primary transition-all hover:bg-[#FFF8EF]"
+              >
+                <span className="text-primary font-mono">{slab.amount}</span>
+                <span className="text-[11px] text-secondary">({slab.label})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Grid: Left Bank Box + Right QR Code & Fund Usage */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Verified Bank Details Box */}
+          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-[#E9B44C]/35 text-left space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E9B44C]/25 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg border border-primary/20">
+                  🏦
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-lg text-[#382719] font-hindi-heading">
+                    {t.donate.bankTitle}
+                  </h3>
+                  <span className="text-xs font-semibold text-trust-green flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'सत्यापित ट्रस्ट बैंक खाता' : 'Verified Public Trust Bank Account'}</span>
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-mono bg-[#FFF8EF] text-secondary px-3 py-1 rounded-full font-bold border border-[#E9B44C]/40">
+                Gorakhpur
+              </span>
+            </div>
+
+            {/* Bank Spec Table */}
+            <div className="space-y-3.5 text-xs sm:text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+                <span className="text-[#454545] font-semibold">{t.donate.bankName}:</span>
+                <span className="font-black text-[#382719]">{t.donate.bankNameVal}</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-primary/5 border border-primary/25">
+                <span className="text-primary font-bold">{t.donate.accNo}:</span>
+                <div className="flex items-center gap-2 mt-1 sm:mt-0">
+                  <span className="font-mono font-black text-base sm:text-lg text-primary tracking-wider">
+                    {t.donate.accNoVal}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(t.donate.accNoVal, 'acc')}
+                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm"
+                    title={t.donate.copyAcc}
+                  >
+                    {copiedAcc ? <Check className="w-4 h-4 text-trust-green" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+                <span className="text-[#454545] font-semibold">{t.donate.upiId}:</span>
+                <div className="flex items-center gap-2 mt-1 sm:mt-0">
+                  <span className="font-mono font-bold text-[#382719] text-sm">
+                    {t.donate.upiIdVal}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(t.donate.upiIdVal, 'upi')}
+                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm"
+                    title={t.donate.copyUpi}
+                  >
+                    {copiedUpi ? <Check className="w-4 h-4 text-trust-green" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+                  <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.ifsc}:</span>
+                  <span className="font-mono text-xs font-bold text-secondary">{t.donate.ifscVal}</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+                  <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.branch}:</span>
+                  <span className="text-xs font-bold text-[#382719]">{t.donate.branchVal}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Receipt Modal Trigger Button inside Box */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onOpenReceiptModal}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-primary hover:bg-secondary text-white font-black text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-primary"
+              >
+                <FileText className="w-4 h-4" />
+                <span>{t.donate.openReceiptModal}</span>
+              </button>
+              <p className="text-[11px] text-[#454545] font-medium text-center mt-2">
+                {t.donate.receiptGenDesc}
+              </p>
+            </div>
+
+            {/* 80G Tax Exemption Transparent Statement */}
+            <div className="p-4 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/40 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-[#382719] leading-relaxed font-medium">
+                <span className="font-black block mb-0.5">{t.donate.taxNoteTitle}</span>
+                <p className="text-[#454545]">{t.donate.taxNoteDesc}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Authentic QR Code & Fund Usage */}
+          <div className="lg:col-span-5 space-y-6 text-left">
+            {/* UPI QR Display Card */}
+            <div className="bg-white rounded-3xl p-6 shadow-card border border-[#E9B44C]/35 text-center">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFF8EF] border border-[#E9B44C]/50 text-secondary text-xs font-bold mb-3 shadow-sm">
+                <QrCode className="w-3.5 h-3.5 text-primary" />
+                <span>{lang === 'hi' ? 'त्वरित स्कैन एवं भुगतान' : 'Instant Scan & Pay'}</span>
+              </div>
+
+              {/* QR Image Box */}
+              <div className="mx-auto w-48 h-48 p-3 bg-white rounded-2xl border-2 border-dashed border-primary/40 shadow-inner flex items-center justify-center">
+                <img
+                  src="/images/avatars/upi_qr_clean.png"
+                  alt="Bank of India UPI QR Code boim-135883270012@boi"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <p className="font-mono font-black text-xs text-primary mt-3">
+                boim-135883270012@boi
+              </p>
+              <p className="text-[11px] text-[#454545] font-medium mt-1">
+                {t.donate.scanQr}
+              </p>
+
+              <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-[#E9B44C]/20">
+                <span className="text-[10px] font-bold text-[#666666] uppercase tracking-wider">
+                  Supported UPI: GPay • PhonePe • Paytm • BHIM
+                </span>
+              </div>
+            </div>
+
+            {/* Transparent Fund Utilization List */}
+            <div className="bg-white rounded-3xl p-6 shadow-card border border-[#E9B44C]/35">
+              <div className="flex items-center gap-2 mb-3">
+                <Heart className="w-4 h-4 text-primary" />
+                <h4 className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading">
+                  {t.donate.fundUsageTitle}
+                </h4>
+              </div>
+
+              <ul className="space-y-2.5 text-xs text-[#454545]">
+                {t.donate.fundUsage.map((point, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
+                    <span className="leading-relaxed font-medium">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+export default Donate;

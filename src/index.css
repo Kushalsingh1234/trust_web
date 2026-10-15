@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  html[lang="hi"] {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    line-height: 1.8;
+  }
+
+  html[lang="hi"] h1,
+  html[lang="hi"] h2,
+  html[lang="hi"] h3,
+  html[lang="hi"] h4,
+  html[lang="hi"] h5,
+  html[lang="hi"] h6 {
+    font-family: 'Tiro Devanagari Hindi', 'Noto Serif Devanagari', serif;
+    line-height: 1.5;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #454545;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #382719;
+  }
+}
+
+/* Radiant Sacred Saffron, Warm Ivory & Golden Accent Patterns */
+.bg-warm-ivory {
+  background-color: #FFF8EF;
+}
+
+.bg-pure-white {
+  background-color: #FFFFFF;
+}
+
+.bg-hero-ivory {
+  background-color: #FFF8EF;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(233, 180, 76, 0.22) 0px, transparent 55%),
+    radial-gradient(at 85% 15%, rgba(232, 117, 22, 0.14) 0px, transparent 55%),
+    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.85) 0px, transparent 65%),
+    radial-gradient(at 85% 85%, rgba(233, 180, 76, 0.18) 0px, transparent 55%),
+    radial-gradient(at 15% 85%, rgba(232, 117, 22, 0.12) 0px, transparent 55%);
+}
+
+.bg-soft-card {
+  background: #FFF8EF;
+  border: 1px solid rgba(233, 180, 76, 0.35);
+}
+
+.bg-mandala-subtle {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e87516' fill-opacity='0.04' fill-rule='evenodd'%3E%3Cpath d='M30 30c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm-20 0c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm10-20c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zm0 40c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Custom Scrollbar in Saffron Orange & Warm Ivory */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #FFF8EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #E87516;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C65D13;
+}
+
+/* Print Styles for Receipts */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #FFFFFF !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Accessibility Focus Ring */
+:focus-visible {
+  outline: 2px solid #E87516;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
