@@ -13,12 +13,13 @@ import {
   HandHeart,
   Copy,
   Check,
-  ArrowRight
+  ArrowRight,
+  Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOpenLogin }) => {
-  const { lang } = useLanguage();
+  const { lang, toggleLanguage } = useLanguage();
   const { currentUser } = useAuth();
 
   const [category, setCategory] = useState(defaultCategory); // 'catA', 'catB', 'catC'
@@ -152,13 +153,24 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1 transition-all"
+              title="Toggle Language"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
+              <span>{lang === 'hi' ? 'EN' : 'हिंदी'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -332,7 +344,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    placeholder="उदा. रमेश कुमार मिश्र"
+                    placeholder={lang === 'hi' ? 'उदा. रमेश कुमार मिश्र' : 'e.g. Ramesh Kumar Mishra'}
                     className={`w-full px-3.5 py-2.5 rounded-xl border ${
                       errors.fullName ? 'border-red-500' : 'border-[#E9B44C]/50'
                     } focus:outline-none focus:border-primary text-sm`}
@@ -349,7 +361,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     name="fatherHusbandName"
                     value={formData.fatherHusbandName}
                     onChange={handleInputChange}
-                    placeholder="उदा. श्री बैजनाथ मिश्र"
+                    placeholder={lang === 'hi' ? 'उदा. श्री बैजनाथ मिश्र' : 'e.g. Shri Baijnath Mishra'}
                     className={`w-full px-3.5 py-2.5 rounded-xl border ${
                       errors.fatherHusbandName ? 'border-red-500' : 'border-[#E9B44C]/50'
                     } focus:outline-none focus:border-primary text-sm`}
@@ -402,7 +414,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     name="villageOrLocality"
                     value={formData.villageOrLocality}
                     onChange={handleInputChange}
-                    placeholder="उदा. शिवाजी नगर, सेक्टर-2"
+                    placeholder={lang === 'hi' ? 'उदा. शिवाजी नगर, सेक्टर-2' : 'e.g. Shivaji Nagar, Sector-2'}
                     className={`w-full px-3.5 py-2.5 rounded-xl border ${
                       errors.villageOrLocality ? 'border-red-500' : 'border-[#E9B44C]/50'
                     } focus:outline-none focus:border-primary text-sm`}
@@ -419,7 +431,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     name="postOffice"
                     value={formData.postOffice}
                     onChange={handleInputChange}
-                    placeholder="रूस्तमपुर"
+                    placeholder={lang === 'hi' ? 'रूस्तमपुर' : 'Rustampur'}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9B44C]/50 focus:outline-none focus:border-primary text-sm"
                   />
                 </div>
@@ -433,7 +445,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
-                    placeholder="गोरखपुर"
+                    placeholder={lang === 'hi' ? 'गोरखपुर' : 'Gorakhpur'}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9B44C]/50 focus:outline-none focus:border-primary text-sm"
                   />
                 </div>
@@ -465,7 +477,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     <span className="text-xs font-bold text-[#382719]">
                       {lang === 'hi' ? 'निर्धारित वार्षिक सदस्यता शुल्क:' : 'Standard Annual Membership Fee:'}
                     </span>
-                    <span className="font-mono font-black text-sm text-primary">₹200 / वर्ष</span>
+                    <span className="font-mono font-black text-sm text-primary">₹200 / {lang === 'hi' ? 'वर्ष' : 'Year'}</span>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#454545] mt-2 mb-1">
@@ -476,7 +488,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                       name="voluntaryAmount"
                       value={formData.voluntaryAmount}
                       onChange={handleInputChange}
-                      placeholder="उदा. 500, 1100, 2100"
+                      placeholder={lang === 'hi' ? 'उदा. 500, 1100, 2100' : 'e.g. 500, 1100, 2100'}
                       className="w-full px-3.5 py-2 rounded-xl border border-[#E9B44C]/40 bg-white text-xs font-mono focus:outline-none focus:border-primary"
                     />
                   </div>
@@ -494,10 +506,18 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                     onChange={handleInputChange}
                     className="w-full px-3.5 py-2 rounded-xl border border-[#E9B44C]/40 bg-white text-xs focus:outline-none focus:border-primary"
                   >
-                    <option value="sanskar_camps">16 संस्कार जागरण एवं वैदिक शिविर</option>
-                    <option value="labor_welfare">श्रमिक कल्याण एवं जागरूकता अभियान</option>
-                    <option value="ration_distribution">राशन एवं आकस्मिक सहायता वितरण</option>
-                    <option value="cultural_events">सांस्कृतिक व आध्यात्मिक कार्यक्रम प्रबंधन</option>
+                    <option value="sanskar_camps">
+                      {lang === 'hi' ? '16 संस्कार जागरण एवं वैदिक शिविर' : '16 Vedic Sanskar Awareness Camps'}
+                    </option>
+                    <option value="labor_welfare">
+                      {lang === 'hi' ? 'श्रमिक कल्याण एवं जागरूकता अभियान' : 'Labor Rights & Welfare Campaigns'}
+                    </option>
+                    <option value="ration_distribution">
+                      {lang === 'hi' ? 'राशन एवं आकस्मिक सहायता वितरण' : 'Emergency Ration & Food Distribution'}
+                    </option>
+                    <option value="cultural_events">
+                      {lang === 'hi' ? 'सांस्कृतिक व आध्यात्मिक कार्यक्रम प्रबंधन' : 'Cultural & Vedic Event Management'}
+                    </option>
                   </select>
                 </div>
               )}

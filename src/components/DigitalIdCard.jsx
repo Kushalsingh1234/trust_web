@@ -104,12 +104,12 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
             <div className="flex items-center justify-between pt-1 text-[10px] text-[#666666] border-t border-[#E9B44C]/30">
               <div>
-                <span>जारी तिथि: </span>
+                <span>{lang === 'hi' ? 'जारी तिथि: ' : 'Issued: '}</span>
                 <span className="font-mono font-bold text-[#382719]">{formattedDate}</span>
               </div>
               <div>
-                <span>वैधता: </span>
-                <span className="font-mono font-bold text-trust-green">{member.validUntil || '1 Year'}</span>
+                <span>{lang === 'hi' ? 'वैधता: ' : 'Valid: '}</span>
+                <span className="font-mono font-bold text-trust-green">{member.validUntil || (lang === 'hi' ? '1 वर्ष' : '1 Year')}</span>
               </div>
             </div>
           </div>
@@ -119,11 +119,15 @@ export const DigitalIdCard = ({ member, onClose }) => {
         <div className="mt-4 pt-2.5 border-t border-dashed border-[#E9B44C]/60 flex items-center justify-between text-[9px] text-[#666666]">
           <div className="flex items-center gap-1 text-trust-green font-bold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>अधिकृत ट्रस्ट पहचान पत्र</span>
+            <span>{lang === 'hi' ? 'अधिकृत ट्रस्ट पहचान पत्र' : 'Official Verified Trust ID'}</span>
           </div>
           <div className="text-right">
-            <span className="font-bold text-[#382719] block">बजरंगी दूबे / कुसुमलता दूबे</span>
-            <span className="text-[8px] text-[#888888]">अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)</span>
+            <span className="font-bold text-[#382719] block">
+              {lang === 'hi' ? 'बजरंगी दूबे / कुसुमलता दूबे' : 'Bajrangi Dubey / Kusumlata Dubey'}
+            </span>
+            <span className="text-[8px] text-[#888888]">
+              {lang === 'hi' ? 'अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)' : 'Authorized Signatory (Executive)'}
+            </span>
           </div>
         </div>
 
@@ -132,7 +136,7 @@ export const DigitalIdCard = ({ member, onClose }) => {
       {/* Action Strip */}
       <div className="mt-4 flex items-center justify-between print:hidden">
         <p className="text-[11px] text-[#666666]">
-          * यह पहचान पत्र संस्था के कार्यक्रमों व शिविरों में मान्य है।
+          {lang === 'hi' ? '* यह पहचान पत्र संस्था के कार्यक्रमों व शिविरों में मान्य है।' : '* This digital ID is officially recognized across all trust camps.'}
         </p>
         <button
           type="button"

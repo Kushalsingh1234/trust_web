@@ -41,11 +41,12 @@ import {
   Plus,
   Trash2,
   Lock,
-  Building
+  Building,
+  Globe
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
-  const { lang } = useLanguage();
+  const { lang, toggleLanguage } = useLanguage();
   const { currentUser, userProfile, isAdmin, adminPinVerified, verifyPinForSession, logout } = useAuth();
 
   const [pinInput, setPinInput] = useState('');
@@ -142,11 +143,16 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   // Actions
   const handleApproveApp = async (appId) => {
-    if (!window.confirm("क्या आप इस सदस्यता आवेदन को अनुमोदित करना चाहते हैं?")) return;
+    const confirmMsg = lang === 'hi' 
+      ? "क्या आप इस सदस्यता आवेदन को अनुमोदित करना चाहते हैं?" 
+      : "Are you sure you want to approve this membership application?";
+    if (!window.confirm(confirmMsg)) return;
     setActionInProgress(true);
     try {
       const result = await approveMembershipApplication(appId, currentUser?.uid || 'admin');
-      setActionMsg(`सफलतापूर्वक अनुमोदित! सदस्यता संख्या: ${result.membershipNumber}`);
+      alert(lang === 'hi' 
+        ? `सफलतापूर्वक अनुमोदित! सदस्यता संख्या: ${result.membershipNumber}` 
+        : `Successfully approved! Membership Number: ${result.membershipNumber}`);
       await loadAllAdminData();
       setSelectedApp(null);
     } catch (err) {
@@ -158,13 +164,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   const handleRejectApp = async (appId) => {
     if (!rejectionReason.trim()) {
-      alert("कृपया अस्वीकृति का कारण दर्ज करें।");
+      alert(lang === 'hi' ? "कृपया अस्वीकृति का कारण दर्ज करें।" : "Please enter reason for rejection.");
       return;
     }
     setActionInProgress(true);
     try {
       await rejectMembershipApplication(appId, rejectionReason, currentUser?.uid || 'admin');
-      setActionMsg("आवेदन अस्वीकृत कर दिया गया है।");
+      alert(lang === 'hi' ? "आवेदन अस्वीकृत कर दिया गया है।" : "Application rejected.");
       setRejectingAppId(null);
       setRejectionReason('');
       await loadAllAdminData();
@@ -177,13 +183,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   };
 
   const handleVerifyPayment = async (paymentId) => {
-    const notes = prompt("सत्यापन टिप्पणी (वैकल्पिक बैंक विवरण दर्ज करें):", "Verified via Bank of India ledger match");
+    const defaultNotes = lang === 'hi' ? "बैंक ऑफ इंडिया खाता बही से मिलान सत्यापित" : "Verified via Bank of India ledger match";
+    const promptMsg = lang === 'hi' ? "सत्यापन टिप्पणी (वैकल्पिक बैंक विवरण दर्ज करें):" : "Verification note (bank confirmation reference):";
+    const notes = prompt(promptMsg, defaultNotes);
     if (notes === null) return;
 
     setActionInProgress(true);
     try {
       const result = await verifyPaymentRecord(paymentId, currentUser?.uid || 'admin', notes);
-      alert(`भुगतान सत्यापित! आधिकारिक रसीद संख्या: ${result.receiptNumber}`);
+      alert(lang === 'hi' 
+        ? `भुगतान सत्यापित! आधिकारिक रसीद संख्या: ${result.receiptNumber}` 
+        : `Payment verified! Official Receipt No: ${result.receiptNumber}`);
       await loadAllAdminData();
     } catch (err) {
       alert(err.message);
@@ -193,7 +203,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   };
 
   const handleRejectPayment = async (paymentId) => {
-    const reason = prompt("अस्वीकृति का कारण (उदा. बैंक में UTR अनुपलब्ध):", "बैंक खाते में यह UTR प्रविष्टि प्राप्त नहीं हुई");
+    const defaultReason = lang === 'hi' ? "बैंक खाते में यह UTR प्रविष्टि प्राप्त नहीं हुई" : "Transaction UTR not found in bank ledger";
+    const promptMsg = lang === 'hi' ? "अस्वीकृति का कारण (उदा. बैंक में UTR अनुपलब्ध):" : "Reason for rejection:";
+    const reason = prompt(promptMsg, defaultReason);
     if (!reason) return;
 
     setActionInProgress(true);
@@ -208,7 +220,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   };
 
   const handleUpdateAssistance = async (id, status) => {
-    const notes = prompt("ट्रस्ट समीक्षा टिप्पणी दर्ज करें:", "समीक्षा उपरांत राहत सामग्री / सहयोग प्रेषित");
+    const defaultNotes = lang === 'hi' ? "समीक्षा उपरांत राहत सामग्री / सहयोग प्रेषित" : "Aid dispatched following review";
+    const promptMsg = lang === 'hi' ? "ट्रस्ट समीक्षा टिप्पणी दर्ज करें:" : "Enter review notes:";
+    const notes = prompt(promptMsg, defaultNotes);
     if (notes === null) return;
     try {
       await updateAssistanceRequestStatus(id, status, notes, currentUser?.uid || 'admin');
@@ -232,7 +246,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) return;
     setActionInProgress(true);
     try {
-      await createAnnouncement(newAnnouncement, currentUser?.uid || 'admin', userProfile?.displayName || 'ट्रस्ट प्रबंधकारिणी');
+      await createAnnouncement(
+        newAnnouncement, 
+        currentUser?.uid || 'admin', 
+        userProfile?.displayName || (lang === 'hi' ? 'ट्रस्ट प्रबंधकारिणी' : 'Trust Executive')
+      );
       setNewAnnouncement({ title: '', content: '', category: 'general', isPublished: true, isFeatured: false });
       await loadAllAdminData();
     } catch (err) {
@@ -243,7 +261,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   };
 
   const handleDeleteAnnouncement = async (id) => {
-    if (!window.confirm("क्या आप इस सूचना को हटाना चाहते हैं?")) return;
+    const confirmMsg = lang === 'hi' ? "क्या आप इस सूचना को हटाना चाहते हैं?" : "Are you sure you want to delete this notice?";
+    if (!window.confirm(confirmMsg)) return;
     try {
       await deleteAnnouncement(id);
       await loadAllAdminData();
@@ -254,13 +273,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   const handleSetupMasterAdmin = async (e) => {
     e.preventDefault();
-    setSetupResult('प्रक्रियाधीन...');
+    setSetupResult(lang === 'hi' ? 'प्रक्रियाधीन...' : 'Processing...');
     try {
       await initializeMasterAdmin(setupForm);
-      setSetupResult('व्यवस्थापक खाता सफलतापूर्वक स्थापित एवं अधिकृत हो गया है!');
+      setSetupResult(lang === 'hi' 
+        ? 'व्यवस्थापक खाता सफलतापूर्वक स्थापित एवं अधिकृत हो गया है!' 
+        : 'Admin account provisioned and authorized successfully!');
       await loadAllAdminData();
     } catch (err) {
-      setSetupResult(`त्रुटि: ${err.message}`);
+      setSetupResult(`${lang === 'hi' ? 'त्रुटि:' : 'Error:'} ${err.message}`);
     }
   };
 
@@ -275,13 +296,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
           <div>
             <span className="text-xs font-black uppercase tracking-wider text-secondary">
-              गोपनीय प्रशासनिक सुरक्षा
+              {lang === 'hi' ? 'गोपनीय प्रशासनिक सुरक्षा' : 'Confidential Administrative Security'}
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-[#382719] mt-1 font-hindi-heading">
-              ट्रस्ट व्यवस्थापक सुरक्षा पिन
+              {lang === 'hi' ? 'ट्रस्ट व्यवस्थापक सुरक्षा पिन' : 'Trust Admin Security PIN'}
             </h1>
             <p className="text-xs text-[#666666] mt-2">
-              प्रशासनिक नियंत्रण कक्ष में प्रवेश हेतु अपना 6-अंकीय अधिकृत एडमिन पिन दर्ज करें।
+              {lang === 'hi'
+                ? 'प्रशासनिक नियंत्रण कक्ष में प्रवेश हेतु अपना 6-अंकीय अधिकृत एडमिन पिन दर्ज करें।'
+                : 'Enter your 6-digit authorized Admin PIN to access the administrative control center.'}
             </p>
           </div>
 
@@ -302,62 +325,74 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               type="submit"
               className="w-full py-3 rounded-2xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-saffron transition-all"
             >
-              प्रशासनिक पोर्टल अनलॉक करें
+              {lang === 'hi' ? 'प्रशासनिक पोर्टल अनलॉक करें' : 'Unlock Administrative Portal'}
             </button>
           </form>
 
-          <div className="pt-2 border-t border-gray-100 flex justify-between text-xs text-[#666666]">
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-[#666666]">
             <button
               type="button"
               onClick={onNavigateHome}
               className="hover:text-primary underline"
             >
-              ← मुख्य वेबसाइट
+              {lang === 'hi' ? '← मुख्य वेबसाइट' : '← Home Website'}
             </button>
+
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex items-center gap-1 text-[#382719] font-bold hover:text-primary"
+            >
+              <Globe className="w-3.5 h-3.5 text-secondary" />
+              <span>{lang === 'hi' ? 'English' : 'हिंदी'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('setup')}
               className="text-secondary font-bold hover:underline"
             >
-              व्यवस्थापक सेटअप टूल
+              {lang === 'hi' ? 'व्यवस्थापक सेटअप' : 'Admin Setup'}
             </button>
           </div>
         </div>
 
-        {/* Master Setup Panel (if needed for initial trust setup) */}
+        {/* Master Setup Panel */}
         {activeTab === 'setup' && (
           <div className="mt-8 bg-white max-w-lg w-full p-6 rounded-3xl border border-[#E9B44C]/40 shadow-card text-left space-y-4">
             <h3 className="font-extrabold text-sm text-[#382719] font-hindi-heading">
-              प्रारंभिक व्यवस्थापक खाता स्थापना (Initial Admin Provisioning)
+              {lang === 'hi' ? 'प्रारंभिक व्यवस्थापक खाता स्थापना' : 'Initial Admin Account Provisioning'}
             </h3>
             <p className="text-xs text-[#666666]">
-              ट्रस्ट के अधिकृत मास्टर सेटअप सीक्रेट की द्वारा प्राथमिक एडमिन खाता बनाएं अथवा भूमिका प्रदान करें।
+              {lang === 'hi'
+                ? 'ट्रस्ट के अधिकृत मास्टर सेटअप सीक्रेट की द्वारा प्राथमिक एडमिन खाता बनाएं अथवा भूमिका प्रदान करें।'
+                : 'Provision an authorized master administrator using the security setup secret.'}
             </p>
             <form onSubmit={handleSetupMasterAdmin} className="space-y-3 text-xs">
               <input
                 type="text"
-                placeholder="व्यवस्थापक यूज़रनेम (उदा. admin)"
+                placeholder={lang === 'hi' ? "व्यवस्थापक यूज़रनेम (उदा. admin)" : "Admin Username (e.g. admin)"}
                 value={setupForm.username}
                 onChange={(e) => setSetupForm(prev => ({ ...prev, username: e.target.value }))}
                 className="w-full p-2.5 rounded-xl border border-gray-300"
               />
               <input
                 type="password"
-                placeholder="पासवर्ड (कम से कम 6 अक्षर)"
+                placeholder={lang === 'hi' ? "पासवर्ड (कम से कम 6 अक्षर)" : "Password (min 6 chars)"}
                 value={setupForm.password}
                 onChange={(e) => setSetupForm(prev => ({ ...prev, password: e.target.value }))}
                 className="w-full p-2.5 rounded-xl border border-gray-300"
               />
               <input
                 type="password"
-                placeholder="मास्टर सेटअप सीक्रेट की (Master Setup Secret)"
+                placeholder={lang === 'hi' ? "मास्टर सेटअप सीक्रेट की (Master Setup Secret)" : "Master Setup Secret Key"}
                 value={setupForm.setupSecret}
                 onChange={(e) => setSetupForm(prev => ({ ...prev, setupSecret: e.target.value }))}
                 className="w-full p-2.5 rounded-xl border border-[#E9B44C]"
               />
               <input
                 type="password"
-                placeholder="एडमिन पिन (273016)"
+                placeholder="Admin PIN (273016)"
                 value={setupForm.adminPin}
                 onChange={(e) => setSetupForm(prev => ({ ...prev, adminPin: e.target.value }))}
                 className="w-full p-2.5 rounded-xl border border-gray-300"
@@ -366,7 +401,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 type="submit"
                 className="w-full py-2.5 rounded-xl bg-secondary text-white font-bold"
               >
-                मास्टर एडमिन अधिकृत करें
+                {lang === 'hi' ? 'मास्टर एडमिन अधिकृत करें' : 'Authorize Master Admin'}
               </button>
               {setupResult && <p className="text-xs font-bold text-primary mt-2">{setupResult}</p>}
             </form>
@@ -412,16 +447,27 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               <TrustLogo className="w-9 h-9 sm:w-10 sm:h-10" showText={false} lang={lang} />
               <div className="text-left">
                 <span className="font-black text-white text-sm sm:text-base tracking-tight font-hindi-heading block leading-tight">
-                  राष्ट्रीय सनातन संस्कार सेवा संस्थान
+                  {lang === 'hi' ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान' : 'Rashtriya Sanatan Sanskar Seva Sansthan'}
                 </span>
                 <span className="text-[10px] text-[#E9B44C] font-bold uppercase tracking-wider">
-                  केन्द्रीय प्रशासनिक नियंत्रण कक्ष (ADMIN PANEL)
+                  {lang === 'hi' ? 'केन्द्रीय प्रशासनिक नियंत्रण कक्ष (ADMIN PANEL)' : 'CENTRAL ADMINISTRATIVE CONTROL PANEL'}
                 </span>
               </div>
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Language Switcher */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="p-2 sm:px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+              title="Toggle Hindi / English"
+            >
+              <Globe className="w-4 h-4 text-[#E9B44C]" />
+              <span>{lang === 'hi' ? 'English' : 'हिंदी'}</span>
+            </button>
+
             <button
               type="button"
               onClick={loadAllAdminData}
@@ -430,7 +476,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               title="Refresh Data"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">ताज़ा करें</span>
+              <span className="hidden md:inline">{lang === 'hi' ? 'ताज़ा करें' : 'Refresh'}</span>
             </button>
 
             <button
@@ -439,7 +485,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5"
             >
               <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">वेबसाइट देखें</span>
+              <span className="hidden sm:inline">{lang === 'hi' ? 'वेबसाइट देखें' : 'View Site'}</span>
             </button>
 
             <button
@@ -448,7 +494,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               className="p-2 sm:px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">लॉगआउट</span>
+              <span className="hidden sm:inline">{lang === 'hi' ? 'लॉगआउट' : 'Logout'}</span>
             </button>
           </div>
         </div>
@@ -460,12 +506,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         {/* Navigation Tabs */}
         <div className="flex border-b border-[#E9B44C]/40 mb-8 overflow-x-auto gap-2">
           {[
-            { id: 'overview', label: 'सांख्यिकी अवलोकन (Overview)', icon: ShieldCheck },
-            { id: 'applications', label: `सदस्यता आवेदन (${applications.length})`, icon: Users },
-            { id: 'payments', label: `भुगतान सत्यापन (${payments.filter(p => p.verificationStatus === 'pending_verification').length})`, icon: CreditCard },
-            { id: 'assistance', label: `सहायता अनुरोध (${assistanceRequests.length})`, icon: HandHeart },
-            { id: 'volunteers', label: `स्वयंसेवक (${volunteers.length})`, icon: Users },
-            { id: 'announcements', label: `सूचना प्रबंधन (${announcements.length})`, icon: Megaphone }
+            { id: 'overview', label: lang === 'hi' ? 'सांख्यिकी अवलोकन (Overview)' : 'Overview & Metrics', icon: ShieldCheck },
+            { id: 'applications', label: `${lang === 'hi' ? 'सदस्यता आवेदन' : 'Applications'} (${applications.length})`, icon: Users },
+            { id: 'payments', label: `${lang === 'hi' ? 'भुगतान सत्यापन' : 'Payments'} (${payments.filter(p => p.verificationStatus === 'pending_verification').length})`, icon: CreditCard },
+            { id: 'assistance', label: `${lang === 'hi' ? 'सहायता अनुरोध' : 'Help Requests'} (${assistanceRequests.length})`, icon: HandHeart },
+            { id: 'volunteers', label: `${lang === 'hi' ? 'स्वयंसेवक' : 'Volunteers'} (${volunteers.length})`, icon: Users },
+            { id: 'announcements', label: `${lang === 'hi' ? 'सूचना प्रबंधन' : 'Notices'} (${announcements.length})`, icon: Megaphone }
           ].map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -492,10 +538,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <div className="space-y-8 text-left">
             <div>
               <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                ट्रस्ट प्रबंधकारिणी सांख्यिकी (Real-time Trust Metrics)
+                {lang === 'hi' ? 'ट्रस्ट प्रबंधकारिणी सांख्यिकी' : 'Trust Executive Council Metrics'}
               </h2>
               <p className="text-xs text-[#666666]">
-                क्लाउड फायरस्टोर से सीधे संकलित प्रामाणिक प्रशासनिक आंकड़े
+                {lang === 'hi' ? 'क्लाउड फायरस्टोर से सीधे संकलित प्रामाणिक प्रशासनिक आंकड़े' : 'Real-time verified metrics directly aggregated from Cloud Firestore'}
               </p>
             </div>
 
@@ -503,82 +549,100 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">कुल सदस्यता आवेदन</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'कुल सदस्यता आवेदन' : 'Total Applications'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-[#382719] font-mono mt-1 block">
                   {stats.totalApplications}
                 </span>
                 <span className="text-[11px] text-amber-700 font-bold block mt-1">
-                  प्रतीक्षारत: {stats.pendingApplications}
+                  {lang === 'hi' ? `प्रतीक्षारत: ${stats.pendingApplications}` : `Pending: ${stats.pendingApplications}`}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">स्वीकृत सक्रिय सदस्य</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'स्वीकृत सक्रिय सदस्य' : 'Approved Members'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-trust-green font-mono mt-1 block">
                   {stats.approvedMembers}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  आईडी कार्ड धारक
+                  {lang === 'hi' ? 'आईडी कार्ड धारक' : 'ID Card Holders'}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">लंबित भुगतान सत्यापन</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'लंबित भुगतान सत्यापन' : 'Pending UTR Verifications'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
                   {stats.pendingPayments}
                 </span>
                 <span className="text-[11px] text-primary font-bold block mt-1">
-                  सत्यापित: {stats.verifiedPaymentsCount}
+                  {lang === 'hi' ? `सत्यापित: ${stats.verifiedPaymentsCount}` : `Verified: ${stats.verifiedPaymentsCount}`}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">सत्यापित सदस्यता शुल्क</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'सत्यापित सदस्यता शुल्क' : 'Verified Membership Fees'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-primary font-mono mt-1 block">
                   ₹ {stats.verifiedMembershipFees.toLocaleString('en-IN')}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  समर्पण: ₹ {stats.verifiedVoluntaryContributions.toLocaleString('en-IN')}
+                  {lang === 'hi' 
+                    ? `समर्पण: ₹ ${stats.verifiedVoluntaryContributions.toLocaleString('en-IN')}` 
+                    : `Donations: ₹ ${stats.verifiedVoluntaryContributions.toLocaleString('en-IN')}`}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">लंबित सहायता अनुरोध</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'लंबित सहायता अनुरोध' : 'Pending Assistance'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-red-700 font-mono mt-1 block">
                   {stats.pendingAssistanceRequests}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  चिकित्सा / विवाह / राशन
+                  {lang === 'hi' ? 'चिकित्सा / विवाह / राशन' : 'Medical / Relief / Education'}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">पंजीकृत स्वयंसेवक</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'पंजीकृत स्वयंसेवक' : 'Registered Volunteers'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
                   {stats.volunteerApplicationsCount}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  क्षेत्रीय कार्यकर्ता
+                  {lang === 'hi' ? 'क्षेत्रीय कार्यकर्ता' : 'Field Workers'}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">अस्वीकृत आवेदन</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'अस्वीकृत आवेदन' : 'Rejected Applications'}
+                </span>
                 <span className="text-2xl sm:text-3xl font-black text-gray-500 font-mono mt-1 block">
                   {stats.rejectedApplications}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  कारण सहित रिकॉर्ड सुरक्षित
+                  {lang === 'hi' ? 'कारण सहित रिकॉर्ड सुरक्षित' : 'Logged with legal reasons'}
                 </span>
               </div>
 
               <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
-                <span className="text-[10px] text-[#666666] uppercase font-bold block">फायरबेस सुरक्षा स्थिति</span>
+                <span className="text-[10px] text-[#666666] uppercase font-bold block">
+                  {lang === 'hi' ? 'फायरबेस सुरक्षा स्थिति' : 'Database Status'}
+                </span>
                 <span className="text-base font-black text-trust-green mt-1 block">
-                  सुरक्षित एवं सक्रिय
+                  {lang === 'hi' ? 'सुरक्षित एवं सक्रिय' : 'Active & Synced'}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  Firestore Rules v2 Active
+                  Cloud Firestore v2
                 </span>
               </div>
 
@@ -587,7 +651,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             {/* Quick Actions */}
             <div className="p-6 rounded-3xl bg-[#FFF8EF] border border-[#E9B44C]/40 space-y-4">
               <h3 className="font-extrabold text-sm sm:text-base text-[#382719] font-hindi-heading">
-                व्यवस्थापक त्वरित कार्य (Quick Actions)
+                {lang === 'hi' ? 'व्यवस्थापक त्वरित कार्य' : 'Quick Admin Actions'}
               </h3>
               <div className="flex flex-wrap gap-3">
                 <button
@@ -595,21 +659,21 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onClick={() => { setActiveTab('applications'); setAppStatusFilter('pending'); }}
                   className="px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs shadow-sm hover:bg-secondary transition-all"
                 >
-                  लंबित सदस्यता आवेदन जांचें ({stats.pendingApplications})
+                  {lang === 'hi' ? `लंबित सदस्यता आवेदन जांचें (${stats.pendingApplications})` : `Review Pending Applications (${stats.pendingApplications})`}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setActiveTab('payments'); setPayStatusFilter('pending_verification'); }}
                   className="px-4 py-2.5 rounded-xl bg-secondary text-white font-bold text-xs shadow-sm hover:bg-primary transition-all"
                 >
-                  लंबित UTR भुगतान सत्यापित करें ({stats.pendingPayments})
+                  {lang === 'hi' ? `लंबित UTR भुगतान सत्यापित करें (${stats.pendingPayments})` : `Verify Pending Payments (${stats.pendingPayments})`}
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('announcements')}
                   className="px-4 py-2.5 rounded-xl bg-white text-[#382719] border border-[#E9B44C] font-bold text-xs hover:bg-[#FFF8EF] transition-all"
                 >
-                  + नई ट्रस्ट सूचना प्रकाशित करें
+                  {lang === 'hi' ? '+ नई ट्रस्ट सूचना प्रकाशित करें' : '+ Publish New Notice'}
                 </button>
               </div>
             </div>
@@ -622,10 +686,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                  सदस्यता आवेदन प्रबंधन
+                  {lang === 'hi' ? 'सदस्यता आवेदन प्रबंधन' : 'Membership Application Review'}
                 </h2>
                 <p className="text-xs text-[#666666]">
-                  आवेदनों की समीक्षा, विशिष्ट सदस्यता संख्या सृजन व अनुमोदन
+                  {lang === 'hi' 
+                    ? 'आवेदनों की समीक्षा, विशिष्ट सदस्यता संख्या सृजन व अनुमोदन' 
+                    : 'Review applications, assign unique membership IDs, and approve or reject.'}
                 </p>
               </div>
 
@@ -635,7 +701,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
-                    placeholder="नाम, मोबाइल, संदर्भ संख्या..."
+                    placeholder={lang === 'hi' ? "नाम, मोबाइल, संदर्भ संख्या..." : "Name, mobile, ref ID..."}
                     value={appSearch}
                     onChange={(e) => setAppSearch(e.target.value)}
                     className="pl-9 pr-3 py-1.5 rounded-xl border border-[#E9B44C]/50 text-xs w-48 sm:w-60"
@@ -647,10 +713,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onChange={(e) => setAppStatusFilter(e.target.value)}
                   className="p-1.5 rounded-xl border border-[#E9B44C]/50 text-xs bg-white"
                 >
-                  <option value="all">सभी स्थितियां</option>
-                  <option value="pending">लंबित (Pending)</option>
-                  <option value="approved">स्वीकृत (Approved)</option>
-                  <option value="rejected">अस्वीकृत (Rejected)</option>
+                  <option value="all">{lang === 'hi' ? 'सभी स्थितियां' : 'All Statuses'}</option>
+                  <option value="pending">{lang === 'hi' ? 'लंबित (Pending)' : 'Pending'}</option>
+                  <option value="approved">{lang === 'hi' ? 'स्वीकृत (Approved)' : 'Approved'}</option>
+                  <option value="rejected">{lang === 'hi' ? 'अस्वीकृत (Rejected)' : 'Rejected'}</option>
                 </select>
 
                 <select
@@ -658,10 +724,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onChange={(e) => setAppCatFilter(e.target.value)}
                   className="p-1.5 rounded-xl border border-[#E9B44C]/50 text-xs bg-white"
                 >
-                  <option value="all">सभी श्रेणियां</option>
-                  <option value="catA">श्रेणी-क (सहायता)</option>
-                  <option value="catB">श्रेणी-ख (दानदाता)</option>
-                  <option value="catC">श्रेणी-ग (कार्यकर्ता)</option>
+                  <option value="all">{lang === 'hi' ? 'सभी श्रेणियां' : 'All Categories'}</option>
+                  <option value="catA">{lang === 'hi' ? 'श्रेणी-क (सहायता)' : 'Cat A (Assistance)'}</option>
+                  <option value="catB">{lang === 'hi' ? 'श्रेणी-ख (दानदाता)' : 'Cat B (Donors)'}</option>
+                  <option value="catC">{lang === 'hi' ? 'श्रेणी-ग (कार्यकर्ता)' : 'Cat C (Volunteers)'}</option>
                 </select>
               </div>
             </div>
@@ -672,13 +738,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#FFF8EF] border-b border-[#E9B44C]/30 text-[#382719] font-black uppercase text-[10px]">
                     <tr>
-                      <th className="p-3.5">संदर्भ संख्या</th>
-                      <th className="p-3.5">आवेदक का नाम</th>
-                      <th className="p-3.5">श्रेणी</th>
-                      <th className="p-3.5">स्थान / ज़िला</th>
-                      <th className="p-3.5">मोबाइल</th>
-                      <th className="p-3.5">स्थिति</th>
-                      <th className="p-3.5 text-right">कार्य (Actions)</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'संदर्भ संख्या' : 'Ref ID'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'आवेदक का नाम' : 'Applicant Name'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'श्रेणी' : 'Category'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'स्थान / ज़िला' : 'Location'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'मोबाइल' : 'Mobile'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'स्थिति' : 'Status'}</th>
+                      <th className="p-3.5 text-right">{lang === 'hi' ? 'कार्य (Actions)' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -687,24 +753,28 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         <td className="p-3.5 font-mono font-bold text-primary">{app.applicationRef}</td>
                         <td className="p-3.5 font-extrabold text-[#382719]">{app.fullName}</td>
                         <td className="p-3.5 font-bold">
-                          {app.category === 'catA' ? 'श्रेणी-क (निराश्रित)' : app.category === 'catB' ? 'श्रेणी-ख (दानदाता)' : 'श्रेणी-ग (स्वयंसेवक)'}
+                          {app.category === 'catA' 
+                            ? (lang === 'hi' ? 'श्रेणी-क (निराश्रित)' : 'Cat A (Beneficiary)') 
+                            : app.category === 'catB' 
+                            ? (lang === 'hi' ? 'श्रेणी-ख (दानदाता)' : 'Cat B (Donor)') 
+                            : (lang === 'hi' ? 'श्रेणी-ग (स्वयंसेवक)' : 'Cat C (Volunteer)')}
                         </td>
                         <td className="p-3.5 text-[#454545]">{app.villageOrLocality}, {app.district}</td>
                         <td className="p-3.5 font-mono text-[#454545]">{app.mobile}</td>
                         <td className="p-3.5">
                           {app.status === 'pending' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                              लंबित
+                              {lang === 'hi' ? 'लंबित' : 'Pending'}
                             </span>
                           )}
                           {app.status === 'approved' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">
-                              स्वीकृत ({app.membershipNumber})
+                              {lang === 'hi' ? 'स्वीकृत' : 'Approved'} ({app.membershipNumber})
                             </span>
                           )}
                           {app.status === 'rejected' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
-                              अस्वीकृत
+                              {lang === 'hi' ? 'अस्वीकृत' : 'Rejected'}
                             </span>
                           )}
                         </td>
@@ -714,7 +784,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                             onClick={() => setSelectedApp(app)}
                             className="p-1 px-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#382719] font-bold text-[11px]"
                           >
-                            विवरण
+                            {lang === 'hi' ? 'विवरण' : 'Details'}
                           </button>
 
                           {app.status === 'pending' && (
@@ -725,14 +795,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                 disabled={actionInProgress}
                                 className="p-1 px-2.5 rounded-lg bg-trust-green hover:bg-green-700 text-white font-bold text-[11px] shadow-sm"
                               >
-                                अनुमोदन
+                                {lang === 'hi' ? 'अनुमोदन' : 'Approve'}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => { setRejectingAppId(app.id); setSelectedApp(app); }}
                                 className="p-1 px-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px]"
                               >
-                                अस्वीकार
+                                {lang === 'hi' ? 'अस्वीकार' : 'Reject'}
                               </button>
                             </>
                           )}
@@ -752,17 +822,19 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                  भुगतान एवं UTR सत्यापन प्रबंधन
+                  {lang === 'hi' ? 'भुगतान एवं UTR सत्यापन प्रबंधन' : 'Payment & UTR Verification Management'}
                 </h2>
                 <p className="text-xs text-[#666666]">
-                  बैंक रिकॉर्ड से मिलान उपरांत रसीद सृजन एवं सत्यापन
+                  {lang === 'hi' 
+                    ? 'बैंक रिकॉर्ड से मिलान उपरांत रसीद सृजन एवं सत्यापन' 
+                    : 'Verify bank transactions and issue downloadable official receipts.'}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder="UTR, नाम या मोबाइल..."
+                  placeholder={lang === 'hi' ? "UTR, नाम या मोबाइल..." : "UTR, name or mobile..."}
                   value={paySearch}
                   onChange={(e) => setPaySearch(e.target.value)}
                   className="px-3 py-1.5 rounded-xl border border-[#E9B44C]/50 text-xs w-48"
@@ -772,10 +844,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onChange={(e) => setPayStatusFilter(e.target.value)}
                   className="p-1.5 rounded-xl border border-[#E9B44C]/50 text-xs bg-white"
                 >
-                  <option value="all">सभी स्थितियां</option>
-                  <option value="pending_verification">सत्यापन प्रतीक्षारत</option>
-                  <option value="verified">सत्यापित (Verified)</option>
-                  <option value="rejected">अस्वीकृत (Rejected)</option>
+                  <option value="all">{lang === 'hi' ? 'सभी स्थितियां' : 'All Statuses'}</option>
+                  <option value="pending_verification">{lang === 'hi' ? 'सत्यापन प्रतीक्षारत' : 'Pending Verification'}</option>
+                  <option value="verified">{lang === 'hi' ? 'सत्यापित (Verified)' : 'Verified'}</option>
+                  <option value="rejected">{lang === 'hi' ? 'अस्वीकृत (Rejected)' : 'Rejected'}</option>
                 </select>
               </div>
             </div>
@@ -785,13 +857,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#FFF8EF] border-b border-[#E9B44C]/30 text-[#382719] font-black uppercase text-[10px]">
                     <tr>
-                      <th className="p-3.5">दिनांक</th>
-                      <th className="p-3.5">भुगतानकर्ता</th>
-                      <th className="p-3.5">उद्देश्य</th>
-                      <th className="p-3.5">राशि</th>
-                      <th className="p-3.5">प्रस्तुत UTR संदर्भ</th>
-                      <th className="p-3.5">सत्यापन स्थिति</th>
-                      <th className="p-3.5 text-right">कार्य</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'दिनांक' : 'Date'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'भुगतानकर्ता' : 'Payer'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'उद्देश्य' : 'Purpose'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'राशि' : 'Amount'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'प्रस्तुत UTR संदर्भ' : 'Submitted UTR'}</th>
+                      <th className="p-3.5">{lang === 'hi' ? 'सत्यापन स्थिति' : 'Status'}</th>
+                      <th className="p-3.5 text-right">{lang === 'hi' ? 'कार्य' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -805,7 +877,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                           <span className="block text-[10px] text-[#666666] font-mono">{p.payerMobile}</span>
                         </td>
                         <td className="p-3.5 text-[#454545]">
-                          {p.purpose === 'membership_fee' ? 'वार्षिक शुल्क' : 'समर्पण निधि'}
+                          {p.purpose === 'membership_fee' 
+                            ? (lang === 'hi' ? 'वार्षिक शुल्क' : 'Annual Fee') 
+                            : (lang === 'hi' ? 'समर्पण निधि' : 'Donation')}
                         </td>
                         <td className="p-3.5 font-mono font-black text-primary">₹ {p.amount}</td>
                         <td className="p-3.5 font-mono font-bold text-[#382719] bg-amber-50/50 p-1 rounded">
@@ -814,17 +888,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         <td className="p-3.5">
                           {p.verificationStatus === 'pending_verification' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                              सत्यापन प्रतीक्षारत
+                              {lang === 'hi' ? 'सत्यापन प्रतीक्षारत' : 'Pending'}
                             </span>
                           )}
                           {p.verificationStatus === 'verified' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">
-                              सत्यापित ({p.receiptNumber})
+                              {lang === 'hi' ? 'सत्यापित' : 'Verified'} ({p.receiptNumber})
                             </span>
                           )}
                           {p.verificationStatus === 'rejected' && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
-                              अस्वीकृत
+                              {lang === 'hi' ? 'अस्वीकृत' : 'Rejected'}
                             </span>
                           )}
                         </td>
@@ -837,14 +911,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                 disabled={actionInProgress}
                                 className="p-1 px-3 rounded-lg bg-trust-green hover:bg-green-700 text-white font-bold text-[11px]"
                               >
-                                बैंक मिलान व रसीद जारी करें
+                                {lang === 'hi' ? 'बैंक मिलान व रसीद जारी करें' : 'Verify & Issue Receipt'}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleRejectPayment(p.id)}
                                 className="p-1 px-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px]"
                               >
-                                अस्वीकार
+                                {lang === 'hi' ? 'अस्वीकार' : 'Reject'}
                               </button>
                             </>
                           )}
@@ -863,10 +937,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <div className="space-y-6 text-left">
             <div>
               <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                गोपनीय सहायता अनुरोध (Assistance Beneficiary Management)
+                {lang === 'hi' ? 'गोपनीय सहायता अनुरोध' : 'Confidential Assistance Requests'}
               </h2>
               <p className="text-xs text-[#666666]">
-                निराश्रित एवं आर्थिक रूप से कमज़ोर परिवारों के सहायता आवेदन
+                {lang === 'hi' 
+                  ? 'निराश्रित एवं आर्थिक रूप से कमज़ोर परिवारों के सहायता आवेदन' 
+                  : 'Private assistance requests from economically disadvantaged applicants'}
               </p>
             </div>
 
@@ -882,21 +958,21 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                   <div className="space-y-1.5 text-xs">
                     <p className="font-bold text-[#382719] text-sm">{req.fullName}</p>
-                    <p className="text-[#666666]">पिता / पति: {req.fatherHusbandName || 'N/A'}</p>
-                    <p className="text-[#666666]">मोबाइल: <span className="font-mono text-[#382719] font-bold">{req.mobile}</span></p>
-                    <p className="text-[#666666]">स्थान: {req.location}, {req.cityDistrict}</p>
+                    <p className="text-[#666666]">{lang === 'hi' ? 'पिता / पति:' : 'Father / Husband:'} {req.fatherHusbandName || 'N/A'}</p>
+                    <p className="text-[#666666]">{lang === 'hi' ? 'मोबाइल:' : 'Mobile:'} <span className="font-mono text-[#382719] font-bold">{req.mobile}</span></p>
+                    <p className="text-[#666666]">{lang === 'hi' ? 'स्थान:' : 'Location:'} {req.location}, {req.cityDistrict}</p>
                     <p className="font-bold text-primary">
-                      अपेक्षित राशि: <span className="font-mono text-base">₹ {Number(req.amountNeeded).toLocaleString('en-IN')}</span>
+                      {lang === 'hi' ? 'अपेक्षित राशि:' : 'Amount Needed:'} <span className="font-mono text-base">₹ {Number(req.amountNeeded).toLocaleString('en-IN')}</span>
                     </p>
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 mt-2">
-                      <span className="font-bold text-[#382719] block mb-1">कारण / आवश्यकता विवरण:</span>
+                      <span className="font-bold text-[#382719] block mb-1">{lang === 'hi' ? 'कारण / आवश्यकता विवरण:' : 'Description of Need:'}</span>
                       <p className="text-[#454545] leading-relaxed">{req.description}</p>
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-700">
-                      स्थिति: {req.status}
+                      {lang === 'hi' ? `स्थिति: ${req.status}` : `Status: ${req.status}`}
                     </span>
 
                     <div className="space-x-1.5">
@@ -905,21 +981,21 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         onClick={() => handleUpdateAssistance(req.id, 'approved')}
                         className="p-1 px-3 rounded-lg bg-trust-green text-white font-bold text-xs"
                       >
-                        अनुमोदित
+                        {lang === 'hi' ? 'अनुमोदित' : 'Approve'}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleUpdateAssistance(req.id, 'assistance_provided')}
                         className="p-1 px-3 rounded-lg bg-primary text-white font-bold text-xs"
                       >
-                        सहायता प्रदत्त
+                        {lang === 'hi' ? 'सहायता प्रदत्त' : 'Dispatched'}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleUpdateAssistance(req.id, 'rejected')}
                         className="p-1 px-2.5 rounded-lg bg-red-600 text-white font-bold text-xs"
                       >
-                        अस्वीकृत
+                        {lang === 'hi' ? 'अस्वीकृत' : 'Reject'}
                       </button>
                     </div>
                   </div>
@@ -934,10 +1010,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <div className="space-y-6 text-left">
             <div>
               <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                सनातन स्वयंसेवक एवं कार्यकर्ता सूची
+                {lang === 'hi' ? 'सनातन स्वयंसेवक एवं कार्यकर्ता सूची' : 'Volunteer Applications & Availability'}
               </h2>
               <p className="text-xs text-[#666666]">
-                अभियानों एवं शिविरों हेतु पंजीकृत समर्पित स्वयंसेवक
+                {lang === 'hi' ? 'अभियानों एवं शिविरों हेतु पंजीकृत समर्पित स्वयंसेवक' : 'Volunteers registered for cultural and community campaigns'}
               </p>
             </div>
 
@@ -945,13 +1021,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#FFF8EF] border-b border-[#E9B44C]/30 text-[#382719] font-black uppercase text-[10px]">
                   <tr>
-                    <th className="p-3.5">नाम</th>
-                    <th className="p-3.5">मोबाइल</th>
-                    <th className="p-3.5">ज़िला</th>
-                    <th className="p-3.5">उपलब्धता</th>
-                    <th className="p-3.5">पसंदीदा कार्यक्षेत्र</th>
-                    <th className="p-3.5">स्थिति</th>
-                    <th className="p-3.5 text-right">कार्य</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'नाम' : 'Name'}</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'मोबाइल' : 'Mobile'}</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'ज़िला' : 'District'}</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'उपलब्धता' : 'Availability'}</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'पसंदीदा कार्यक्षेत्र' : 'Preferred Areas'}</th>
+                    <th className="p-3.5">{lang === 'hi' ? 'स्थिति' : 'Status'}</th>
+                    <th className="p-3.5 text-right">{lang === 'hi' ? 'कार्य' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -975,14 +1051,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                           onClick={() => handleUpdateVolunteer(v.id, 'contacted')}
                           className="p-1 px-2.5 rounded-lg bg-secondary text-white font-bold text-[11px]"
                         >
-                          संपर्क हुआ
+                          {lang === 'hi' ? 'संपर्क हुआ' : 'Contacted'}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleUpdateVolunteer(v.id, 'approved')}
                           className="p-1 px-2.5 rounded-lg bg-trust-green text-white font-bold text-[11px]"
                         >
-                          स्वीकृत
+                          {lang === 'hi' ? 'स्वीकृत' : 'Approve'}
                         </button>
                       </td>
                     </tr>
@@ -998,37 +1074,43 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <div className="space-y-8 text-left">
             <div>
               <h2 className="text-xl font-black text-[#382719] font-hindi-heading">
-                सार्वजनिक सूचना एवं दैनिक संदेश प्रबंधन
+                {lang === 'hi' ? 'सार्वजनिक सूचना एवं दैनिक संदेश प्रबंधन' : 'Public Announcements Management'}
               </h2>
               <p className="text-xs text-[#666666]">
-                वेबसाइट पर प्रदर्शित होने वाली आधिकारिक घोषणाएं एवं समाचार
+                {lang === 'hi' 
+                  ? 'वेबसाइट पर प्रदर्शित होने वाली आधिकारिक घोषणाएं एवं समाचार' 
+                  : 'Official announcements and notices displayed publicly on the landing page'}
               </p>
             </div>
 
             {/* Create Announcement Form */}
             <form onSubmit={handleCreateAnnouncement} className="p-6 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card space-y-4">
               <h3 className="font-extrabold text-sm text-[#382719] font-hindi-heading">
-                + नई सूचना प्रकाशित करें
+                {lang === 'hi' ? '+ नई सूचना प्रकाशित करें' : '+ Publish New Announcement'}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-[#382719] mb-1">सूचना शीर्षक *</label>
+                  <label className="block text-xs font-bold text-[#382719] mb-1">
+                    {lang === 'hi' ? 'सूचना शीर्षक *' : 'Notice Title *'}
+                  </label>
                   <input
                     type="text"
                     value={newAnnouncement.title}
                     onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="उदा. निःशुल्क षोडश संस्कार जागरण शिविर • गोरखपुर"
+                    placeholder={lang === 'hi' ? "उदा. निःशुल्क षोडश संस्कार जागरण शिविर • गोरखपुर" : "e.g. Free 16 Vedic Sanskar Camp, Gorakhpur"}
                     className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-[#382719] mb-1">सूचना का विवरण एवं संदेश *</label>
+                  <label className="block text-xs font-bold text-[#382719] mb-1">
+                    {lang === 'hi' ? 'सूचना का विवरण एवं संदेश *' : 'Notice Content & Description *'}
+                  </label>
                   <textarea
                     rows={3}
                     value={newAnnouncement.content}
                     onChange={(e) => setNewAnnouncement(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="विस्तृत विवरण एवं स्थान..."
+                    placeholder={lang === 'hi' ? "विस्तृत विवरण एवं स्थान..." : "Detailed message and location..."}
                     className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -1042,7 +1124,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     onChange={(e) => setNewAnnouncement(prev => ({ ...prev, isPublished: e.target.checked }))}
                     className="h-4 w-4 rounded text-primary"
                   />
-                  <span className="font-bold text-[#382719]">तुरंत सार्वजनिक रूप से प्रकाशित करें</span>
+                  <span className="font-bold text-[#382719]">
+                    {lang === 'hi' ? 'तुरंत सार्वजनिक रूप से प्रकाशित करें' : 'Publish live immediately'}
+                  </span>
                 </label>
 
                 <button
@@ -1050,7 +1134,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   disabled={actionInProgress}
                   className="px-6 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
                 >
-                  प्रकाशित करें
+                  {lang === 'hi' ? 'प्रकाशित करें' : 'Publish Notice'}
                 </button>
               </div>
             </form>
@@ -1063,7 +1147,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       item.isPublished ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
                     }`}>
-                      {item.isPublished ? 'सार्वजनिक रूप से लाइव' : 'अप्रकाशित ड्राफ्ट'}
+                      {item.isPublished 
+                        ? (lang === 'hi' ? 'सार्वजनिक रूप से लाइव' : 'Live on Site') 
+                        : (lang === 'hi' ? 'अप्रकाशित ड्राफ्ट' : 'Draft')}
                     </span>
                     <button
                       type="button"
@@ -1090,7 +1176,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-[#E9B44C] space-y-4 text-left">
             <div className="flex items-center justify-between border-b pb-2">
               <h3 className="font-black text-base text-[#382719] font-hindi-heading">
-                आवेदन पूर्ण विवरण
+                {lang === 'hi' ? 'आवेदन पूर्ण विवरण' : 'Full Application Details'}
               </h3>
               <button
                 type="button"
@@ -1102,25 +1188,27 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </div>
 
             <div className="space-y-2 text-xs">
-              <p><strong>संदर्भ:</strong> <span className="font-mono text-primary font-bold">{selectedApp.applicationRef}</span></p>
-              <p><strong>नाम:</strong> {selectedApp.fullName}</p>
-              <p><strong>पिता / पति:</strong> {selectedApp.fatherHusbandName}</p>
-              <p><strong>मोबाइल:</strong> {selectedApp.mobile}</p>
-              <p><strong>ग्राम / वार्ड:</strong> {selectedApp.villageOrLocality}</p>
-              <p><strong>डाकघर:</strong> {selectedApp.postOffice || 'N/A'}</p>
-              <p><strong>ज़िला व राज्य:</strong> {selectedApp.district}, {selectedApp.state}</p>
-              <p><strong>श्रेणी:</strong> {selectedApp.category}</p>
-              <p><strong>स्थिति:</strong> <span className="font-bold uppercase text-amber-700">{selectedApp.status}</span></p>
+              <p><strong>{lang === 'hi' ? 'संदर्भ:' : 'Reference:'}</strong> <span className="font-mono text-primary font-bold">{selectedApp.applicationRef}</span></p>
+              <p><strong>{lang === 'hi' ? 'नाम:' : 'Name:'}</strong> {selectedApp.fullName}</p>
+              <p><strong>{lang === 'hi' ? 'पिता / पति:' : 'Father / Husband:'}</strong> {selectedApp.fatherHusbandName}</p>
+              <p><strong>{lang === 'hi' ? 'मोबाइल:' : 'Mobile:'}</strong> {selectedApp.mobile}</p>
+              <p><strong>{lang === 'hi' ? 'ग्राम / वार्ड:' : 'Locality:'}</strong> {selectedApp.villageOrLocality}</p>
+              <p><strong>{lang === 'hi' ? 'डाकघर:' : 'Post Office:'}</strong> {selectedApp.postOffice || 'N/A'}</p>
+              <p><strong>{lang === 'hi' ? 'ज़िला व राज्य:' : 'District & State:'}</strong> {selectedApp.district}, {selectedApp.state}</p>
+              <p><strong>{lang === 'hi' ? 'श्रेणी:' : 'Category:'}</strong> {selectedApp.category}</p>
+              <p><strong>{lang === 'hi' ? 'स्थिति:' : 'Status:'}</strong> <span className="font-bold uppercase text-amber-700">{selectedApp.status}</span></p>
             </div>
 
             {rejectingAppId === selectedApp.id ? (
               <div className="pt-3 border-t space-y-2">
-                <label className="block text-xs font-bold text-red-700">अस्वीकृति का वैधानिक कारण:</label>
+                <label className="block text-xs font-bold text-red-700">
+                  {lang === 'hi' ? 'अस्वीकृति का वैधानिक कारण:' : 'Mandatory Rejection Reason:'}
+                </label>
                 <textarea
                   rows={2}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="उदा. अपूर्ण पता अथवा नियमों के अनुसार पात्रता नहीं पाई गई..."
+                  placeholder={lang === 'hi' ? "उदा. अपूर्ण पता अथवा नियमों के अनुसार पात्रता नहीं पाई गई..." : "e.g. Incomplete address or eligibility criteria..."}
                   className="w-full p-2 border rounded-xl text-xs"
                 />
                 <div className="flex justify-end gap-2">
@@ -1129,14 +1217,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     onClick={() => setRejectingAppId(null)}
                     className="px-3 py-1.5 rounded-lg border text-xs"
                   >
-                    रद्द करें
+                    {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRejectApp(selectedApp.id)}
                     className="px-4 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs"
                   >
-                    अस्वीकार करें
+                    {lang === 'hi' ? 'अस्वीकार करें' : 'Confirm Reject'}
                   </button>
                 </div>
               </div>
@@ -1147,7 +1235,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onClick={() => setSelectedApp(null)}
                   className="px-4 py-1.5 rounded-lg border text-xs"
                 >
-                  बंद करें
+                  {lang === 'hi' ? 'बंद करें' : 'Close'}
                 </button>
                 {selectedApp.status === 'pending' && (
                   <>
@@ -1156,14 +1244,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       onClick={() => setRejectingAppId(selectedApp.id)}
                       className="px-4 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs"
                     >
-                      अस्वीकार करें
+                      {lang === 'hi' ? 'अस्वीकार करें' : 'Reject'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleApproveApp(selectedApp.id)}
                       className="px-5 py-1.5 rounded-lg bg-trust-green text-white font-bold text-xs shadow-sm"
                     >
-                      अनुमोदन करें
+                      {lang === 'hi' ? 'अनुमोदन करें' : 'Approve'}
                     </button>
                   </>
                 )}

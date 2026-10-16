@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { submitVolunteerApplication } from '../firebase/services';
-import { X, Users, CheckCircle2, ShieldCheck, HeartHandshake } from 'lucide-react';
+import { X, Users, CheckCircle2, ShieldCheck, HeartHandshake, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const VOLUNTEER_AREAS = [
@@ -14,7 +14,7 @@ const VOLUNTEER_AREAS = [
 ];
 
 export const VolunteerModal = ({ isOpen, onClose }) => {
-  const { lang } = useLanguage();
+  const { lang, toggleLanguage } = useLanguage();
   const { currentUser, userProfile } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -103,13 +103,24 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={resetAndClose}
-            className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+              title="Toggle Language"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
+              <span>{lang === 'hi' ? 'EN' : 'हिंदी'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={resetAndClose}
+              className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -148,7 +159,7 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    placeholder="उदा. अमित त्रिपाठी"
+                    placeholder={lang === 'hi' ? 'उदा. अमित त्रिपाठी' : 'e.g. Amit Tripathi'}
                     className={`w-full px-3 py-2 rounded-xl border ${errors.fullName ? 'border-red-500' : 'border-[#E9B44C]/50'} text-xs focus:outline-none focus:border-primary`}
                   />
                   {errors.fullName && <p className="text-[10px] text-red-500 mt-0.5">{errors.fullName}</p>}
@@ -179,7 +190,7 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
                     name="cityOrDistrict"
                     value={formData.cityOrDistrict}
                     onChange={handleInputChange}
-                    placeholder="गोरखपुर"
+                    placeholder={lang === 'hi' ? 'गोरखपुर' : 'Gorakhpur'}
                     className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -194,9 +205,15 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs bg-white focus:outline-none focus:border-primary"
                   >
-                    <option value="weekends">सप्ताहांत (शनिवार / रविवार)</option>
-                    <option value="few_hours_daily">प्रतिदिन 1-2 घंटे</option>
-                    <option value="full_time">पूर्णकालिक / आवश्यकतानुसार</option>
+                    <option value="weekends">
+                      {lang === 'hi' ? 'सप्ताहांत (शनिवार / रविवार)' : 'Weekends (Saturday / Sunday)'}
+                    </option>
+                    <option value="few_hours_daily">
+                      {lang === 'hi' ? 'प्रतिदिन 1-2 घंटे' : '1-2 Hours Daily'}
+                    </option>
+                    <option value="full_time">
+                      {lang === 'hi' ? 'पूर्णकालिक / आवश्यकतानुसार' : 'Full Time / As Needed'}
+                    </option>
                   </select>
                 </div>
               </div>

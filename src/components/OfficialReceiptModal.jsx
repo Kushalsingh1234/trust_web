@@ -14,11 +14,11 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
   };
 
   const getPurposeLabel = (purp) => {
-    if (purp === 'membership_fee') return 'वार्षिक सदस्यता शुल्क (Annual Membership Fee)';
-    if (purp === 'samarpan') return 'ऐच्छिक समर्पण निधि (Voluntary Donation)';
-    if (purp === 'labor_welfare') return 'श्रमिक कल्याण एवं सहायता कोष (Labor Welfare Support)';
-    if (purp === 'vedic_sanskar') return 'षोडश संस्कार आयोजन सहयोग (Vedic Sanskar Rites)';
-    return purp || 'धार्मिक एवं सामाजिक जनकल्याण सहयोग';
+    if (purp === 'membership_fee') return lang === 'hi' ? 'वार्षिक सदस्यता शुल्क (Annual Membership Fee)' : 'Annual Membership Fee';
+    if (purp === 'samarpan') return lang === 'hi' ? 'ऐच्छिक समर्पण निधि (Voluntary Donation)' : 'Voluntary Donation (Samarpan)';
+    if (purp === 'labor_welfare') return lang === 'hi' ? 'श्रमिक कल्याण एवं सहायता कोष (Labor Welfare Support)' : 'Labor Welfare Support Fund';
+    if (purp === 'vedic_sanskar') return lang === 'hi' ? 'षोडश संस्कार आयोजन सहयोग (Vedic Sanskar Rites)' : 'Vedic Sanskar Rites Organization Support';
+    return purp || (lang === 'hi' ? 'धार्मिक एवं सामाजिक जनकल्याण सहयोग' : 'Charitable & Cultural Contribution');
   };
 
   const formattedDate = receipt.issuedAt?.toDate
@@ -150,17 +150,29 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             {/* Legal Disclaimers & Signatures */}
             <div className="mt-4 pt-4 border-t-2 border-[#E9B44C]/40 grid grid-cols-2 gap-4 items-end relative z-10 text-[10px] text-[#666666]">
               <div className="space-y-1">
-                <p className="font-bold text-[#382719]">वैधानिक सूचना:</p>
-                <p>• यह रसीद बैंक द्वारा UTR पुष्टि उपरांत विधिवत जारी की गई है।</p>
-                <p>• संस्था को दिया गया प्रत्येक सहयोग सनातन धर्म एवं जनसेवा में प्रयुक्त होता है।</p>
+                <p className="font-bold text-[#382719]">{lang === 'hi' ? 'वैधानिक सूचना:' : 'Official Notice:'}</p>
+                <p>
+                  {lang === 'hi'
+                    ? '• यह रसीद बैंक द्वारा UTR पुष्टि उपरांत विधिवत जारी की गई है।'
+                    : '• This receipt is officially issued upon administrative bank UTR verification.'}
+                </p>
+                <p>
+                  {lang === 'hi'
+                    ? '• संस्था को दिया गया प्रत्येक सहयोग सनातन धर्म एवं जनसेवा में प्रयुक्त होता है।'
+                    : '• Every donation is devoted strictly to cultural preservation & public welfare.'}
+                </p>
               </div>
 
               <div className="text-right space-y-1">
                 <div className="inline-block p-1 border border-primary/30 rounded bg-white text-[9px] font-mono text-primary font-bold mb-1">
                   OFFICIAL TRUST STAMP
                 </div>
-                <p className="font-black text-xs text-[#382719]">बजरंगी दूबे</p>
-                <p className="text-[10px] text-[#666666]">महामंत्री / प्रबंधक (प्रबंधकारिणी)</p>
+                <p className="font-black text-xs text-[#382719]">
+                  {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
+                </p>
+                <p className="text-[10px] text-[#666666]">
+                  {lang === 'hi' ? 'महामंत्री / प्रबंधक (प्रबंधकारिणी)' : 'General Secretary / Manager (Council)'}
+                </p>
               </div>
             </div>
 

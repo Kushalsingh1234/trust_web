@@ -11,12 +11,13 @@ import {
   Check,
   QrCode,
   Building,
-  AlertCircle
+  AlertCircle,
+  Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', defaultAmount = '200' }) => {
-  const { lang, t } = useLanguage();
+  const { lang, toggleLanguage, t } = useLanguage();
   const { currentUser, userProfile } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -127,13 +128,24 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={resetAndClose}
-            className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+              title="Toggle Language"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
+              <span>{lang === 'hi' ? 'EN' : 'हिंदी'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={resetAndClose}
+              className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -228,7 +240,7 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
                     name="payerName"
                     value={formData.payerName}
                     onChange={handleInputChange}
-                    placeholder="उदा. रमेश कुमार"
+                    placeholder={lang === 'hi' ? 'उदा. रमेश कुमार' : 'e.g. Ramesh Kumar'}
                     className={`w-full px-3 py-2 rounded-xl border ${
                       errors.payerName ? 'border-red-500' : 'border-[#E9B44C]/50'
                     } text-xs focus:outline-none focus:border-primary`}
@@ -264,10 +276,18 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none focus:border-primary bg-white"
                   >
-                    <option value="membership_fee">वार्षिक सदस्यता शुल्क (₹200)</option>
-                    <option value="samarpan">ऐच्छिक समर्पण निधि (Voluntary Donation)</option>
-                    <option value="labor_welfare">श्रमिक सहायता कोष (Labor Welfare)</option>
-                    <option value="vedic_sanskar">षोडश संस्कार आयोजन सहयोग</option>
+                    <option value="membership_fee">
+                      {lang === 'hi' ? 'वार्षिक सदस्यता शुल्क (₹200)' : 'Annual Membership Fee (₹200)'}
+                    </option>
+                    <option value="samarpan">
+                      {lang === 'hi' ? 'ऐच्छिक समर्पण निधि (Voluntary Donation)' : 'Voluntary Donation (Samarpan)'}
+                    </option>
+                    <option value="labor_welfare">
+                      {lang === 'hi' ? 'श्रमिक सहायता कोष (Labor Welfare)' : 'Labor Welfare Support Fund'}
+                    </option>
+                    <option value="vedic_sanskar">
+                      {lang === 'hi' ? 'षोडश संस्कार आयोजन सहयोग' : 'Vedic Sanskar Rites Contribution'}
+                    </option>
                   </select>
                 </div>
 
@@ -297,7 +317,7 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
                     name="utrNumber"
                     value={formData.utrNumber}
                     onChange={handleInputChange}
-                    placeholder="उदा. 4289XXXXXXXX या UPI-Ref-123456"
+                    placeholder={lang === 'hi' ? 'उदा. 4289XXXXXXXX या UPI-Ref-123456' : 'e.g. 4289XXXXXXXX or UPI-Ref-123456'}
                     className={`w-full px-3 py-2 rounded-xl border ${
                       errors.utrNumber ? 'border-red-500' : 'border-[#E9B44C]/50'
                     } text-xs font-mono uppercase focus:outline-none focus:border-primary`}
