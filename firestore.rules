@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function: Check if user matches document owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function: Check if user is an administrator
+    // Checks custom claims or the secured admin collection/user profile
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.admin == true) ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      // Allow creation during registration; ensure role cannot be set to 'admin' by normal user
+      allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role != 'admin');
+      // User can update basic profile info, but CANNOT modify their own role
+      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 2. Membership Applications
+    match /membershipApplications/{appId} {
+      // Anyone logged in can read their own applications; Admins can read all
+      allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
+      // Authenticated users can submit applications with initial 'pending' status
+      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid && request.resource.data.status == 'pending';
+      // Only administrators can review, approve, or reject applications
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 3. Approved Members
+    match /members/{memberId} {
+      // Members can read their own membership card & record; Admin can read all
+      allow read: if (isAuthenticated() && resource.data.userUid == request.auth.uid) || isAdmin();
+      // Only administrators or trusted functions can create or update membership records
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 4. Payments
+    match /payments/{paymentId} {
+      // Users can view their own payments; Admins can view all
+      allow read: if (isAuthenticated() && resource.data.payerUid == request.auth.uid) || isAdmin();
+      // Users can submit a payment with initial 'pending_verification' status
+      allow create: if isAuthenticated() && 
+                    request.resource.data.payerUid == request.auth.uid && 
+                    request.resource.data.verificationStatus == 'pending_verification';
+      // Only administrators can verify, reject, or modify payment verification status
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 5. Assistance Requests (Sensitive Beneficiary Data)
+    match /assistanceRequests/{requestId} {
+      // Strictly private: accessible ONLY to the applicant and authorized administrators
+      allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 6. Volunteer Applications
+    match /volunteerApplications/{appId} {
+      allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() || true; // Allow submission by prospective volunteers
+      allow update, delete: if isAdmin();
+    }
+
+    // 7. Announcements (Public Messages & Field Updates)
+    match /announcements/{announcementId} {
+      // Public visitors can read only published announcements
+      allow read: if (resource.data.isPublished == true) || isAdmin();
+      // Only administrators can create, update, or archive announcements
+      allow write: if isAdmin();
+    }
+
+    // 8. Receipts
+    match /receipts/{receiptId} {
+      // Read allowed to the verified payer and admins
+      allow read: if (isAuthenticated() && resource.data.payerUid == request.auth.uid) || isAdmin();
+      // Only administrators or server-side functions can issue receipts
+      allow write: if isAdmin();
+    }
+
+    // 9. Admin Audits and System Config
+    match /systemConfig/{configId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

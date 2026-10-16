@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Hero from './sections/Hero';
 import About from './sections/About';
@@ -16,27 +17,66 @@ import NewsEvents from './sections/NewsEvents';
 import Contact from './sections/Contact';
 import Footer from './sections/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
+
+// Modals & Portals
 import ReceiptGeneratorModal from './components/ReceiptGeneratorModal';
 import HelpRequestModal from './components/HelpRequestModal';
 import ImageLightboxModal from './components/ImageLightboxModal';
+import JoinTrustModal from './components/JoinTrustModal';
+import PaymentModal from './components/PaymentModal';
+import VolunteerModal from './components/VolunteerModal';
+import LoginModal from './components/LoginModal';
+
+// Dedicated Sub-Pages
+import MemberDashboard from './pages/MemberDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
+  // Current route pathname tracking
+  const [currentPath, setCurrentPath] = useState(() => {
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  });
+
+  // Modals state
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(() => {
     return typeof window !== 'undefined' && window.location.search.includes('modal=help');
   });
+  const [joinModalOpen, setJoinModalOpen] = useState(() => {
+    return typeof window !== 'undefined' && (window.location.pathname === '/join' || window.location.search.includes('modal=join'));
+  });
+  const [paymentModalOpen, setPaymentModalOpen] = useState(() => {
+    return typeof window !== 'undefined' && window.location.search.includes('modal=pay');
+  });
+  const [volunteerModalOpen, setVolunteerModalOpen] = useState(() => {
+    return typeof window !== 'undefined' && (window.location.pathname === '/volunteer' || window.location.search.includes('modal=volunteer'));
+  });
+  const [loginModalOpen, setLoginModalOpen] = useState(() => {
+    return typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.search.includes('modal=login'));
+  });
+
   const [activeLightbox, setActiveLightbox] = useState(null);
   const [lightboxList, setLightboxList] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const handleOpenReceipt = () => {
-    setReceiptModalOpen(true);
+  // Synchronize browser history / popstate
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', path);
+      setCurrentPath(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  const handleOpenHelp = () => {
-    setHelpModalOpen(true);
-  };
-
+  // Lightbox controls
   const handleSelectImage = (img, index, list) => {
     setActiveLightbox(img);
     setLightboxIndex(index);
@@ -57,12 +97,41 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
+  // Route 1: Administrator Dashboard
+  if (currentPath === '/admin') {
+    return (
+      <AdminDashboard
+        onNavigateHome={() => navigateTo('/')}
+      />
+    );
+  }
+
+  // Route 2: Member Portal Dashboard
+  if (currentPath === '/member' || currentPath === '/dashboard') {
+    return (
+      <MemberDashboard
+        onNavigateHome={() => navigateTo('/')}
+      />
+    );
+  }
+
+  // Route 3: Main Landing Page (Preserving original design, colors, hero & sections)
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
-      {/* Top Screen: Navbar & Hero unified on identical Warm Ivory #FFF8EF */}
+      {/* Top Screen: Navbar & Hero unified on Warm Ivory #FFF8EF */}
       <div className="bg-[#FFF8EF] relative">
-        <Navbar onOpenReceiptModal={handleOpenReceipt} />
-        <Hero onOpenReceiptModal={handleOpenReceipt} onOpenHelpModal={handleOpenHelp} />
+        <Navbar
+          onOpenReceiptModal={() => setReceiptModalOpen(true)}
+          onOpenLoginModal={() => setLoginModalOpen(true)}
+          onOpenJoinModal={() => setJoinModalOpen(true)}
+          onNavigateMember={() => navigateTo('/member')}
+          onNavigateAdmin={() => navigateTo('/admin')}
+        />
+        <Hero
+          onOpenReceiptModal={() => setReceiptModalOpen(true)}
+          onOpenHelpModal={() => setHelpModalOpen(true)}
+          onOpenJoinModal={() => setJoinModalOpen(true)}
+        />
       </div>
 
       <main className="flex-1">
@@ -88,36 +157,76 @@ function AppContent() {
         <Trustees />
 
         {/* 9. How You Can Help */}
-        <HowYouCanHelp onOpenReceiptModal={handleOpenReceipt} />
+        <HowYouCanHelp
+          onOpenReceiptModal={() => setReceiptModalOpen(true)}
+          onOpenJoinModal={() => setJoinModalOpen(true)}
+          onOpenVolunteerModal={() => setVolunteerModalOpen(true)}
+        />
 
         {/* 10. Official Bank & Donate Details */}
-        <Donate onOpenReceiptModal={handleOpenReceipt} />
+        <Donate
+          onOpenReceiptModal={() => setReceiptModalOpen(true)}
+          onOpenPaymentModal={() => setPaymentModalOpen(true)}
+        />
 
         {/* 11. Institutional Transparency */}
         <Transparency />
 
-        {/* 12. News & Field Events */}
+        {/* 12. News & Field Events (Dynamic from Firestore) */}
         <NewsEvents />
 
         {/* 13. Contact & Dual Gorakhpur Offices */}
         <Contact />
       </main>
 
-      {/* 14. Footer */}
-      <Footer onOpenReceiptModal={handleOpenReceipt} />
+      {/* 14. Footer with Quick Portal & Legal Links */}
+      <Footer
+        onOpenReceiptModal={() => setReceiptModalOpen(true)}
+        onOpenJoinModal={() => setJoinModalOpen(true)}
+        onNavigateMember={() => navigateTo('/member')}
+        onNavigateAdmin={() => navigateTo('/admin')}
+      />
 
       {/* Persistent Floating Controls */}
       <FloatingWhatsApp />
 
-      {/* Modals */}
-      <ReceiptGeneratorModal
-        isOpen={receiptModalOpen}
-        onClose={() => setReceiptModalOpen(false)}
+      {/* Interactive System Modals */}
+      <JoinTrustModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onOpenLogin={() => {
+          setJoinModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+      />
+
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onOpenJoin={() => {
+          setLoginModalOpen(false);
+          setJoinModalOpen(true);
+        }}
+      />
+
+      <PaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+      />
+
+      <VolunteerModal
+        isOpen={volunteerModalOpen}
+        onClose={() => setVolunteerModalOpen(false)}
       />
 
       <HelpRequestModal
         isOpen={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}
+      />
+
+      <ReceiptGeneratorModal
+        isOpen={receiptModalOpen}
+        onClose={() => setReceiptModalOpen(false)}
       />
 
       <ImageLightboxModal
@@ -133,7 +242,9 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </LanguageProvider>
   );
 }

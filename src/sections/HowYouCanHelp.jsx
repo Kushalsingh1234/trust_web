@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Heart, UserPlus, Users, Share2, ArrowRight } from 'lucide-react';
 
-export const HowYouCanHelp = ({ onOpenReceiptModal }) => {
+export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolunteerModal }) => {
   const { lang, t } = useLanguage();
 
   const handleShare = () => {
@@ -81,7 +81,7 @@ export const HowYouCanHelp = ({ onOpenReceiptModal }) => {
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
               <button
                 type="button"
-                onClick={onOpenReceiptModal}
+                onClick={onOpenJoinModal}
                 className="inline-flex items-center gap-1.5 text-xs font-black text-primary hover:text-secondary transition-colors"
               >
                 <span>{t.howToHelp.cards[1].action}</span>
@@ -104,13 +104,14 @@ export const HowYouCanHelp = ({ onOpenReceiptModal }) => {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
-              <a
-                href="#contact"
+              <button
+                type="button"
+                onClick={onOpenVolunteerModal}
                 className="inline-flex items-center gap-1.5 text-xs font-black text-secondary hover:text-primary transition-colors"
               >
                 <span>{t.howToHelp.cards[2].action}</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </button>
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight } from 'lucide-react';
 
-export const Donate = ({ onOpenReceiptModal }) => {
+export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
   const { lang, t } = useLanguage();
   const [copiedAcc, setCopiedAcc] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
@@ -134,17 +134,26 @@ export const Donate = ({ onOpenReceiptModal }) => {
               </div>
             </div>
 
-            {/* Receipt Modal Trigger Button inside Box */}
-            <div className="pt-2">
+            {/* Action Buttons inside Box */}
+            <div className="pt-2 space-y-2.5">
+              <button
+                type="button"
+                onClick={onOpenPaymentModal}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-primary hover:bg-secondary text-white font-black text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-primary"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>{lang === 'hi' ? 'भुगतान UTR संदर्भ दर्ज करें (सत्यापन हेतु)' : 'Submit Payment UTR for Verification'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={onOpenReceiptModal}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-primary hover:bg-secondary text-white font-black text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-primary"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FFF8EF] text-primary border border-primary/40 font-bold text-xs shadow-sm transition-all"
               >
                 <FileText className="w-4 h-4" />
                 <span>{t.donate.openReceiptModal}</span>
               </button>
-              <p className="text-[11px] text-[#454545] font-medium text-center mt-2">
+              <p className="text-[11px] text-[#454545] font-medium text-center mt-1">
                 {t.donate.receiptGenDesc}
               </p>
             </div>

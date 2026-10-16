@@ -1,9 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Calendar, MapPin, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Megaphone, ArrowRight } from 'lucide-react';
+import { getPublishedAnnouncements } from '../firebase/services';
 
 export const NewsEvents = () => {
   const { lang, t } = useLanguage();
+  const [dbAnnouncements, setDbAnnouncements] = useState([]);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const list = await getPublishedAnnouncements();
+        if (list && list.length > 0) {
+          setDbAnnouncements(list);
+        }
+      } catch (err) {
+        console.warn("Could not load dynamic announcements:", err);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
+  // Merge dynamic published announcements with default static field events
+  const dynamicItems = dbAnnouncements.map(ann => ({
+    title: ann.title,
+    desc: ann.content,
+    date: ann.publishedAt?.toDate ? ann.publishedAt.toDate().toLocaleDateString('en-IN') : 'आधिकारिक सूचना',
+    location: ann.authorName || 'मुख्यालय, गोरखपुर',
+    isDynamic: true
+  }));
+
+  const displayItems = dynamicItems.length > 0 ? [...dynamicItems, ...t.news.items].slice(0, 6) : t.news.items;
 
   return (
     <section id="news" className="py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
@@ -25,11 +52,16 @@ export const NewsEvents = () => {
 
         {/* News Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {t.news.items.map((item, idx) => (
+          {displayItems.map((item, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-3xl p-6 shadow-card hover:shadow-lift transition-all duration-300 border border-[#E9B44C]/35 flex flex-col justify-between text-left group hover:-translate-y-1"
+              className="bg-white rounded-3xl p-6 shadow-card hover:shadow-lift transition-all duration-300 border border-[#E9B44C]/35 flex flex-col justify-between text-left group hover:-translate-y-1 relative overflow-hidden"
             >
+              {item.isDynamic && (
+                <div className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-bl-lg shadow-sm">
+                  Live Notice
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold text-secondary mb-3 bg-[#FFF8EF] px-3 py-1 rounded-full w-fit border border-[#E9B44C]/40">
                   <Calendar className="w-3.5 h-3.5 text-secondary" />

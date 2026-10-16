@@ -1,0 +1,151 @@
+import React, { useRef } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import TrustLogo from './TrustLogo';
+import { Printer, ShieldCheck, CheckCircle2, Award, Calendar, MapPin } from 'lucide-react';
+
+export const DigitalIdCard = ({ member, onClose }) => {
+  const { lang } = useLanguage();
+  const cardRef = useRef(null);
+
+  if (!member || member.status !== 'active') return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const getCategoryTitle = (cat) => {
+    if (cat === 'catA') return lang === 'hi' ? 'श्रेणी-क (सहायता लाभार्थी)' : 'Category A (Beneficiary)';
+    if (cat === 'catB') return lang === 'hi' ? 'श्रेणी-ख (सम्पन्न / दानदाता सदस्य)' : 'Category B (Donor / Supporter)';
+    if (cat === 'catC') return lang === 'hi' ? 'श्रेणी-ग (कर्मठ स्वयंसेवक)' : 'Category C (Volunteer Member)';
+    return lang === 'hi' ? 'आजीवन सदस्य' : 'Trust Member';
+  };
+
+  const formattedDate = member.approvedAt?.toDate
+    ? member.approvedAt.toDate().toLocaleDateString('en-IN')
+    : new Date().toLocaleDateString('en-IN');
+
+  return (
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-primary/40 shadow-card max-w-lg mx-auto text-left relative overflow-hidden">
+      
+      {/* Printable Card Area */}
+      <div
+        ref={cardRef}
+        id="trust-member-id-card"
+        className="rounded-2xl p-5 border-2 border-[#E9B44C] bg-gradient-to-br from-[#FFF8EF] via-white to-[#FFF8EF] shadow-md relative overflow-hidden print:m-0 print:border-black"
+      >
+        {/* Top Watermark Om Background */}
+        <div className="absolute right-2 -bottom-6 text-[#E9B44C]/15 font-serif text-9xl select-none pointer-events-none">
+          ॐ
+        </div>
+
+        {/* Card Header Strip */}
+        <div className="flex items-center gap-3 border-b-2 border-primary/30 pb-3 mb-4">
+          <TrustLogo className="w-12 h-12 flex-shrink-0" showText={false} lang={lang} />
+          <div className="flex-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-secondary block">
+              राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
+            </span>
+            <h3 className="font-extrabold text-xs sm:text-sm text-[#382719] leading-tight font-hindi-heading">
+              RASHTRIYA SANATAN SANSKAR SEVA SANSTHAN
+            </h3>
+            <span className="text-[9px] text-[#666666] block">
+              Registered Charitable Trust • Gorakhpur (U.P.) 273016
+            </span>
+          </div>
+        </div>
+
+        {/* Identity Title */}
+        <div className="flex items-center justify-between mb-4 bg-primary text-white px-3 py-1 rounded-lg text-xs font-bold">
+          <span>डिजिटल सदस्यता पहचान पत्र (DIGITAL MEMBER ID)</span>
+          <span className="font-mono text-[11px] bg-secondary px-2 py-0.5 rounded text-white font-extrabold">
+            {member.membershipNumber}
+          </span>
+        </div>
+
+        {/* Card Body */}
+        <div className="grid grid-cols-12 gap-4 items-center">
+          {/* Member Avatar / Seal */}
+          <div className="col-span-4 text-center">
+            <div className="w-20 h-24 mx-auto rounded-xl border-2 border-primary/40 bg-white shadow-inner flex flex-col items-center justify-center p-2">
+              <div className="w-10 h-10 rounded-full bg-[#FFF8EF] text-primary flex items-center justify-center font-bold text-lg mb-1 border border-[#E9B44C]">
+                ॐ
+              </div>
+              <span className="text-[8px] font-black text-trust-green uppercase">Verified</span>
+            </div>
+            <span className="text-[9px] text-[#666666] font-semibold block mt-1">
+              Gorakhpur, UP
+            </span>
+          </div>
+
+          {/* Member Credentials */}
+          <div className="col-span-8 space-y-1.5 text-xs">
+            <div>
+              <span className="text-[10px] text-[#666666] block">सदस्य का नाम / Name:</span>
+              <span className="font-extrabold text-[#382719] text-sm block">
+                {member.fullName}
+              </span>
+            </div>
+
+            {member.fatherHusbandName && (
+              <div>
+                <span className="text-[10px] text-[#666666] block">पिता / पति:</span>
+                <span className="font-medium text-[#454545] text-xs">
+                  {member.fatherHusbandName}
+                </span>
+              </div>
+            )}
+
+            <div>
+              <span className="text-[10px] text-[#666666] block">सदस्यता श्रेणी / Category:</span>
+              <span className="font-bold text-primary text-xs">
+                {getCategoryTitle(member.category)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 text-[10px] text-[#666666] border-t border-[#E9B44C]/30">
+              <div>
+                <span>जारी तिथि: </span>
+                <span className="font-mono font-bold text-[#382719]">{formattedDate}</span>
+              </div>
+              <div>
+                <span>वैधता: </span>
+                <span className="font-mono font-bold text-trust-green">{member.validUntil || '1 Year'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Footer Strip with Authorized Signatory */}
+        <div className="mt-4 pt-2.5 border-t border-dashed border-[#E9B44C]/60 flex items-center justify-between text-[9px] text-[#666666]">
+          <div className="flex items-center gap-1 text-trust-green font-bold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>अधिकृत ट्रस्ट पहचान पत्र</span>
+          </div>
+          <div className="text-right">
+            <span className="font-bold text-[#382719] block">बजरंगी दूबे / कुसुमलता दूबे</span>
+            <span className="text-[8px] text-[#888888]">अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Action Strip */}
+      <div className="mt-4 flex items-center justify-between print:hidden">
+        <p className="text-[11px] text-[#666666]">
+          * यह पहचान पत्र संस्था के कार्यक्रमों व शिविरों में मान्य है।
+        </p>
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
+        >
+          <Printer className="w-4 h-4" />
+          <span>{lang === 'hi' ? 'प्रिंट / डाउनलोड करें' : 'Print / Download'}</span>
+        </button>
+      </div>
+
+    </div>
+  );
+};
+
+export default DigitalIdCard;

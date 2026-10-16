@@ -3,7 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import TrustLogo from '../components/TrustLogo';
 import { Globe, Heart, Phone, MapPin, ArrowUp } from 'lucide-react';
 
-export const Footer = ({ onOpenReceiptModal }) => {
+export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, onNavigateAdmin }) => {
   const { lang, toggleLanguage, t } = useLanguage();
 
   const scrollToTop = () => {
@@ -41,33 +41,55 @@ export const Footer = ({ onOpenReceiptModal }) => {
               <li><a href="#about" className="hover:text-[#E9B44C] transition-colors">{t.nav.about}</a></li>
               <li><a href="#sanskars" className="hover:text-[#E9B44C] transition-colors">{t.nav.sanskars}</a></li>
               <li><a href="#programs" className="hover:text-[#E9B44C] transition-colors">{t.nav.programs}</a></li>
-              <li><a href="#guidelines" className="hover:text-[#E9B44C] transition-colors">{t.nav.guidelines}</a></li>
-              <li><a href="#gallery" className="hover:text-[#E9B44C] transition-colors">{t.nav.gallery}</a></li>
-              <li><a href="#team" className="hover:text-[#E9B44C] transition-colors">{t.nav.team}</a></li>
+              <li><a href="#news" className="hover:text-[#E9B44C] transition-colors">{lang === 'hi' ? 'सूचनाएं एवं संदेश' : 'Announcements'}</a></li>
               <li><a href="#transparency" className="hover:text-[#E9B44C] transition-colors">{t.nav.transparency}</a></li>
               <li><a href="#contact" className="hover:text-[#E9B44C] transition-colors">{t.nav.contact}</a></li>
             </ul>
           </div>
 
-          {/* Col 3: Direct Actions & Receipt */}
+          {/* Col 3: Direct Actions & Portals */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-[#E9B44C]">
-              {lang === 'hi' ? 'सेवा एवं सदस्यता' : 'Sewa & Membership'}
+              {lang === 'hi' ? 'सेवा, सदस्यता व पोर्टल' : 'Sewa & Portals'}
             </h4>
             <div className="space-y-2.5">
-              <a
-                href="#donate"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
-              >
-                <Heart className="w-3.5 h-3.5 fill-white text-white" />
-                <span>{t.nav.donate}</span>
-              </a>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="#donate"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <Heart className="w-3.5 h-3.5 fill-white text-white" />
+                  <span>{t.nav.donate}</span>
+                </a>
 
-              <div>
+                <button
+                  type="button"
+                  onClick={onOpenJoinModal}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
+                </button>
+              </div>
+
+              <div className="space-y-1.5 pt-1 text-xs text-[#FFF8EF]/80">
+                <button
+                  type="button"
+                  onClick={onNavigateMember}
+                  className="block hover:text-[#E9B44C] transition-colors text-left"
+                >
+                  → {lang === 'hi' ? 'सदस्य डैशबोर्ड एवं पहचान पत्र' : 'Member Dashboard & ID'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onNavigateAdmin}
+                  className="block text-[#E9B44C] hover:underline font-bold text-left"
+                >
+                  🔒 {lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin)' : 'Admin Dashboard'}
+                </button>
                 <button
                   type="button"
                   onClick={onOpenReceiptModal}
-                  className="block text-xs text-[#FFF8EF]/80 hover:text-white underline pt-1"
+                  className="block text-[#FFF8EF]/70 hover:text-white underline text-left"
                 >
                   {lang === 'hi' ? 'ऑनलाइन डिजिटल रसीद सृजन' : 'Generate Digital Receipt'}
                 </button>

@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import TrustLogo from './TrustLogo';
-import { Menu, X, Globe, FileText, ArrowRight } from 'lucide-react';
+import { Menu, X, Globe, FileText, ArrowRight, User, Shield, UserPlus } from 'lucide-react';
 
-export const Navbar = ({ onOpenReceiptModal }) => {
+export const Navbar = ({
+  onOpenReceiptModal,
+  onOpenLoginModal,
+  onOpenJoinModal,
+  onNavigateMember,
+  onNavigateAdmin
+}) => {
   const { lang, toggleLanguage, t } = useLanguage();
+  const { currentUser, userProfile, isAdmin } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -16,7 +24,7 @@ export const Navbar = ({ onOpenReceiptModal }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Simplified, uncluttered core links matching the reference layout
+  // Core nav links
   const navLinks = [
     { href: '#about', label: t.nav.about },
     { 
@@ -26,6 +34,7 @@ export const Navbar = ({ onOpenReceiptModal }) => {
     },
     { href: '#programs', label: t.nav.programs },
     { href: '#gallery', label: t.nav.gallery },
+    { href: '#news', label: lang === 'hi' ? 'सूचनाएं' : 'News' },
     { href: '#contact', label: t.nav.contact },
   ];
 
@@ -43,7 +52,7 @@ export const Navbar = ({ onOpenReceiptModal }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
         
-        {/* Brand Logo & Name (matching reference two-tone style in theme colors) */}
+        {/* Brand Logo & Name */}
         <a href="#" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0" aria-label="Home">
           <TrustLogo className="w-9 h-9 sm:w-10 sm:h-10" showText={false} lang={lang} />
           <div className="flex items-center">
@@ -56,8 +65,8 @@ export const Navbar = ({ onOpenReceiptModal }) => {
           </div>
         </a>
 
-        {/* Center Navigation Links (Clean, Focused, in theme colors) */}
-        <nav className="hidden xl:flex items-center gap-7 2xl:gap-8" aria-label="Main Navigation">
+        {/* Center Navigation Links */}
+        <nav className="hidden xl:flex items-center gap-6 2xl:gap-7" aria-label="Main Navigation">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -72,15 +81,25 @@ export const Navbar = ({ onOpenReceiptModal }) => {
               )}
             </a>
           ))}
+
+          {/* Direct Join Link in Header */}
+          <button
+            type="button"
+            onClick={onOpenJoinModal}
+            className="text-sm font-bold text-primary hover:text-secondary transition-colors flex items-center gap-1 py-1"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>{lang === 'hi' ? 'सदस्य बनें' : 'Join'}</span>
+          </button>
         </nav>
 
-        {/* Right Actions: Language Toggle, Quick Receipt, and Saffron CTA Button with Arrow */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {/* Right Actions: Language Toggle, Quick Receipt, Member/Login, and Saffron CTA Button */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
           {/* Language Toggle Button */}
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm transition-all active:scale-95"
+            className="flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm transition-all active:scale-95"
             aria-label={`Switch language to ${lang === 'en' ? 'Hindi' : 'English'}`}
           >
             <Globe className="w-3.5 h-3.5 text-secondary" />
@@ -98,10 +117,33 @@ export const Navbar = ({ onOpenReceiptModal }) => {
             <span>{lang === 'hi' ? 'रसीद' : 'Receipt'}</span>
           </button>
 
-          {/* Saffron CTA Button with Arrow (Exact style from reference screenshot) */}
+          {/* Member Login / Dashboard Button */}
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={onNavigateMember}
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/50 shadow-sm transition-all"
+              title="Open Member Portal"
+            >
+              <User className="w-3.5 h-3.5 text-primary" />
+              <span>{lang === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenLoginModal}
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/50 shadow-sm transition-all"
+              title="Member or Admin Login"
+            >
+              <User className="w-3.5 h-3.5 text-secondary" />
+              <span>{lang === 'hi' ? 'लॉगिन' : 'Login'}</span>
+            </button>
+          )}
+
+          {/* Saffron CTA Button with Arrow */}
           <a
             href="#donate"
-            className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap group border border-primary"
+            className="inline-flex items-center gap-2 px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap group border border-primary"
           >
             <span>{t.nav.donate}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -142,9 +184,47 @@ export const Navbar = ({ onOpenReceiptModal }) => {
                 )}
               </a>
             ))}
+
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenJoinModal();
+              }}
+              className="px-3 py-2.5 text-sm font-bold text-primary hover:bg-white rounded-xl transition-colors flex items-center justify-between text-left"
+            >
+              <span>{lang === 'hi' ? 'सदस्यता आवेदन (Join Trust)' : 'Apply for Membership'}</span>
+              <span className="text-primary text-xs">→</span>
+            </button>
           </div>
 
-          <div className="pt-3 border-t border-[#E9B44C]/25 flex flex-col gap-2.5">
+          <div className="pt-3 border-t border-[#E9B44C]/25 flex flex-col gap-2">
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onNavigateMember();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-xs shadow-sm transition-all"
+              >
+                <User className="w-4 h-4" />
+                <span>{lang === 'hi' ? 'सदस्य डैशबोर्ड खोलें' : 'Open Member Dashboard'}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenLoginModal();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[#E9B44C] bg-white text-[#382719] hover:bg-[#FFF8EF] font-bold text-xs shadow-sm transition-all"
+              >
+                <User className="w-4 h-4 text-primary" />
+                <span>{lang === 'hi' ? 'सदस्य / व्यवस्थापक लॉगिन' : 'Member / Admin Login'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {

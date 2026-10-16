@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { submitAssistanceRequest } from '../firebase/services';
 import {
   X,
   HandHeart,
@@ -118,43 +120,50 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const { currentUser } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      // scroll to top of modal if there are errors
       return;
     }
 
-    const uniqueId = `RSSSST-HELP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    setIsSubmitting(true);
     const now = new Date();
     const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-    setApplicationId(uniqueId);
-    setSubmissionDate(formattedDate);
-    setSubmitted(true);
-
-    // Save to local storage for administrative record retention
     try {
-      const existing = JSON.parse(localStorage.getItem('rsssst_help_requests') || '[]');
-      existing.unshift({
-        id: uniqueId,
-        date: formattedDate,
-        ...formData
-      });
-      localStorage.setItem('rsssst_help_requests', JSON.stringify(existing.slice(0, 50)));
-    } catch {
-      // ignore storage errors
-    }
+      const result = await submitAssistanceRequest(formData, currentUser?.uid || null);
+      const trackingId = result.trackingId;
 
-    // Trigger celebration / acknowledgment confetti
-    try {
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 }
-      });
-    } catch {
-      // ignore
+      setApplicationId(trackingId);
+      setSubmissionDate(formattedDate);
+      setSubmitted(true);
+
+      // Save to local storage as fallback cache
+      try {
+        const existing = JSON.parse(localStorage.getItem('rsssst_help_requests') || '[]');
+        existing.unshift({
+          id: trackingId,
+          date: formattedDate,
+          ...formData
+        });
+        localStorage.setItem('rsssst_help_requests', JSON.stringify(existing.slice(0, 50)));
+      } catch {}
+
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+      } catch {}
+    } catch (err) {
+      console.error("Assistance submission failed:", err);
+      setErrors(prev => ({ ...prev, form: err.message || 'सहायता आवेदन प्रेषण में त्रुटि हुई।' }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

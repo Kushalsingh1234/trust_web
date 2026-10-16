@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart } from 'lucide-react';
 
-export const Hero = ({ onOpenReceiptModal, onOpenHelpModal }) => {
+export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
 
   return (
@@ -42,7 +42,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal }) => {
 
               <button
                 type="button"
-                onClick={onOpenReceiptModal}
+                onClick={onOpenJoinModal}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-secondary hover:bg-primary text-white font-bold text-sm sm:text-base shadow-deep-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 <UserPlus className="w-5 h-5" />
