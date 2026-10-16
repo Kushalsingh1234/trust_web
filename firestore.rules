@@ -13,7 +13,6 @@ service cloud.firestore {
     }
 
     // Helper function: Check if user is an administrator
-    // Checks custom claims or the secured admin collection/user profile
     function isAdmin() {
       return isAuthenticated() && (
         (request.auth.token.admin == true) ||
@@ -31,12 +30,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // 2. Membership Applications
+    // 2. Membership Applications (Category A, B, C)
     match /membershipApplications/{appId} {
       // Anyone logged in can read their own applications; Admins can read all
       allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
-      // Authenticated users can submit applications with initial 'pending' status
-      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid && request.resource.data.status == 'pending';
+      // Allow creation with initial 'pending' status (both for authenticated users and new applicants)
+      allow create: if request.resource.data.status == 'pending' && 
+                    (!isAuthenticated() || request.resource.data.applicantUid == request.auth.uid);
       // Only administrators can review, approve, or reject applications
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -46,18 +46,17 @@ service cloud.firestore {
     match /members/{memberId} {
       // Members can read their own membership card & record; Admin can read all
       allow read: if (isAuthenticated() && resource.data.userUid == request.auth.uid) || isAdmin();
-      // Only administrators or trusted functions can create or update membership records
+      // Only administrators can create or update membership records
       allow create, update, delete: if isAdmin();
     }
 
-    // 4. Payments
+    // 4. Payments & UTR Records
     match /payments/{paymentId} {
       // Users can view their own payments; Admins can view all
       allow read: if (isAuthenticated() && resource.data.payerUid == request.auth.uid) || isAdmin();
-      // Users can submit a payment with initial 'pending_verification' status
-      allow create: if isAuthenticated() && 
-                    request.resource.data.payerUid == request.auth.uid && 
-                    request.resource.data.verificationStatus == 'pending_verification';
+      // Allow submission with initial 'pending_verification' status
+      allow create: if request.resource.data.verificationStatus == 'pending_verification' && 
+                    (!isAuthenticated() || request.resource.data.payerUid == request.auth.uid);
       // Only administrators can verify, reject, or modify payment verification status
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -67,7 +66,8 @@ service cloud.firestore {
     match /assistanceRequests/{requestId} {
       // Strictly private: accessible ONLY to the applicant and authorized administrators
       allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
-      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid;
+      // Allow submission from applicants
+      allow create: if !isAuthenticated() || request.resource.data.applicantUid == request.auth.uid;
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -75,7 +75,7 @@ service cloud.firestore {
     // 6. Volunteer Applications
     match /volunteerApplications/{appId} {
       allow read: if (isAuthenticated() && resource.data.applicantUid == request.auth.uid) || isAdmin();
-      allow create: if isAuthenticated() || true; // Allow submission by prospective volunteers
+      allow create: if true; // Allow submission by prospective volunteers
       allow update, delete: if isAdmin();
     }
 
@@ -91,7 +91,7 @@ service cloud.firestore {
     match /receipts/{receiptId} {
       // Read allowed to the verified payer and admins
       allow read: if (isAuthenticated() && resource.data.payerUid == request.auth.uid) || isAdmin();
-      // Only administrators or server-side functions can issue receipts
+      // Only administrators can issue receipts
       allow write: if isAdmin();
     }
 
