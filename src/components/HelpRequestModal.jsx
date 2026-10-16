@@ -35,7 +35,9 @@ const QUICK_AMOUNTS = ['5000', '10000', '25000', '50000', '100000'];
 
 export const HelpRequestModal = ({ isOpen, onClose }) => {
   const { lang } = useLanguage();
+  const { currentUser } = useAuth();
   const printRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState(() => {
     const isMock = typeof window !== 'undefined' && window.location.search.includes('submitted=true');
@@ -119,9 +121,6 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const { currentUser } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
