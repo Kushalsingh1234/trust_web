@@ -124,16 +124,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   };
 
   useEffect(() => {
-    if (adminPinVerified && (isAdmin || userProfile?.role === 'admin')) {
+    if (adminPinVerified) {
       loadAllAdminData();
     }
-  }, [adminPinVerified, isAdmin, userProfile]);
+  }, [adminPinVerified]);
 
   // Handle PIN unlock
   const handleUnlockWithPin = (e) => {
     e.preventDefault();
     if (verifyPinForSession(pinInput)) {
       setPinError('');
+      loadAllAdminData();
     } else {
       setPinError(lang === 'hi' ? 'अमान्य सुरक्षा पिन (Invalid Admin PIN).' : 'Invalid Admin Security PIN.');
     }

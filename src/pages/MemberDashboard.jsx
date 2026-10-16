@@ -47,13 +47,14 @@ export const MemberDashboard = ({ onNavigateHome }) => {
 
   useEffect(() => {
     const loadUserData = async () => {
-      if (!currentUser) return;
       setLoading(true);
       try {
+        const uid = currentUser?.uid || null;
+        const mobile = userProfile?.mobile || null;
         const [userApps, userPays, userHelp, publicNews] = await Promise.all([
-          getApplicationsForUser(currentUser.uid),
-          getPaymentsForUser(currentUser.uid),
-          getAssistanceRequestsForUser(currentUser.uid),
+          getApplicationsForUser(uid, mobile),
+          getPaymentsForUser(uid, mobile),
+          getAssistanceRequestsForUser(uid, mobile),
           getPublishedAnnouncements()
         ]);
 

@@ -9,10 +9,8 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
-  runTransaction,
-  limit
+  runTransaction
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -38,7 +36,6 @@ export const generateMembershipNumber = async () => {
     });
     return result;
   } catch (err) {
-    // Fallback safe unique ID using timestamp and random seed
     const rand = Math.floor(1000 + Math.random() * 9000);
     return `RSSSST-MEM-${currentYear}-${rand}`;
   }
@@ -99,33 +96,81 @@ export const submitMembershipApplication = async (data, applicantUid) => {
   };
 
   const docRef = await addDoc(colRef, applicationDoc);
+
+  // Save reference in browser localStorage so member dashboard can load it even if submitted before account creation
+  try {
+    const saved = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+    saved.unshift(docRef.id);
+    localStorage.setItem('rsssst_my_app_ids', JSON.stringify(saved.slice(0, 20)));
+    localStorage.setItem('rsssst_last_app_mobile', data.mobile.trim());
+  } catch {}
+
   return { id: docRef.id, applicationRef: uniqueRefId, ...applicationDoc };
 };
 
-export const getApplicationsForUser = async (userUid) => {
-  if (!userUid) return [];
+export const getApplicationsForUser = async (userUid, userMobile) => {
   const colRef = collection(db, 'membershipApplications');
-  const q = query(colRef, where('applicantUid', '==', userUid), orderBy('submittedAt', 'desc'));
-  try {
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (err) {
-    // If composite index is pending, fallback query
-    const fallbackQ = query(colRef, where('applicantUid', '==', userUid));
-    const snap = await getDocs(fallbackQ);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const resultsMap = new Map();
+
+  // 1. Search by applicant UID if logged in
+  if (userUid) {
+    try {
+      const q = query(colRef, where('applicantUid', '==', userUid));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch (e) {
+      console.warn("UID query failed:", e);
+    }
   }
+
+  // 2. Search by mobile number (bridges applications submitted before creating an account!)
+  const searchMobile = userMobile || (typeof window !== 'undefined' ? localStorage.getItem('rsssst_last_app_mobile') : null);
+  if (searchMobile) {
+    try {
+      const qMob = query(colRef, where('mobile', '==', searchMobile.trim()));
+      const snapMob = await getDocs(qMob);
+      snapMob.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch (e) {
+      console.warn("Mobile query failed:", e);
+    }
+  }
+
+  // 3. Fallback: Check local saved IDs from this device
+  try {
+    const localIds = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+    for (const appId of localIds) {
+      if (!resultsMap.has(appId)) {
+        try {
+          const docSnap = await getDoc(doc(db, 'membershipApplications', appId));
+          if (docSnap.exists()) {
+            resultsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+          }
+        } catch {}
+      }
+    }
+  } catch {}
+
+  const list = Array.from(resultsMap.values());
+  return list.sort((a, b) => {
+    const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+    const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+    return timeB - timeA;
+  });
 };
 
 export const getAllApplicationsForAdmin = async () => {
   const colRef = collection(db, 'membershipApplications');
   try {
-    const q = query(colRef, orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
     const snap = await getDocs(colRef);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return list.sort((a, b) => {
+      const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+      const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch (err) {
+    console.error("Admin fetch applications error:", err);
+    return [];
   }
 };
 
@@ -212,32 +257,69 @@ export const submitPaymentRecord = async (paymentData, userUid) => {
   };
 
   const ref = await addDoc(colRef, docData);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem('rsssst_my_payment_ids') || '[]');
+    saved.unshift(ref.id);
+    localStorage.setItem('rsssst_my_payment_ids', JSON.stringify(saved.slice(0, 20)));
+  } catch {}
+
   return { id: ref.id, ...docData };
 };
 
-export const getPaymentsForUser = async (userUid) => {
-  if (!userUid) return [];
+export const getPaymentsForUser = async (userUid, userMobile) => {
   const colRef = collection(db, 'payments');
-  try {
-    const q = query(colRef, where('payerUid', '==', userUid), orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
-    const fallbackQ = query(colRef, where('payerUid', '==', userUid));
-    const snap = await getDocs(fallbackQ);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const resultsMap = new Map();
+
+  if (userUid) {
+    try {
+      const q = query(colRef, where('payerUid', '==', userUid));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch {}
   }
+
+  const searchMobile = userMobile || (typeof window !== 'undefined' ? localStorage.getItem('rsssst_last_app_mobile') : null);
+  if (searchMobile) {
+    try {
+      const qMob = query(colRef, where('payerMobile', '==', searchMobile.trim()));
+      const snapMob = await getDocs(qMob);
+      snapMob.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch {}
+  }
+
+  try {
+    const localIds = JSON.parse(localStorage.getItem('rsssst_my_payment_ids') || '[]');
+    for (const pid of localIds) {
+      if (!resultsMap.has(pid)) {
+        try {
+          const docSnap = await getDoc(doc(db, 'payments', pid));
+          if (docSnap.exists()) resultsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+        } catch {}
+      }
+    }
+  } catch {}
+
+  const list = Array.from(resultsMap.values());
+  return list.sort((a, b) => {
+    const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+    const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+    return timeB - timeA;
+  });
 };
 
 export const getAllPaymentsForAdmin = async () => {
   const colRef = collection(db, 'payments');
   try {
-    const q = query(colRef, orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
     const snap = await getDocs(colRef);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return list.sort((a, b) => {
+      const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+      const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch {
+    return [];
   }
 };
 
@@ -317,44 +399,81 @@ export const submitAssistanceRequest = async (requestData, applicantUid) => {
     cityDistrict: requestData.cityDistrict.trim(),
     state: requestData.state.trim(),
     pincode: requestData.pincode ? requestData.pincode.trim() : '',
-    category: requestData.category, // 'medical' | 'education' | 'marriage' | 'ration' | 'labor_welfare' | 'last_rites' | 'other'
+    category: requestData.category,
     amountNeeded: Number(requestData.amountNeeded),
     urgency: requestData.urgency || 'urgent',
     description: requestData.description.trim(),
     bankOrUpi: requestData.bankOrUpi ? requestData.bankOrUpi.trim() : '',
-    status: 'submitted', // 'submitted' | 'under_review' | 'approved' | 'rejected' | 'assistance_provided'
+    status: 'submitted',
     submittedAt: serverTimestamp(),
     reviewedAt: null,
     adminNotes: null
   };
 
   const docRef = await addDoc(colRef, data);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem('rsssst_my_help_ids') || '[]');
+    saved.unshift(docRef.id);
+    localStorage.setItem('rsssst_my_help_ids', JSON.stringify(saved.slice(0, 20)));
+  } catch {}
+
   return { id: docRef.id, trackingId: trackingId, ...data };
 };
 
-export const getAssistanceRequestsForUser = async (userUid) => {
-  if (!userUid) return [];
+export const getAssistanceRequestsForUser = async (userUid, userMobile) => {
   const colRef = collection(db, 'assistanceRequests');
-  try {
-    const q = query(colRef, where('applicantUid', '==', userUid), orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
-    const q = query(colRef, where('applicantUid', '==', userUid));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const resultsMap = new Map();
+
+  if (userUid) {
+    try {
+      const q = query(colRef, where('applicantUid', '==', userUid));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch {}
   }
+
+  const searchMobile = userMobile || (typeof window !== 'undefined' ? localStorage.getItem('rsssst_last_app_mobile') : null);
+  if (searchMobile) {
+    try {
+      const qMob = query(colRef, where('mobile', '==', searchMobile.trim()));
+      const snapMob = await getDocs(qMob);
+      snapMob.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+    } catch {}
+  }
+
+  try {
+    const localIds = JSON.parse(localStorage.getItem('rsssst_my_help_ids') || '[]');
+    for (const hid of localIds) {
+      if (!resultsMap.has(hid)) {
+        try {
+          const docSnap = await getDoc(doc(db, 'assistanceRequests', hid));
+          if (docSnap.exists()) resultsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+        } catch {}
+      }
+    }
+  } catch {}
+
+  const list = Array.from(resultsMap.values());
+  return list.sort((a, b) => {
+    const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+    const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+    return timeB - timeA;
+  });
 };
 
 export const getAllAssistanceRequestsForAdmin = async () => {
   const colRef = collection(db, 'assistanceRequests');
   try {
-    const q = query(colRef, orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
     const snap = await getDocs(colRef);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return list.sort((a, b) => {
+      const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+      const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch {
+    return [];
   }
 };
 
@@ -379,11 +498,11 @@ export const submitVolunteerApplication = async (data, userUid) => {
     fullName: data.fullName.trim(),
     mobile: data.mobile.trim(),
     email: data.email ? data.email.trim() : '',
-    preferredAreas: data.preferredAreas || [], // e.g. ['sanskar_camps', 'labor_welfare', 'ration_distribution', 'social_media']
-    availability: data.availability || 'weekends', // 'weekends' | 'full_time' | 'few_hours_daily'
+    preferredAreas: data.preferredAreas || [],
+    availability: data.availability || 'weekends',
     experience: data.experience ? data.experience.trim() : '',
     cityOrDistrict: data.cityOrDistrict.trim(),
-    status: 'pending', // 'pending' | 'contacted' | 'approved'
+    status: 'pending',
     submittedAt: serverTimestamp()
   };
 
@@ -394,12 +513,15 @@ export const submitVolunteerApplication = async (data, userUid) => {
 export const getAllVolunteerApplications = async () => {
   const colRef = collection(db, 'volunteerApplications');
   try {
-    const q = query(colRef, orderBy('submittedAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
     const snap = await getDocs(colRef);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return list.sort((a, b) => {
+      const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+      const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch {
+    return [];
   }
 };
 
@@ -415,26 +537,32 @@ export const updateVolunteerStatus = async (appId, status) => {
 export const getPublishedAnnouncements = async () => {
   const colRef = collection(db, 'announcements');
   try {
-    const q = query(colRef, where('isPublished', '==', true), orderBy('publishedAt', 'desc'), limit(20));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (err) {
-    // If index or empty, fallback query
-    const q = query(colRef, where('isPublished', '==', true));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snap = await getDocs(colRef);
+    const list = snap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(a => a.isPublished === true);
+    return list.sort((a, b) => {
+      const timeA = a.publishedAt?.toMillis ? a.publishedAt.toMillis() : 0;
+      const timeB = b.publishedAt?.toMillis ? b.publishedAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch {
+    return [];
   }
 };
 
 export const getAllAnnouncementsForAdmin = async () => {
   const colRef = collection(db, 'announcements');
   try {
-    const q = query(colRef, orderBy('createdAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch {
     const snap = await getDocs(colRef);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return list.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
+  } catch {
+    return [];
   }
 };
 
