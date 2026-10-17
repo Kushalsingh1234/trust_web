@@ -1,182 +1,330 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart } from 'lucide-react';
+import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart, Users, BookOpen, Sparkles, Phone } from 'lucide-react';
 
 export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
 
-  return (
-    <section className="relative overflow-hidden bg-transparent min-h-[calc(100vh-68px)] lg:min-h-[calc(100vh-76px)] flex flex-col justify-center py-6 sm:py-12 lg:py-16 border-b border-[#E9B44C]/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+  const visualCardContent = (
+    <div className="relative mx-auto max-w-md lg:max-w-none">
+      {/* Outer Golden decorative aura */}
+      <div className="absolute -inset-2 bg-gradient-to-tr from-accent/50 via-primary/30 to-secondary/30 rounded-3xl blur-md opacity-60"></div>
+      
+      {/* Main Card with Real Event Collage */}
+      <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          <img
+            src="/images/gallery/shramik_camp_collage.jpg"
+            alt="Shramik Jagrookta Abhiyan Camp Gorakhpur"
+            className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"></div>
           
-          {/* Left Column: Heading, Mission, Badges & CTAs */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-left">
-            {/* Trust Identity Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFF8EF] border border-[#E9B44C]/70 text-[#382719] font-bold text-xs sm:text-sm shadow-sm max-w-full">
-              <ShieldCheck className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="truncate">{t.hero.badge}</span>
+          {/* Docked Badge: Bank of India (Contained, no overlap) */}
+          <div className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-md border border-[#E9B44C]/40 text-left">
+            <span className="text-[8px] text-[#666666] block uppercase font-bold leading-tight">
+              {lang === 'hi' ? 'अधिकृत बैंक' : 'Official Bank'}
+            </span>
+            <span className="text-[11px] sm:text-xs font-black text-primary leading-tight">
+              Bank of India
+            </span>
+          </div>
+
+          {/* Docked Badge: 16 Sanskars (Contained, no overlap) */}
+          <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-md border border-[#E9B44C]/40 flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-md bg-primary text-white flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
+              १६
             </div>
-
-            {/* Main Title */}
-            <div>
-              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#382719] leading-[1.2] sm:leading-[1.15] tracking-tight font-hindi-heading">
-                {t.hero.title}
-              </h1>
-            </div>
-
-            {/* Subtitle / Mission */}
-            <p className="text-sm sm:text-base md:text-lg text-[#454545] leading-relaxed max-w-2xl font-medium">
-              {t.hero.subtitle}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1">
-              <a
-                href="#donate"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-primary hover:bg-secondary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-primary text-center"
-              >
-                <Heart className="w-5 h-5 fill-white text-white flex-shrink-0" />
-                <span>{t.hero.donateBtn}</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={onOpenJoinModal}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-secondary hover:bg-primary text-white font-bold text-sm sm:text-base shadow-deep-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center"
-              >
-                <UserPlus className="w-5 h-5 flex-shrink-0" />
-                <span>{t.hero.joinBtn}</span>
-              </button>
-
-              <button
-                type="button"
-                id="hero-ask-help-btn"
-                aria-label="Ask for Help"
-                onClick={onOpenHelpModal}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full text-xs sm:text-sm font-bold text-[#382719] hover:text-primary transition-all bg-white hover:bg-[#FFF8EF] border-2 border-[#E9B44C] shadow-sm hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 text-center"
-              >
-                <HandHeart className="w-4 h-4 text-primary flex-shrink-0" />
-                <span>{t.hero.askHelpBtn || (lang === 'hi' ? 'सहायता मांगें (Ask Help)' : 'Ask for Help')}</span>
-              </button>
-            </div>
-
-            {/* Small Trust Verification Badges */}
-            <div className="pt-3 sm:pt-4 border-t border-[#E9B44C]/30 grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 min-w-0">
-                <ShieldCheck className="w-4 h-4 text-trust-green flex-shrink-0" />
-                <div className="min-w-0 truncate">
-                  <span className="font-extrabold block text-[#382719] truncate">{t.hero.badges.reg}</span>
-                  <span className="text-[10px] text-[#454545] font-mono font-medium block truncate">{t.hero.badges.regNo}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 min-w-0">
-                <Award className="w-4 h-4 text-primary flex-shrink-0" />
-                <div className="min-w-0 truncate">
-                  <span className="font-extrabold block text-[#382719] truncate">80G / 12A Status</span>
-                  <span className="text-[10px] text-secondary font-bold block truncate">{t.hero.badges.taxStatus}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 col-span-2 sm:col-span-1 min-w-0">
-                <MapPin className="w-4 h-4 text-accent flex-shrink-0" />
-                <div className="min-w-0 truncate">
-                  <span className="font-extrabold block text-[#382719] truncate">{t.hero.badges.location}</span>
-                  <span className="text-[10px] text-[#454545] font-semibold block truncate">Gorakhpur 273016</span>
-                </div>
-              </div>
+            <div className="text-left">
+              <p className="text-[10px] sm:text-[11px] font-extrabold text-[#382719] uppercase tracking-tight leading-tight">
+                {lang === 'hi' ? 'षोडश संस्कार' : '16 Vedic Sanskars'}
+              </p>
             </div>
           </div>
 
-          {/* Right Column: Hero Visual Showcase with Real Photos */}
-          <div className="lg:col-span-5 relative mt-4 lg:mt-0">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              {/* Outer Golden decorative aura */}
-              <div className="absolute -inset-2 bg-gradient-to-tr from-accent/50 via-primary/30 to-secondary/30 rounded-3xl blur-md opacity-60"></div>
-              
-              {/* Main Card with Real Event Collage */}
-              <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-                <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                  <img
-                    src="/images/gallery/shramik_camp_collage.jpg"
-                    alt="Shramik Jagrookta Abhiyan Camp Gorakhpur"
-                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-                  
-                  {/* Floating Caption on Image */}
-                  <div className="absolute bottom-3 left-3 right-3 text-white text-left">
-                    <span className="bg-secondary text-gray-950 font-black text-[10px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">
-                      {lang === 'hi' ? 'जमीनी कार्यक्रम' : 'Ground Action'}
-                    </span>
-                    <h3 className="text-xs sm:text-base font-bold mt-1 line-clamp-1 drop-shadow">
-                      {lang === 'hi' 
-                        ? 'श्रमिक जागरूकता अभियान • आजाद चौक, गोरखपुर' 
-                        : 'Labor Welfare Awareness Campaign, Gorakhpur'}
-                    </h3>
-                  </div>
-                </div>
+          {/* Floating Caption on Image */}
+          <div className="absolute bottom-3 left-3 right-3 text-white text-left z-10">
+            <span className="bg-secondary text-gray-950 font-black text-[9px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">
+              {lang === 'hi' ? 'जमीनी कार्यक्रम' : 'Ground Action'}
+            </span>
+            <h3 className="text-xs sm:text-sm md:text-base font-extrabold mt-1 line-clamp-1 text-white drop-shadow-md">
+              {lang === 'hi' 
+                ? 'श्रमिक जागरूकता अभियान • आजाद चौक, गोरखपुर' 
+                : 'Labor Welfare Awareness Campaign, Gorakhpur'}
+            </h3>
+          </div>
+        </div>
 
-                {/* Card Sub-strip with Bank Verification info */}
-                <div className="p-3.5 sm:p-4 bg-[#FFF8EF] border-t border-[#E9B44C]/30 flex items-center justify-between text-left gap-2">
-                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <img
-                      src="/images/avatars/bajrangi_dubey.jpg"
-                      alt="Bajrangi Dubey"
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-primary object-cover shadow-sm flex-shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-[#382719] truncate">
-                        {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
-                      </p>
-                      <p className="text-[10px] sm:text-[11px] text-[#454545] font-medium truncate">
-                        {lang === 'hi' ? 'महामंत्री / प्रबंधक (RSSSST)' : 'General Secretary / Manager'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-right flex-shrink-0">
-                    <span className="text-[9px] sm:text-[10px] text-[#666666] block uppercase font-bold tracking-wider">
-                      {lang === 'hi' ? 'वार्षिक सदस्यता' : 'Membership'}
-                    </span>
-                    <span className="text-xs sm:text-sm font-extrabold text-primary">
-                      ₹200 / {lang === 'hi' ? 'वर्ष' : 'yr'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Badge: 16 Sanskars (Contained on mobile) */}
-              <div className="absolute -bottom-3 left-2 sm:-bottom-4 sm:-left-6 bg-white p-2 sm:p-2.5 rounded-xl shadow-card border border-[#E9B44C]/40 flex items-center gap-2 max-w-[180px] sm:max-w-[200px]">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
-                  १६
-                </div>
-                <div className="text-left min-w-0">
-                  <p className="text-[9px] sm:text-[10px] font-extrabold text-[#382719] uppercase tracking-tight truncate">
-                    {lang === 'hi' ? 'षोडश संस्कार' : '16 Vedic Sanskars'}
-                  </p>
-                  <p className="text-[8px] sm:text-[9px] text-[#454545] font-medium truncate">
-                    {lang === 'hi' ? 'सुलभ व पवित्र विधान' : 'Authentic Life Rites'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Floating Badge: Bank of India (Contained on mobile) */}
-              <div className="absolute -top-3 right-2 sm:-top-3 sm:-right-4 bg-white px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl shadow-card border border-[#E9B44C]/40 text-left shadow-sm">
-                <span className="text-[8px] sm:text-[9px] text-[#666666] block uppercase font-bold">
-                  {lang === 'hi' ? 'अधिकृत बैंक' : 'Official Bank'}
-                </span>
-                <span className="text-[11px] sm:text-xs font-black text-primary">
-                  Bank of India
-                </span>
-              </div>
+        {/* Card Sub-strip with Manager info & membership */}
+        <div className="p-3 sm:p-4 bg-[#FFF8EF] border-t border-[#E9B44C]/30 flex items-center justify-between text-left gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <img
+              src="/images/avatars/bajrangi_dubey.jpg"
+              alt="Bajrangi Dubey"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-primary object-cover shadow-sm flex-shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-[#382719] truncate">
+                {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-[#454545] font-medium truncate">
+                {lang === 'hi' ? 'महामंत्री / प्रबंधक (RSSSST)' : 'General Secretary / Manager'}
+              </p>
             </div>
           </div>
 
+          <div className="text-right flex-shrink-0">
+            <span className="text-[9px] sm:text-[10px] text-[#666666] block uppercase font-bold tracking-wider">
+              {lang === 'hi' ? 'वार्षिक सदस्यता' : 'Membership'}
+            </span>
+            <span className="text-xs sm:text-sm font-extrabold text-primary">
+              ₹200 / {lang === 'hi' ? 'वर्ष' : 'yr'}
+            </span>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Front Page Hero Section: Clean, rich, no images on initial mobile fold */}
+      <section className="relative overflow-hidden bg-transparent min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-5rem)] lg:min-h-[calc(100vh-5rem)] flex flex-col justify-between py-4 sm:py-7 lg:py-12 border-b border-[#E9B44C]/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full my-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-center">
+            
+            {/* Left Column: Heading, Mission, 4 Pillars, Badges & CTAs */}
+            <div className="lg:col-span-7 space-y-3.5 sm:space-y-4 text-left">
+              {/* Sacred Ribbon & Trust Status */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 via-white to-amber-500/10 border border-[#E9B44C]/60 text-primary font-bold text-[11px] sm:text-xs shadow-xs">
+                  <span className="font-hindi-heading">॥ ॐ धर्मो रक्षति रक्षितः ॥</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 border border-[#E9B44C]/60 text-[#382719] font-bold text-[11px] sm:text-xs shadow-xs max-w-full">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                  <span className="truncate">{t.hero.badge}</span>
+                </div>
+              </div>
+
+              {/* Main Title with Elegant Saffron Accent */}
+              <div>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#382719] leading-[1.2] sm:leading-[1.15] tracking-tight font-hindi-heading">
+                  {lang === 'hi' ? (
+                    <>
+                      राष्ट्रीय <span className="text-primary font-black bg-gradient-to-r from-primary via-[#EA6F0B] to-[#D65900] bg-clip-text text-transparent">सनातन संस्कार</span> सेवा संस्थान
+                    </>
+                  ) : (
+                    <>
+                      Rashtriya <span className="text-primary font-black bg-gradient-to-r from-primary via-[#EA6F0B] to-[#D65900] bg-clip-text text-transparent">Sanatan Sanskar</span> Seva Sansthan
+                    </>
+                  )}
+                </h1>
+                <p className="text-xs sm:text-base text-[#523e2b] leading-relaxed max-w-2xl font-medium mt-1.5">
+                  {t.hero.subtitle}
+                </p>
+              </div>
+
+              {/* Four Sacred Pillars of Seva Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 pt-0.5">
+                {/* Pillar 1: 16 Sanskars */}
+                <a
+                  href="#sanskars"
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="w-5 h-5 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] group-hover:bg-primary group-hover:text-white transition-colors">
+                      १६
+                    </span>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
+                      {lang === 'hi' ? 'षोडश संस्कार' : '16 Sanskars'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
+                    {lang === 'hi' ? 'सुलभ, किफायती व वैदिक विधान' : 'Affordable Vedic Life Rites'}
+                  </p>
+                </a>
+
+                {/* Pillar 2: Labor Welfare */}
+                <a
+                  href="#programs"
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                      <Users className="w-3 h-3" />
+                    </div>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
+                      {lang === 'hi' ? 'श्रमिक कल्याण' : 'Labor Welfare'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
+                    {lang === 'hi' ? 'मजदूर अधिकार एवं सहायता' : 'Grassroots Worker Support'}
+                  </p>
+                </a>
+
+                {/* Pillar 3: Family Reform Guidelines */}
+                <a
+                  href="#guidelines"
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-5 h-5 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center group-hover:bg-amber-700 group-hover:text-white transition-colors">
+                      <BookOpen className="w-3 h-3" />
+                    </div>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
+                      {lang === 'hi' ? '१२ आग्रह नियम' : '12 Guidelines'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
+                    {lang === 'hi' ? 'संयुक्त परिवार व सादगी संकल्प' : 'Moral Family Culture'}
+                  </p>
+                </a>
+
+                {/* Pillar 4: Membership */}
+                <button
+                  type="button"
+                  onClick={onOpenJoinModal}
+                  className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-5 h-5 rounded-md bg-orange-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                      <Sparkles className="w-3 h-3" />
+                    </div>
+                    <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
+                      {lang === 'hi' ? '₹२०० सदस्यता' : 'Membership'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
+                    {lang === 'hi' ? 'वार्षिक सहयोग व सेवा सदस्यता' : '₹200/yr Annual Membership'}
+                  </p>
+                </button>
+              </div>
+
+              {/* Action Buttons: Primary Full-Width on Mobile, Companion Grid */}
+              <div className="space-y-2.5 sm:space-y-0 sm:flex sm:flex-row sm:items-center sm:gap-3 pt-1">
+                {/* Primary Action: Donate */}
+                <a
+                  href="#donate"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-full bg-gradient-to-r from-primary via-[#EA6F0B] to-[#D65900] hover:from-secondary hover:to-primary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:scale-[0.98] border border-primary/20 text-center"
+                >
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white flex-shrink-0" />
+                  <span>{t.hero.donateBtn}</span>
+                </a>
+
+                {/* Secondary Companion Actions: 2 columns on mobile, row on desktop */}
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={onOpenJoinModal}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-full bg-secondary hover:bg-primary text-white font-bold text-xs sm:text-base shadow-deep-saffron transition-all transform hover:-translate-y-0.5 active:scale-[0.98] text-center"
+                  >
+                    <UserPlus className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{lang === 'hi' ? 'सदस्य बनें' : 'Join Member'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="hero-ask-help-btn"
+                    aria-label="Ask for Help"
+                    onClick={onOpenHelpModal}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 sm:py-3.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold text-[#382719] hover:text-primary transition-all bg-white hover:bg-[#FFF8EF] border-2 border-[#E9B44C] shadow-xs hover:shadow-sm transform hover:-translate-y-0.5 active:scale-[0.98] text-center"
+                  >
+                    <HandHeart className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="truncate">{lang === 'hi' ? 'सहायता मांगें' : 'Ask for Help'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Small Trust Verification Badges: Untruncated 3-column micro-cards */}
+              <div className="pt-2 sm:pt-3 border-t border-[#E9B44C]/30 grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 shadow-xs">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <div className="min-w-0 w-full">
+                    <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
+                      {lang === 'hi' ? 'पंजीकृत ट्रस्ट' : 'Regd. Trust'}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] text-[#666666] font-medium block leading-tight mt-0.5 truncate">
+                      Gorakhpur, UP
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 shadow-xs">
+                  <Award className="w-4 h-4 text-primary flex-shrink-0" />
+                  <div className="min-w-0 w-full">
+                    <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
+                      80G / 12A
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] text-amber-700 font-bold block leading-tight mt-0.5 truncate">
+                      {lang === 'hi' ? 'प्रक्रियाधीन' : 'In Process'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 shadow-xs">
+                  <MapPin className="w-4 h-4 text-accent flex-shrink-0" />
+                  <div className="min-w-0 w-full">
+                    <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
+                      {lang === 'hi' ? 'रूस्तमपुर' : 'Rustampur'}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] text-[#666666] font-semibold block leading-tight mt-0.5 truncate">
+                      Gorakhpur 273016
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Helpline Bar */}
+              <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl bg-white/90 border border-[#E9B44C]/35 shadow-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-[#666666] font-bold uppercase tracking-wider leading-none">
+                      {lang === 'hi' ? 'मार्गदर्शन एवं सहायता हेल्पलाइन' : 'Helpline & Inquiries'}
+                    </p>
+                    <p className="text-xs font-mono font-black text-[#382719] leading-tight mt-0.5 truncate">
+                      +91 9794590044 • 9135218839
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="tel:9794590044"
+                  className="px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[10px] font-black uppercase tracking-wider shadow-xs flex-shrink-0 transition-colors"
+                >
+                  {lang === 'hi' ? 'कॉल करें' : 'Call'}
+                </a>
+              </div>
+
+            </div>
+
+            {/* Desktop Only: Hero Visual Showcase in Right Column */}
+            <div className="hidden lg:block lg:col-span-5 relative mt-4 lg:mt-0">
+              {visualCardContent}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Mobile-only Scroll Indicator at bottom of front page fold */}
+        <div className="lg:hidden flex flex-col items-center justify-center gap-0.5 text-[11px] text-[#8C6D53] font-bold pt-2 animate-bounce">
+          <span>{lang === 'hi' ? 'नीचे फ़ोटो व विस्तृत विवरण देखें ↓' : 'Scroll down to explore photos & programs ↓'}</span>
+        </div>
+      </section>
+
+      {/* Mobile-only After-Scroll Section: Reveals the real photo showcase after scrolling down */}
+      <section className="lg:hidden bg-[#FFF8EF] px-4 py-8 border-b border-[#E9B44C]/30">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-3">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60 px-3 py-0.5 rounded-full shadow-xs">
+              {lang === 'hi' ? 'जमीनी झलक एवं परिचय' : 'Ground Action & Leadership'}
+            </span>
+          </div>
+          {visualCardContent}
+        </div>
+      </section>
+    </>
   );
 };
 

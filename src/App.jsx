@@ -118,15 +118,17 @@ function AppContent() {
   // Route 3: Main Landing Page (Preserving original design, colors, hero & sections)
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
-      {/* Top Screen: Navbar & Hero unified on Warm Ivory #FFF8EF */}
-      <div className="bg-[#FFF8EF] relative">
-        <Navbar
-          onOpenReceiptModal={() => setReceiptModalOpen(true)}
-          onOpenLoginModal={() => setLoginModalOpen(true)}
-          onOpenJoinModal={() => setJoinModalOpen(true)}
-          onNavigateMember={() => navigateTo('/member')}
-          onNavigateAdmin={() => navigateTo('/admin')}
-        />
+      {/* Always Pinned Top Navigation Bar */}
+      <Navbar
+        onOpenReceiptModal={() => setReceiptModalOpen(true)}
+        onOpenLoginModal={() => setLoginModalOpen(true)}
+        onOpenJoinModal={() => setJoinModalOpen(true)}
+        onNavigateMember={() => navigateTo('/member')}
+        onNavigateAdmin={() => navigateTo('/admin')}
+      />
+
+      {/* Top Hero Screen: Radiant Sacred Ivory with offset for pinned navbar */}
+      <div className="pt-14 sm:pt-20 bg-hero-ivory bg-mandala-subtle relative">
         <Hero
           onOpenReceiptModal={() => setReceiptModalOpen(true)}
           onOpenHelpModal={() => setHelpModalOpen(true)}

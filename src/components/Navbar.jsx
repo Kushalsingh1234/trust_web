@@ -44,19 +44,15 @@ export const Navbar = ({
 
   return (
     <header 
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-[#FFF8EF]/95 backdrop-blur-md shadow-sm border-b border-[#E9B44C]/30' 
-          : 'bg-[#FFF8EF] sm:bg-transparent border-b border-[#E9B44C]/20 sm:border-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 w-full bg-[#FFF8EF]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(56,39,25,0.06)] border-b border-[#E9B44C]/30 transition-all duration-300"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Name */}
         <a href="#" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0 min-w-0" aria-label="Home">
           <TrustLogo className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" showText={false} lang={lang} />
-          <div className="flex items-center truncate">
-            <span className="font-extrabold text-[#382719] text-sm sm:text-lg md:text-xl tracking-tight font-hindi-heading group-hover:text-primary transition-colors truncate">
+          <div className="flex items-center min-w-0">
+            <span className="font-extrabold text-[#382719] text-xs sm:text-lg md:text-xl tracking-tight font-hindi-heading group-hover:text-primary transition-colors truncate">
               {lang === 'hi' ? 'सनातन संस्कार ' : 'Sanatan Sanskar '}
               <span className="text-primary font-black">
                 {lang === 'hi' ? 'ट्रस्ट' : 'Trust'}
@@ -149,11 +145,11 @@ export const Navbar = ({
         <>
           {/* Overlay Backdrop */}
           <div 
-            className="fixed inset-0 top-16 bg-black/40 backdrop-blur-xs xl:hidden z-40"
+            className="fixed inset-0 top-14 sm:top-20 bg-black/40 backdrop-blur-xs xl:hidden z-40"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative z-50 xl:hidden border-t border-[#E9B44C]/25 bg-[#FFF8EF] px-4 pt-3 pb-6 space-y-3 shadow-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="relative z-50 xl:hidden border-t border-[#E9B44C]/25 bg-[#FFF8EF] px-4 pt-3 pb-6 space-y-3 shadow-xl max-h-[calc(100vh-3.5rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto">
             <div className="flex flex-col space-y-1">
               {navLinks.map((link) => (
                 <a
