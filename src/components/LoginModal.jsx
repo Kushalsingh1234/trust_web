@@ -114,17 +114,17 @@ export const LoginModal = ({ isOpen, onClose, initialMode = 'login', onOpenJoin 
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="relative bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Header */}
-        <div className="bg-primary text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-sm shadow-sm">
-              {mode === 'admin' ? <Shield className="w-5 h-5 text-white" /> : <Lock className="w-4 h-4" />}
+        <div className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+              {mode === 'admin' ? <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : <Lock className="w-4 h-4" />}
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black font-hindi-heading">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-black font-hindi-heading truncate">
                 {mode === 'admin'
                   ? (lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin Portal)' : 'Trust Admin Login')
                   : mode === 'register'
@@ -133,14 +133,14 @@ export const LoginModal = ({ isOpen, onClose, initialMode = 'login', onOpenJoin 
                   ? (lang === 'hi' ? 'पासवर्ड पुनर्प्राप्ति' : 'Password Recovery')
                   : (lang === 'hi' ? 'सदस्य लॉगिन (Member Login)' : 'Member Login')}
               </h2>
-              <p className="text-[11px] text-white/80">
+              <p className="text-[10px] sm:text-[11px] text-white/80 truncate">
                 {mode === 'admin'
                   ? (lang === 'hi' ? 'अधिकृत ट्रस्ट प्रबंधकारिणी हेतु' : 'For Trust Executive Council')
-                  : (lang === 'hi' ? 'यूज़रनेम एवं पासवर्ड द्वारा सुरक्षित प्रवेश' : 'Username & Password Authentication')}
+                  : (lang === 'hi' ? 'सुरक्षित प्रवेश' : 'Secure Authentication')}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               type="button"
               onClick={toggleLanguage}

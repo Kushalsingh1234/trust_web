@@ -18,11 +18,11 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
   };
 
   return (
-    <section id="how-to-help" className="py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
+    <section id="how-to-help" className="py-12 sm:py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-[#FFF8EF] border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
             {t.howToHelp.tag}
           </span>
@@ -36,7 +36,7 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
         </div>
 
         {/* 4 Helping Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           
           {/* 1. Samarpan Nidhi */}
           <div className="bg-[#FFF8EF] rounded-3xl p-6 border border-[#E9B44C]/35 flex flex-col justify-between shadow-card hover:shadow-card-hover transition-all duration-300 text-left hover:-translate-y-1">

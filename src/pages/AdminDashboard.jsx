@@ -288,14 +288,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   // If user is not logged in as admin or PIN not verified
   if (!adminPinVerified) {
     return (
-      <div className="min-h-screen bg-[#FFF8EF] flex flex-col justify-center items-center p-4">
-        <div className="bg-white max-w-md w-full p-8 rounded-3xl border-2 border-primary/40 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
-            <Lock className="w-8 h-8" />
+      <div className="min-h-screen bg-[#FFF8EF] flex flex-col justify-center items-center p-3 sm:p-4">
+        <div className="bg-white max-w-md w-full p-5 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-primary/40 shadow-2xl text-center space-y-5 sm:space-y-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
+            <Lock className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
 
           <div>
-            <span className="text-xs font-black uppercase tracking-wider text-secondary">
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-secondary">
               {lang === 'hi' ? 'गोपनीय प्रशासनिक सुरक्षा' : 'Confidential Administrative Security'}
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-[#382719] mt-1 font-hindi-heading">
@@ -323,17 +323,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-2xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-saffron transition-all"
+              className="min-h-[44px] w-full py-3 rounded-2xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-saffron transition-all flex items-center justify-center"
             >
               {lang === 'hi' ? 'प्रशासनिक पोर्टल अनलॉक करें' : 'Unlock Administrative Portal'}
             </button>
           </form>
 
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-[#666666]">
+          <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs text-[#666666]">
             <button
               type="button"
               onClick={onNavigateHome}
-              className="hover:text-primary underline"
+              className="hover:text-primary underline min-h-[36px] flex items-center"
             >
               {lang === 'hi' ? '← मुख्य वेबसाइट' : '← Home Website'}
             </button>
@@ -341,7 +341,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="inline-flex items-center gap-1 text-[#382719] font-bold hover:text-primary"
+              className="inline-flex items-center gap-1 text-[#382719] font-bold hover:text-primary min-h-[36px]"
             >
               <Globe className="w-3.5 h-3.5 text-secondary" />
               <span>{lang === 'hi' ? 'English' : 'हिंदी'}</span>
@@ -350,7 +350,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={() => setActiveTab('setup')}
-              className="text-secondary font-bold hover:underline"
+              className="text-secondary font-bold hover:underline min-h-[36px] flex items-center"
             >
               {lang === 'hi' ? 'व्यवस्थापक सेटअप' : 'Admin Setup'}
             </button>
@@ -359,7 +359,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
         {/* Master Setup Panel */}
         {activeTab === 'setup' && (
-          <div className="mt-8 bg-white max-w-lg w-full p-6 rounded-3xl border border-[#E9B44C]/40 shadow-card text-left space-y-4">
+          <div className="mt-8 bg-white max-w-lg w-full p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E9B44C]/40 shadow-card text-left space-y-4">
             <h3 className="font-extrabold text-sm text-[#382719] font-hindi-heading">
               {lang === 'hi' ? 'प्रारंभिक व्यवस्थापक खाता स्थापना' : 'Initial Admin Account Provisioning'}
             </h3>
@@ -437,31 +437,31 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       
       {/* Top Admin Header */}
       <header className="sticky top-0 z-40 bg-[#382719] text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={onNavigateHome}
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-2 sm:gap-2.5 group min-w-0 text-left"
             >
-              <TrustLogo className="w-9 h-9 sm:w-10 sm:h-10" showText={false} lang={lang} />
-              <div className="text-left">
-                <span className="font-black text-white text-sm sm:text-base tracking-tight font-hindi-heading block leading-tight">
+              <TrustLogo className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" showText={false} lang={lang} />
+              <div className="min-w-0">
+                <span className="font-black text-white text-xs sm:text-base tracking-tight font-hindi-heading block leading-tight truncate max-w-[170px] sm:max-w-none">
                   {lang === 'hi' ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान' : 'Rashtriya Sanatan Sanskar Seva Sansthan'}
                 </span>
-                <span className="text-[10px] text-[#E9B44C] font-bold uppercase tracking-wider">
+                <span className="text-[9px] sm:text-[10px] text-[#E9B44C] font-bold uppercase tracking-wider block truncate max-w-[170px] sm:max-w-none">
                   {lang === 'hi' ? 'केन्द्रीय प्रशासनिक नियंत्रण कक्ष (ADMIN PANEL)' : 'CENTRAL ADMINISTRATIVE CONTROL PANEL'}
                 </span>
               </div>
             </button>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {/* Language Switcher */}
             <button
               type="button"
               onClick={toggleLanguage}
-              className="p-2 sm:px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+              className="p-2 sm:px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all min-h-[38px]"
               title="Toggle Hindi / English"
             >
               <Globe className="w-4 h-4 text-[#E9B44C]" />
@@ -472,7 +472,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               type="button"
               onClick={loadAllAdminData}
               disabled={loading}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all min-h-[38px]"
               title="Refresh Data"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -482,7 +482,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={onNavigateHome}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 min-h-[38px]"
             >
               <Home className="w-4 h-4" />
               <span className="hidden sm:inline">{lang === 'hi' ? 'वेबसाइट देखें' : 'View Site'}</span>
@@ -491,7 +491,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={logout}
-              className="p-2 sm:px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5"
+              className="p-2 sm:px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 min-h-[38px]"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">{lang === 'hi' ? 'लॉगआउट' : 'Logout'}</span>
@@ -501,10 +501,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       </header>
 
       {/* Main Body */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full">
         
         {/* Navigation Tabs */}
-        <div className="flex border-b border-[#E9B44C]/40 mb-8 overflow-x-auto gap-2">
+        <div className="flex border-b border-[#E9B44C]/40 mb-6 sm:mb-8 overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 pb-1">
           {[
             { id: 'overview', label: lang === 'hi' ? 'सांख्यिकी अवलोकन (Overview)' : 'Overview & Metrics', icon: ShieldCheck },
             { id: 'applications', label: `${lang === 'hi' ? 'सदस्यता आवेदन' : 'Applications'} (${applications.length})`, icon: Users },
@@ -520,9 +520,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 flex items-center gap-2 transition-all ${
+                className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
                   active
-                    ? 'border-primary text-primary bg-[#FFF8EF]'
+                    ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-lg'
                     : 'border-transparent text-[#666666] hover:text-primary'
                 }`}
               >
@@ -546,13 +546,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </div>
 
             {/* Stat Cards Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'कुल सदस्यता आवेदन' : 'Total Applications'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-[#382719] font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-[#382719] font-mono mt-1 block">
                   {stats.totalApplications}
                 </span>
                 <span className="text-[11px] text-amber-700 font-bold block mt-1">
@@ -560,11 +560,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'स्वीकृत सक्रिय सदस्य' : 'Approved Members'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-trust-green font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-trust-green font-mono mt-1 block">
                   {stats.approvedMembers}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
@@ -572,11 +572,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'लंबित भुगतान सत्यापन' : 'Pending UTR Verifications'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
                   {stats.pendingPayments}
                 </span>
                 <span className="text-[11px] text-primary font-bold block mt-1">
@@ -584,37 +584,37 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'सत्यापित सदस्यता शुल्क' : 'Verified Membership Fees'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-primary font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-primary font-mono mt-1 block">
                   ₹ {stats.verifiedMembershipFees.toLocaleString('en-IN')}
                 </span>
-                <span className="text-[11px] text-[#666666] font-semibold block mt-1">
+                <span className="text-[11px] text-[#666666] font-semibold block mt-1 truncate">
                   {lang === 'hi' 
                     ? `समर्पण: ₹ ${stats.verifiedVoluntaryContributions.toLocaleString('en-IN')}` 
                     : `Donations: ₹ ${stats.verifiedVoluntaryContributions.toLocaleString('en-IN')}`}
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'लंबित सहायता अनुरोध' : 'Pending Assistance'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-red-700 font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-red-700 font-mono mt-1 block">
                   {stats.pendingAssistanceRequests}
                 </span>
-                <span className="text-[11px] text-[#666666] font-semibold block mt-1">
+                <span className="text-[11px] text-[#666666] font-semibold block mt-1 truncate">
                   {lang === 'hi' ? 'चिकित्सा / विवाह / राशन' : 'Medical / Relief / Education'}
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'पंजीकृत स्वयंसेवक' : 'Registered Volunteers'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-secondary font-mono mt-1 block">
                   {stats.volunteerApplicationsCount}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
@@ -622,23 +622,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'अस्वीकृत आवेदन' : 'Rejected Applications'}
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-gray-500 font-mono mt-1 block">
+                <span className="text-xl sm:text-3xl font-black text-gray-500 font-mono mt-1 block">
                   {stats.rejectedApplications}
                 </span>
-                <span className="text-[11px] text-[#666666] font-semibold block mt-1">
-                  {lang === 'hi' ? 'कारण सहित रिकॉर्ड सुरक्षित' : 'Logged with legal reasons'}
+                <span className="text-[11px] text-[#666666] font-semibold block mt-1 truncate">
+                  {lang === 'hi' ? 'कारण सहित सुरक्षित' : 'Logged with legal reasons'}
                 </span>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E9B44C]/35 shadow-card">
                 <span className="text-[10px] text-[#666666] uppercase font-bold block">
                   {lang === 'hi' ? 'फायरबेस सुरक्षा स्थिति' : 'Database Status'}
                 </span>
-                <span className="text-base font-black text-trust-green mt-1 block">
+                <span className="text-sm sm:text-base font-black text-trust-green mt-1 block">
                   {lang === 'hi' ? 'सुरक्षित एवं सक्रिय' : 'Active & Synced'}
                 </span>
                 <span className="text-[11px] text-[#666666] font-semibold block mt-1">
@@ -649,29 +649,29 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </div>
 
             {/* Quick Actions */}
-            <div className="p-6 rounded-3xl bg-[#FFF8EF] border border-[#E9B44C]/40 space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#FFF8EF] border border-[#E9B44C]/40 space-y-3 sm:space-y-4">
               <h3 className="font-extrabold text-sm sm:text-base text-[#382719] font-hindi-heading">
                 {lang === 'hi' ? 'व्यवस्थापक त्वरित कार्य' : 'Quick Admin Actions'}
               </h3>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => { setActiveTab('applications'); setAppStatusFilter('pending'); }}
-                  className="px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs shadow-sm hover:bg-secondary transition-all"
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs shadow-sm hover:bg-secondary transition-all flex items-center justify-center"
                 >
                   {lang === 'hi' ? `लंबित सदस्यता आवेदन जांचें (${stats.pendingApplications})` : `Review Pending Applications (${stats.pendingApplications})`}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setActiveTab('payments'); setPayStatusFilter('pending_verification'); }}
-                  className="px-4 py-2.5 rounded-xl bg-secondary text-white font-bold text-xs shadow-sm hover:bg-primary transition-all"
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl bg-secondary text-white font-bold text-xs shadow-sm hover:bg-primary transition-all flex items-center justify-center"
                 >
                   {lang === 'hi' ? `लंबित UTR भुगतान सत्यापित करें (${stats.pendingPayments})` : `Verify Pending Payments (${stats.pendingPayments})`}
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('announcements')}
-                  className="px-4 py-2.5 rounded-xl bg-white text-[#382719] border border-[#E9B44C] font-bold text-xs hover:bg-[#FFF8EF] transition-all"
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white text-[#382719] border border-[#E9B44C] font-bold text-xs hover:bg-[#FFF8EF] transition-all flex items-center justify-center"
                 >
                   {lang === 'hi' ? '+ नई ट्रस्ट सूचना प्रकाशित करें' : '+ Publish New Notice'}
                 </button>
@@ -1172,22 +1172,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
       {/* Detail & Rejection Modal */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-[#E9B44C] space-y-4 text-left">
-            <div className="flex items-center justify-between border-b pb-2">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl border border-[#E9B44C] space-y-4 text-left my-auto sm:my-8 max-h-[94vh] flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-2 flex-shrink-0">
               <h3 className="font-black text-base text-[#382719] font-hindi-heading">
                 {lang === 'hi' ? 'आवेदन पूर्ण विवरण' : 'Full Application Details'}
               </h3>
               <button
                 type="button"
                 onClick={() => setSelectedApp(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-2 text-xs">
+            <div className="space-y-2 text-xs flex-1 overflow-y-auto">
               <p><strong>{lang === 'hi' ? 'संदर्भ:' : 'Reference:'}</strong> <span className="font-mono text-primary font-bold">{selectedApp.applicationRef}</span></p>
               <p><strong>{lang === 'hi' ? 'नाम:' : 'Name:'}</strong> {selectedApp.fullName}</p>
               <p><strong>{lang === 'hi' ? 'पिता / पति:' : 'Father / Husband:'}</strong> {selectedApp.fatherHusbandName}</p>
@@ -1200,7 +1201,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </div>
 
             {rejectingAppId === selectedApp.id ? (
-              <div className="pt-3 border-t space-y-2">
+              <div className="pt-3 border-t space-y-2 flex-shrink-0">
                 <label className="block text-xs font-bold text-red-700">
                   {lang === 'hi' ? 'अस्वीकृति का वैधानिक कारण:' : 'Mandatory Rejection Reason:'}
                 </label>
@@ -1209,31 +1210,31 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder={lang === 'hi' ? "उदा. अपूर्ण पता अथवा नियमों के अनुसार पात्रता नहीं पाई गई..." : "e.g. Incomplete address or eligibility criteria..."}
-                  className="w-full p-2 border rounded-xl text-xs"
+                  className="w-full p-2.5 border rounded-xl text-xs"
                 />
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setRejectingAppId(null)}
-                    className="px-3 py-1.5 rounded-lg border text-xs"
+                    className="min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-bold"
                   >
                     {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRejectApp(selectedApp.id)}
-                    className="px-4 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs"
+                    className="min-h-[40px] px-4 py-1.5 rounded-xl bg-red-600 text-white font-bold text-xs"
                   >
                     {lang === 'hi' ? 'अस्वीकार करें' : 'Confirm Reject'}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="pt-3 border-t flex justify-end gap-2">
+              <div className="pt-3 border-t flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setSelectedApp(null)}
-                  className="px-4 py-1.5 rounded-lg border text-xs"
+                  className="min-h-[40px] px-4 py-1.5 rounded-xl border text-xs font-bold"
                 >
                   {lang === 'hi' ? 'बंद करें' : 'Close'}
                 </button>
@@ -1242,14 +1243,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <button
                       type="button"
                       onClick={() => setRejectingAppId(selectedApp.id)}
-                      className="px-4 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs"
+                      className="min-h-[40px] px-4 py-1.5 rounded-xl bg-red-600 text-white font-bold text-xs"
                     >
                       {lang === 'hi' ? 'अस्वीकार करें' : 'Reject'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleApproveApp(selectedApp.id)}
-                      className="px-5 py-1.5 rounded-lg bg-trust-green text-white font-bold text-xs shadow-sm"
+                      className="min-h-[40px] px-5 py-1.5 rounded-xl bg-trust-green text-white font-bold text-xs shadow-sm"
                     >
                       {lang === 'hi' ? 'अनुमोदन करें' : 'Approve'}
                     </button>

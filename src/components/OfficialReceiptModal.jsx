@@ -26,22 +26,22 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     : new Date().toLocaleDateString('en-IN');
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="relative bg-white w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Modal Top Bar (Hidden during print) */}
-        <div className="bg-primary text-white px-6 py-3.5 flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-trust-badge" />
-            <span className="font-extrabold text-sm font-hindi-heading">
+        <div className="bg-primary text-white px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between print:hidden flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 className="w-5 h-5 text-trust-badge flex-shrink-0" />
+            <span className="font-extrabold text-xs sm:text-sm font-hindi-heading truncate">
               {lang === 'hi' ? 'आधिकारिक सत्यापित दान रसीद' : 'Official Verified Donation Receipt'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-primary hover:bg-[#FFF8EF] font-bold text-xs shadow-sm transition-all"
+              className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-primary hover:bg-[#FFF8EF] font-bold text-xs shadow-sm transition-all"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{lang === 'hi' ? 'प्रिंट रसीद' : 'Print Receipt'}</span>
@@ -50,6 +50,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -57,8 +58,8 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
         </div>
 
         {/* Printable Receipt Paper */}
-        <div ref={printAreaRef} className="p-6 sm:p-8 text-left bg-[#FFFDF9] print:p-4 print:bg-white">
-          <div className="border-4 border-double border-[#E9B44C] rounded-2xl p-6 relative overflow-hidden bg-white shadow-sm">
+        <div ref={printAreaRef} className="p-3 sm:p-8 text-left bg-[#FFFDF9] print:p-4 print:bg-white overflow-y-auto flex-1">
+          <div className="border-2 sm:border-4 border-double border-[#E9B44C] rounded-xl sm:rounded-2xl p-3.5 sm:p-6 relative overflow-hidden bg-white shadow-sm">
             
             {/* Watermark Om */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-5">
@@ -102,43 +103,43 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             {/* Receipt Body Details */}
             <div className="py-4 space-y-3 text-xs sm:text-sm text-[#382719] relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 border-b border-dashed border-gray-200 pb-2">
-                <span className="text-[#666666] font-medium w-44 flex-shrink-0">भुगतानकर्ता का नाम / Received From:</span>
+                <span className="text-[#666666] font-medium w-full sm:w-44 flex-shrink-0">भुगतानकर्ता का नाम / Received From:</span>
                 <span className="font-extrabold text-[#382719]">{receipt.payerName}</span>
               </div>
 
               {receipt.payerMobile && (
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 border-b border-dashed border-gray-200 pb-2">
-                  <span className="text-[#666666] font-medium w-44 flex-shrink-0">मोबाइल नंबर / Mobile:</span>
+                  <span className="text-[#666666] font-medium w-full sm:w-44 flex-shrink-0">मोबाइल नंबर / Mobile:</span>
                   <span className="font-mono font-bold text-[#382719]">{receipt.payerMobile}</span>
                 </div>
               )}
 
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 border-b border-dashed border-gray-200 pb-2">
-                <span className="text-[#666666] font-medium w-44 flex-shrink-0">सहयोग का उद्देश्य / Purpose:</span>
+                <span className="text-[#666666] font-medium w-full sm:w-44 flex-shrink-0">सहयोग का उद्देश्य / Purpose:</span>
                 <span className="font-bold text-secondary">{getPurposeLabel(receipt.purpose)}</span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 border-b border-dashed border-gray-200 pb-2">
-                <span className="text-[#666666] font-medium w-44 flex-shrink-0">भुगतान माध्यम / Method:</span>
+                <span className="text-[#666666] font-medium w-full sm:w-44 flex-shrink-0">भुगतान माध्यम / Method:</span>
                 <span className="font-medium text-[#454545] uppercase">{receipt.paymentMethod || 'UPI / Bank Transfer'}</span>
               </div>
 
               {receipt.utrNumber && (
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 border-b border-dashed border-gray-200 pb-2">
-                  <span className="text-[#666666] font-medium w-44 flex-shrink-0">बैंक संदर्भ / UTR No:</span>
-                  <span className="font-mono font-bold text-[#382719]">{receipt.utrNumber}</span>
+                  <span className="text-[#666666] font-medium w-full sm:w-44 flex-shrink-0">बैंक संदर्भ / UTR No:</span>
+                  <span className="font-mono font-bold text-[#382719] break-all">{receipt.utrNumber}</span>
                 </div>
               )}
 
               {/* Amount Highlight Box */}
-              <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/60 flex items-center justify-between mt-2">
+              <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
                 <div>
                   <span className="text-[10px] text-[#666666] uppercase font-bold block">सत्यापित प्राप्त राशि (Verified Amount)</span>
                   <span className="font-black text-xl text-primary font-mono">
                     ₹ {Number(receipt.amount).toLocaleString('en-IN')}/-
                   </span>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-trust-green bg-trust-badge/60 px-2.5 py-1 rounded-full border border-trust-green/30">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>सत्यापित भुगतान (Verified)</span>
@@ -148,7 +149,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             </div>
 
             {/* Legal Disclaimers & Signatures */}
-            <div className="mt-4 pt-4 border-t-2 border-[#E9B44C]/40 grid grid-cols-2 gap-4 items-end relative z-10 text-[10px] text-[#666666]">
+            <div className="mt-4 pt-4 border-t-2 border-[#E9B44C]/40 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end relative z-10 text-[10px] text-[#666666]">
               <div className="space-y-1">
                 <p className="font-bold text-[#382719]">{lang === 'hi' ? 'वैधानिक सूचना:' : 'Official Notice:'}</p>
                 <p>
@@ -163,7 +164,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
                 </p>
               </div>
 
-              <div className="text-right space-y-1">
+              <div className="text-left sm:text-right space-y-1">
                 <div className="inline-block p-1 border border-primary/30 rounded bg-white text-[9px] font-mono text-primary font-bold mb-1">
                   OFFICIAL TRUST STAMP
                 </div>

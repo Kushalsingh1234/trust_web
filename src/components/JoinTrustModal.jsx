@@ -135,29 +135,29 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="relative bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Modal Header */}
-        <div className="bg-primary text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-secondary text-white font-black flex items-center justify-center text-sm shadow-sm">
+        <div className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary text-white font-black flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
               ॐ
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black font-hindi-heading leading-tight">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-xl font-black font-hindi-heading leading-tight truncate">
                 {lang === 'hi' ? 'ट्रस्ट सदस्यता आवेदन' : 'Trust Membership Application'}
               </h2>
-              <p className="text-xs text-white/80">
+              <p className="text-[10px] sm:text-xs text-white/80 truncate">
                 {lang === 'hi' ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (गोरखपुर)' : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust)'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               type="button"
               onClick={toggleLanguage}
-              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1 transition-all"
+              className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all"
               title="Toggle Language"
             >
               <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
@@ -166,7 +166,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
             <button
               type="button"
               onClick={resetForm}
-              className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -174,7 +174,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 sm:p-8 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-8 overflow-y-auto flex-1">
           {submittedRef ? (
             /* Success State */
             <div className="text-center py-6 space-y-6">

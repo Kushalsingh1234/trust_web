@@ -36,15 +36,15 @@ export const Impact = () => {
   const { lang, t } = useLanguage();
 
   return (
-    <section className="py-16 lg:py-20 bg-gradient-to-br from-[#382719] via-[#302319] to-[#241911] text-white relative overflow-hidden border-y border-[#E9B44C]/40 shadow-card">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-[#382719] via-[#302319] to-[#241911] text-white relative overflow-hidden border-y border-[#E9B44C]/40 shadow-card">
       {/* Decorative Golden Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-[#E87516]/15 blur-3xl pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-black uppercase tracking-wider text-white bg-primary px-4 py-1 rounded-full shadow-saffron">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+          <span className="text-xs font-black uppercase tracking-wider text-white bg-primary px-4 py-1 rounded-full shadow-saffron inline-block">
             {t.impact.tag}
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mt-3.5 font-hindi-heading text-accent">
@@ -56,23 +56,23 @@ export const Impact = () => {
         </div>
 
         {/* Counter Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {t.impact.stats.map((stat, idx) => (
             <div
               key={idx}
-              className="bg-white/10 backdrop-blur-md border border-[#E9B44C]/30 rounded-3xl p-6 text-center hover:bg-white/15 transition-all duration-300 group shadow-lg"
+              className="bg-white/10 backdrop-blur-md border border-[#E9B44C]/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-center hover:bg-white/15 transition-all duration-300 group shadow-lg"
             >
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-accent tracking-tight mb-2 drop-shadow">
+              <div className="text-2xl sm:text-4xl lg:text-5xl font-black text-accent tracking-tight mb-1 sm:mb-2 drop-shadow">
                 <AnimatedCounter
                   target={stat.value}
                   prefix={stat.prefix || ''}
                   suffix={stat.suffix || ''}
                 />
               </div>
-              <h3 className="text-sm sm:text-base font-extrabold text-white mb-1 leading-snug">
+              <h3 className="text-xs sm:text-base font-extrabold text-white mb-0.5 sm:mb-1 leading-snug">
                 {stat.label}
               </h3>
-              <p className="text-[11px] sm:text-xs text-gray-300 font-medium">
+              <p className="text-[10px] sm:text-xs text-gray-300 font-medium">
                 {stat.sub}
               </p>
             </div>
@@ -80,7 +80,7 @@ export const Impact = () => {
         </div>
 
         {/* Verification Footer Note */}
-        <div className="mt-10 text-center text-xs text-accent/90 font-medium">
+        <div className="mt-8 sm:mt-10 text-center text-[11px] sm:text-xs text-accent/90 font-medium">
           <span>{lang === 'hi' 
             ? '★ आँकड़े संस्थान के प्रचार-प्रसार पत्रक व जमीनी शिविरों के अनुसार प्रस्तुत हैं।' 
             : '★ Metrics documented from trust manifestos and on-ground worker facilitation camps.'}</span>

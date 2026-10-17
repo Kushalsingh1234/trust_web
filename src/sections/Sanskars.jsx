@@ -24,11 +24,11 @@ export const Sanskars = () => {
   });
 
   return (
-    <section id="sanskars" className="py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
+    <section id="sanskars" className="py-12 sm:py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
             {t.sanskars.tag}
           </span>
@@ -41,13 +41,13 @@ export const Sanskars = () => {
           <div className="w-20 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary mx-auto mt-4 rounded-full"></div>
         </div>
 
-        {/* Phase Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+        {/* Phase Filter Tabs (Swipeable on Mobile) */}
+        <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar pb-2 sm:flex-wrap sm:justify-center sm:pb-0 px-1">
           {phases.map(phase => (
             <button
               key={phase.id}
               onClick={() => setSelectedPhase(phase.id)}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shadow-sm ${
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all shadow-sm ${
                 selectedPhase === phase.id
                   ? 'bg-primary text-white shadow-saffron font-black'
                   : 'bg-white text-[#454545] hover:bg-[#FFF8EF] hover:text-primary border border-[#E9B44C]/40 font-bold'
@@ -59,18 +59,18 @@ export const Sanskars = () => {
         </div>
 
         {/* 16 Sanskars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {filteredItems.map(item => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 border border-[#E9B44C]/35 hover:border-primary flex flex-col justify-between group hover:-translate-y-1 text-left relative overflow-hidden"
+              className="bg-white rounded-2xl p-4 sm:p-5 shadow-card hover:shadow-card-hover transition-all duration-300 border border-[#E9B44C]/35 hover:border-primary flex flex-col justify-between group hover:-translate-y-1 text-left relative overflow-hidden"
             >
               {/* Top Accent Strip */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="w-8 h-8 rounded-full bg-[#FFF8EF] text-primary font-black text-xs flex items-center justify-center border border-[#E9B44C]/40 shadow-sm">
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FFF8EF] text-primary font-black text-xs flex items-center justify-center border border-[#E9B44C]/40 shadow-sm flex-shrink-0">
                     {item.id}
                   </span>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">
@@ -78,7 +78,7 @@ export const Sanskars = () => {
                   </span>
                 </div>
 
-                <h3 className="text-base font-black text-[#382719] mb-2 leading-snug group-hover:text-primary transition-colors font-hindi-heading">
+                <h3 className="text-sm sm:text-base font-black text-[#382719] mb-1.5 sm:mb-2 leading-snug group-hover:text-primary transition-colors font-hindi-heading">
                   {lang === 'hi' ? item.name : `${item.name} (${item.hiName})`}
                 </h3>
 
@@ -96,11 +96,11 @@ export const Sanskars = () => {
         </div>
 
         {/* Benefits & Call to Action Box from flyer */}
-        <div className="mt-12 bg-white rounded-3xl p-6 sm:p-8 border border-[#E9B44C]/50 shadow-card text-left">
+        <div className="mt-10 sm:mt-12 bg-white rounded-3xl p-5 sm:p-8 border border-[#E9B44C]/50 shadow-card text-left">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div className="lg:col-span-8 space-y-2">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-accent" />
+                <Sparkles className="w-5 h-5 text-accent flex-shrink-0" />
                 <h4 className="text-base sm:text-lg font-black text-[#382719] font-hindi-heading">
                   {t.sanskars.benefitTitle}
                 </h4>
@@ -113,18 +113,18 @@ export const Sanskars = () => {
               </p>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 justify-end">
+            <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-2.5 sm:gap-3 justify-end">
               <a
                 href="#contact"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-xs sm:text-sm shadow-saffron transition-transform active:scale-95 border border-primary"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-xs sm:text-sm shadow-saffron transition-transform active:scale-95 border border-primary text-center"
               >
                 <span>{t.sanskars.ctaBtn}</span>
               </a>
               <a
                 href="tel:+919794590044"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#E9B44C]/40 bg-[#FFF8EF] hover:bg-white text-[#382719] font-bold text-xs"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#E9B44C]/40 bg-[#FFF8EF] hover:bg-white text-[#382719] font-bold text-xs text-center"
               >
-                <Phone className="w-3.5 h-3.5 text-primary" />
+                <Phone className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                 <span>9794590044 / 9026734887</span>
               </a>
             </div>

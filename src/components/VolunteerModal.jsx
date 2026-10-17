@@ -85,25 +85,25 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="relative bg-white w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Header */}
-        <div className="bg-primary text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-sm shadow-sm">
-              <Users className="w-5 h-5" />
+        <div className="bg-primary text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black font-hindi-heading">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-black font-hindi-heading truncate">
                 {lang === 'hi' ? 'सनातन स्वयंसेवक / कार्यकर्ता आवेदन' : 'Sanatan Volunteer Application'}
               </h2>
-              <p className="text-xs text-white/80">
+              <p className="text-[10px] sm:text-xs text-white/80 truncate">
                 {lang === 'hi' ? 'धर्म, संस्कृति व समाज सेवा में अपना समय समर्पित करें' : 'Contribute your time for Vedic culture & social welfare'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               type="button"
               onClick={toggleLanguage}
@@ -124,7 +124,7 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[80vh] overflow-y-auto text-left">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 text-left">
           {submitted ? (
             <div className="text-center py-6 space-y-4">
               <div className="w-16 h-16 rounded-full bg-trust-green/10 text-trust-green mx-auto flex items-center justify-center">

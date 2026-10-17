@@ -146,10 +146,10 @@ export const MemberDashboard = ({ onNavigateHome }) => {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full">
         
         {/* Welcome Strip */}
-        <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary text-white">
@@ -173,12 +173,12 @@ export const MemberDashboard = ({ onNavigateHome }) => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
             {!latestApp && (
               <button
                 type="button"
                 onClick={() => setJoinModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>{lang === 'hi' ? 'सदस्यता आवेदन जमा करें' : 'Apply for Membership'}</span>
@@ -188,7 +188,7 @@ export const MemberDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={() => setPaymentModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
+              className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
             >
               <CreditCard className="w-4 h-4" />
               <span>{lang === 'hi' ? 'शुल्क / समर्पण UTR दर्ज करें' : 'Submit Payment UTR'}</span>
@@ -197,13 +197,13 @@ export const MemberDashboard = ({ onNavigateHome }) => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-[#E9B44C]/30 mb-8 overflow-x-auto gap-2">
+        <div className="flex border-b border-[#E9B44C]/30 mb-6 sm:mb-8 overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 pb-1">
           <button
             type="button"
             onClick={() => setActiveTab('overview')}
-            className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all ${
+            className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center justify-center ${
               activeTab === 'overview'
-                ? 'border-primary text-primary bg-[#FFF8EF]/50'
+                ? 'border-primary text-primary bg-[#FFF8EF]/50 rounded-t-lg'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
@@ -214,9 +214,9 @@ export const MemberDashboard = ({ onNavigateHome }) => {
             <button
               type="button"
               onClick={() => setActiveTab('card')}
-              className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'card'
-                  ? 'border-primary text-primary bg-[#FFF8EF]/50'
+                  ? 'border-primary text-primary bg-[#FFF8EF]/50 rounded-t-lg'
                   : 'border-transparent text-[#666666] hover:text-primary'
               }`}
             >
@@ -228,9 +228,9 @@ export const MemberDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => setActiveTab('payments')}
-            className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
+            className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'payments'
-                ? 'border-primary text-primary bg-[#FFF8EF]/50'
+                ? 'border-primary text-primary bg-[#FFF8EF]/50 rounded-t-lg'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
@@ -246,9 +246,9 @@ export const MemberDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => setActiveTab('assistance')}
-            className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
+            className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'assistance'
-                ? 'border-primary text-primary bg-[#FFF8EF]/50'
+                ? 'border-primary text-primary bg-[#FFF8EF]/50 rounded-t-lg'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
@@ -259,9 +259,9 @@ export const MemberDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => setActiveTab('announcements')}
-            className={`py-3 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all ${
+            className={`min-h-[44px] shrink-0 py-2.5 sm:py-3 px-3.5 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center justify-center ${
               activeTab === 'announcements'
-                ? 'border-primary text-primary bg-[#FFF8EF]/50'
+                ? 'border-primary text-primary bg-[#FFF8EF]/50 rounded-t-lg'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
@@ -455,7 +455,7 @@ export const MemberDashboard = ({ onNavigateHome }) => {
         {/* Tab 3: Payments & Official Receipts */}
         {activeTab === 'payments' && (
           <div className="space-y-6 text-left">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-base sm:text-lg font-black text-[#382719] font-hindi-heading">
                   {lang === 'hi' ? 'आपके द्वारा प्रस्तुत भुगतान एवं रसीदें' : 'Submitted Payments & Receipts'}
@@ -467,7 +467,7 @@ export const MemberDashboard = ({ onNavigateHome }) => {
               <button
                 type="button"
                 onClick={() => setPaymentModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
+                className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>{lang === 'hi' ? 'नया UTR दर्ज करें' : 'Submit UTR'}</span>
