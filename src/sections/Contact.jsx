@@ -129,7 +129,7 @@ export const Contact = () => {
             {/* Google Map Placeholder Card */}
             <div className="p-4 rounded-3xl bg-[#FFF8EF] border border-[#E9B44C]/35 shadow-card text-center">
               <div className="aspect-[16/7] rounded-2xl bg-white border border-[#E9B44C]/30 flex flex-col items-center justify-center p-4 text-[#454545]">
-                <MapPin className="w-7 h-7 sm:w-8 sm:h-8 text-primary mb-1 animate-bounce" />
+                <MapPin className="w-7 h-7 sm:w-8 sm:h-8 text-primary mb-1 animate-none md:animate-bounce" />
                 <span className="font-black text-xs sm:text-sm text-[#382719]">
                   {t.contact.mapPlaceholder}
                 </span>

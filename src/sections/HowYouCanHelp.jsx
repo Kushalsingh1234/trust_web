@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { Heart, UserPlus, Users, Share2, ArrowRight } from 'lucide-react';
 
@@ -52,13 +53,13 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
-              <a
-                href="#donate"
+              <Link
+                to="/donate"
                 className="inline-flex items-center gap-1.5 text-xs font-black text-secondary hover:text-primary transition-colors"
               >
                 <span>{t.howToHelp.cards[0].action}</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
             </div>
           </div>
 

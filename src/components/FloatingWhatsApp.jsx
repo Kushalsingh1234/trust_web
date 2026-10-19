@@ -21,7 +21,7 @@ export const FloatingWhatsApp = () => {
     >
       <div className="relative">
         <MessageCircle className="w-6 h-6 fill-white text-[#25D366]" />
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-300 rounded-full animate-ping"></span>
+        <span className="hidden md:inline-block absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-300 rounded-full md:animate-ping"></span>
         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-300 rounded-full"></span>
       </div>
       <span className="hidden sm:inline font-bold text-xs tracking-wide">

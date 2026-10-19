@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import TrustLogo from '../components/TrustLogo';
-import { Globe, Heart, Phone, MapPin, ArrowUp } from 'lucide-react';
+import { Globe, Heart, ArrowUp } from 'lucide-react';
 
 export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, onNavigateAdmin }) => {
   const { lang, toggleLanguage, t } = useLanguage();
@@ -19,9 +20,9 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
           
           {/* Col 1: Trust Identity & Motto */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-[#FFF8EF]/10 p-3 rounded-2xl inline-block">
+            <Link to="/" className="bg-[#FFF8EF]/10 p-3 rounded-2xl inline-block hover:bg-[#FFF8EF]/15 transition-colors">
               <TrustLogo className="w-12 h-12" showText={false} lang={lang} />
-            </div>
+            </Link>
             <div>
               <h3 className="font-extrabold text-base sm:text-lg text-white font-hindi-heading">
                 {t.brand.name}
@@ -32,18 +33,47 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
             </p>
           </div>
 
-          {/* Col 2: Quick Links */}
+          {/* Col 2: Quick Links to Dedicated Pages */}
           <div className="lg:col-span-2 space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-[#E9B44C]">
               {t.footer.quickLinks}
             </h4>
             <ul className="space-y-2 text-xs text-[#FFF8EF]/80">
-              <li><a href="#about" className="hover:text-[#E9B44C] transition-colors py-1 block">{t.nav.about}</a></li>
-              <li><a href="#sanskars" className="hover:text-[#E9B44C] transition-colors py-1 block">{t.nav.sanskars}</a></li>
-              <li><a href="#programs" className="hover:text-[#E9B44C] transition-colors py-1 block">{t.nav.programs}</a></li>
-              <li><a href="#news" className="hover:text-[#E9B44C] transition-colors py-1 block">{lang === 'hi' ? 'सूचनाएं एवं संदेश' : 'Announcements'}</a></li>
-              <li><a href="#transparency" className="hover:text-[#E9B44C] transition-colors py-1 block">{t.nav.transparency}</a></li>
-              <li><a href="#contact" className="hover:text-[#E9B44C] transition-colors py-1 block">{t.nav.contact}</a></li>
+              <li>
+                <Link to="/about" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.about}
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.sanskars}
+                </Link>
+              </li>
+              <li>
+                <Link to="/programs" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.programs}
+                </Link>
+              </li>
+              <li>
+                <Link to="/events" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {lang === 'hi' ? 'सूचनाएं एवं समाचार' : 'News & Events'}
+                </Link>
+              </li>
+              <li>
+                <Link to="/gallery" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.gallery}
+                </Link>
+              </li>
+              <li>
+                <Link to="/transparency" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.transparency}
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.contact}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -54,38 +84,35 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
             </h4>
             <div className="space-y-2.5">
               <div className="flex flex-wrap gap-2">
-                <a
-                  href="#donate"
+                <Link
+                  to="/donate"
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
                 >
                   <Heart className="w-3.5 h-3.5 fill-white text-white flex-shrink-0" />
                   <span>{t.nav.donate}</span>
-                </a>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={onOpenJoinModal}
+                <Link
+                  to="/membership"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
                 >
                   <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
-                </button>
+                </Link>
               </div>
 
               <div className="space-y-2 pt-1 text-xs text-[#FFF8EF]/80">
-                <button
-                  type="button"
-                  onClick={onNavigateMember}
+                <Link
+                  to="/member"
                   className="block hover:text-[#E9B44C] transition-colors text-left py-1"
                 >
                   → {lang === 'hi' ? 'सदस्य डैशबोर्ड एवं पहचान पत्र' : 'Member Dashboard & ID'}
-                </button>
-                <button
-                  type="button"
-                  onClick={onNavigateAdmin}
+                </Link>
+                <Link
+                  to="/admin"
                   className="block text-[#E9B44C] hover:underline font-bold text-left py-1"
                 >
                   🔒 {lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin)' : 'Admin Dashboard'}
-                </button>
+                </Link>
                 <button
                   type="button"
                   onClick={onOpenReceiptModal}
@@ -113,7 +140,7 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
               {t.footer.regOffice}
             </p>
             <p className="text-[11px] text-[#E9B44C] font-mono break-all">
-              [ADD TRUST REGISTRATION NO.]
+              Gorakhpur, Uttar Pradesh
             </p>
             <div className="pt-2">
               <button

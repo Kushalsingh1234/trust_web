@@ -1,87 +1,58 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import TrustLogo from '../components/TrustLogo';
 import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart, Users, BookOpen, Sparkles, Phone } from 'lucide-react';
 
 export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
 
   const visualCardContent = (
-    <div className="relative mx-auto max-w-md lg:max-w-none">
-      {/* Outer Golden decorative aura */}
-      <div className="absolute -inset-2 bg-gradient-to-tr from-accent/50 via-primary/30 to-secondary/30 rounded-3xl blur-md opacity-60"></div>
-      
-      {/* Main Card with Real Event Collage */}
-      <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-          <img
-            src="/images/gallery/shramik_camp_collage.jpg"
-            alt="Shramik Jagrookta Abhiyan Camp Gorakhpur"
-            className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
+    <div className="relative flex flex-col items-center justify-center text-center select-none py-2 sm:py-6 lg:py-8">
+      {/* Concentric Logo Centerpiece */}
+      <div className="relative flex items-center justify-center">
+        {/* Ambient Celestial Glowing Aura - Exact Center of Logo (Pulse only on desktop) */}
+        <div className="absolute w-[125%] h-[125%] rounded-full bg-gradient-to-tr from-[#E87516]/20 via-[#E9B44C]/25 to-amber-200/15 blur-3xl pointer-events-none -z-10 opacity-75 md:opacity-100 md:animate-pulse"></div>
+
+        {/* Subtle Concentric Dashed Ring - Desktop Only Rotation */}
+        <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none -z-10">
+          <div className="w-[114%] h-[114%] rounded-full border border-dashed border-[#E9B44C]/35 md:animate-[spin_80s_linear_infinite_reverse]"></div>
+        </div>
+
+        {/* The Big Freestanding Emblem */}
+        <div className="relative group cursor-pointer transform md:hover:scale-105 transition-all duration-500">
+          <div className="hidden md:block absolute -inset-4 bg-gradient-to-r from-primary/25 to-accent/25 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          <TrustLogo 
+            className="w-56 h-56 sm:w-64 sm:h-64 lg:w-80 lg:h-80 drop-shadow-[0_16px_36px_rgba(200,93,19,0.28)]" 
+            showText={false} 
+            animated={true}
+            hasBackground={false}
+            lang={lang} 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"></div>
-          
-          {/* Docked Badge: Bank of India (Contained, no overlap) */}
-          <div className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-md border border-[#E9B44C]/40 text-left">
-            <span className="text-[8px] text-[#666666] block uppercase font-bold leading-tight">
-              {lang === 'hi' ? 'अधिकृत बैंक' : 'Official Bank'}
-            </span>
-            <span className="text-[11px] sm:text-xs font-black text-primary leading-tight">
-              Bank of India
-            </span>
-          </div>
-
-          {/* Docked Badge: 16 Sanskars (Contained, no overlap) */}
-          <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-md border border-[#E9B44C]/40 flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-md bg-primary text-white flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
-              १६
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] sm:text-[11px] font-extrabold text-[#382719] uppercase tracking-tight leading-tight">
-                {lang === 'hi' ? 'षोडश संस्कार' : '16 Vedic Sanskars'}
-              </p>
-            </div>
-          </div>
-
-          {/* Floating Caption on Image */}
-          <div className="absolute bottom-3 left-3 right-3 text-white text-left z-10">
-            <span className="bg-secondary text-gray-950 font-black text-[9px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">
-              {lang === 'hi' ? 'जमीनी कार्यक्रम' : 'Ground Action'}
-            </span>
-            <h3 className="text-xs sm:text-sm md:text-base font-extrabold mt-1 line-clamp-1 text-white drop-shadow-md">
-              {lang === 'hi' 
-                ? 'श्रमिक जागरूकता अभियान • आजाद चौक, गोरखपुर' 
-                : 'Labor Welfare Awareness Campaign, Gorakhpur'}
-            </h3>
-          </div>
         </div>
+      </div>
 
-        {/* Card Sub-strip with Manager info & membership */}
-        <div className="p-3 sm:p-4 bg-[#FFF8EF] border-t border-[#E9B44C]/30 flex items-center justify-between text-left gap-2">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <img
-              src="/images/avatars/bajrangi_dubey.jpg"
-              alt="Bajrangi Dubey"
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-primary object-cover shadow-sm flex-shrink-0"
-            />
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-[#382719] truncate">
-                {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
-              </p>
-              <p className="text-[10px] sm:text-[11px] text-[#454545] font-medium truncate">
-                {lang === 'hi' ? 'महामंत्री / प्रबंधक (RSSSST)' : 'General Secretary / Manager'}
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right flex-shrink-0">
-            <span className="text-[9px] sm:text-[10px] text-[#666666] block uppercase font-bold tracking-wider">
-              {lang === 'hi' ? 'वार्षिक सदस्यता' : 'Membership'}
-            </span>
-            <span className="text-xs sm:text-sm font-extrabold text-primary">
-              ₹200 / {lang === 'hi' ? 'वर्ष' : 'yr'}
-            </span>
-          </div>
+      {/* Sacred Trust Motto Badge */}
+      <div className="mt-5 sm:mt-6 z-10">
+        <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-white/95 backdrop-blur-sm border border-[#E9B44C]/65 shadow-xs text-xs sm:text-sm font-black text-secondary tracking-wide uppercase hover:border-primary transition-colors">
+          <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>
+          <span>राष्ट्र हित ! • सनातन हित !! • परिवार हित !!!</span>
         </div>
+      </div>
+
+      {/* Trust Title & Location */}
+      <div className="mt-3 max-w-sm sm:max-w-md z-10 px-2">
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-[#2E1E12] tracking-tight leading-tight font-hindi-heading">
+          {lang === 'hi' 
+            ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान' 
+            : 'Rashtriya Sanatan Sanskar Seva Sansthan'}
+        </h2>
+        <p className="text-xs sm:text-sm font-extrabold text-primary mt-1 tracking-wide">
+          {lang === 'hi' 
+            ? 'पंजीकृत लोक धर्मार्थ न्यास (ट्रस्ट) • गोरखपुर, उत्तर प्रदेश' 
+            : 'Registered Public Charitable Trust • Gorakhpur, UP'}
+        </p>
+        <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-[#E9B44C] to-transparent mx-auto mt-2"></div>
       </div>
     </div>
   );
@@ -101,7 +72,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <span className="font-hindi-heading">॥ ॐ धर्मो रक्षति रक्षितः ॥</span>
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 border border-[#E9B44C]/60 text-[#382719] font-bold text-[11px] sm:text-xs shadow-xs max-w-full">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 md:animate-pulse flex-shrink-0"></span>
                   <span className="truncate">{t.hero.badge}</span>
                 </div>
               </div>
@@ -127,8 +98,8 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
               {/* Four Sacred Pillars of Seva Grid */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 pt-0.5">
                 {/* Pillar 1: 16 Sanskars */}
-                <a
-                  href="#sanskars"
+                <Link
+                  to="/about"
                   className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
@@ -142,11 +113,11 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
                     {lang === 'hi' ? 'सुलभ, किफायती व वैदिक विधान' : 'Affordable Vedic Life Rites'}
                   </p>
-                </a>
+                </Link>
 
                 {/* Pillar 2: Labor Welfare */}
-                <a
-                  href="#programs"
+                <Link
+                  to="/programs"
                   className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
@@ -160,11 +131,11 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
                     {lang === 'hi' ? 'मजदूर अधिकार एवं सहायता' : 'Grassroots Worker Support'}
                   </p>
-                </a>
+                </Link>
 
                 {/* Pillar 3: Family Reform Guidelines */}
-                <a
-                  href="#guidelines"
+                <Link
+                  to="/about"
                   className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
@@ -178,7 +149,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
                     {lang === 'hi' ? 'संयुक्त परिवार व सादगी संकल्प' : 'Moral Family Culture'}
                   </p>
-                </a>
+                </Link>
 
                 {/* Pillar 4: Membership */}
                 <button
@@ -203,13 +174,13 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
               {/* Action Buttons: Primary Full-Width on Mobile, Companion Grid */}
               <div className="space-y-2.5 sm:space-y-0 sm:flex sm:flex-row sm:items-center sm:gap-3 pt-1">
                 {/* Primary Action: Donate */}
-                <a
-                  href="#donate"
+                <Link
+                  to="/donate"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-full bg-gradient-to-r from-primary via-[#EA6F0B] to-[#D65900] hover:from-secondary hover:to-primary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:scale-[0.98] border border-primary/20 text-center"
                 >
                   <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white flex-shrink-0" />
                   <span>{t.hero.donateBtn}</span>
-                </a>
+                </Link>
 
                 {/* Secondary Companion Actions: 2 columns on mobile, row on desktop */}
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
@@ -307,8 +278,8 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
           </div>
         </div>
 
-        {/* Mobile-only Scroll Indicator at bottom of front page fold */}
-        <div className="lg:hidden flex flex-col items-center justify-center gap-0.5 text-[11px] text-[#8C6D53] font-bold pt-2 animate-bounce">
+        {/* Mobile-only Scroll Indicator at bottom of front page fold - Clean static on mobile */}
+        <div className="lg:hidden flex flex-col items-center justify-center gap-0.5 text-[11px] text-[#8C6D53] font-bold pt-2">
           <span>{lang === 'hi' ? 'नीचे फ़ोटो व विस्तृत विवरण देखें ↓' : 'Scroll down to explore photos & programs ↓'}</span>
         </div>
       </section>
@@ -318,7 +289,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
         <div className="max-w-md mx-auto">
           <div className="text-center mb-3">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60 px-3 py-0.5 rounded-full shadow-xs">
-              {lang === 'hi' ? 'जमीनी झलक एवं परिचय' : 'Ground Action & Leadership'}
+              {lang === 'hi' ? 'आधिकारिक ट्रस्ट परिचय एवं प्रतीक' : 'Trust Leadership & Official Emblem'}
             </span>
           </div>
           {visualCardContent}
