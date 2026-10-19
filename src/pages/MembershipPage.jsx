@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import PageHeader from '../components/PageHeader';
 import HowYouCanHelp from '../sections/HowYouCanHelp';
@@ -7,6 +9,8 @@ import { ShieldCheck, Award, CreditCard, UserCheck, Calendar, BookOpen, UserPlus
 
 export const MembershipPage = ({ onOpenJoinModal, onOpenVolunteerModal, onOpenReceiptModal }) => {
   const { lang, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   usePageMeta(
     lang === 'hi' ? 'ट्रस्ट सदस्यता • वार्षिक सदस्यता एवं अधिकार' : 'Trust Membership • Annual Registration',
@@ -84,6 +88,35 @@ export const MembershipPage = ({ onOpenJoinModal, onOpenVolunteerModal, onOpenRe
       {/* Membership Plan & Fee Card */}
       <section className="py-12 bg-white border-b border-[#E9B44C]/30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          {isMember && (
+            <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-500/60 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm sm:text-base text-emerald-950 font-hindi-heading">
+                    {lang === 'hi'
+                      ? 'आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के सक्रिय सदस्य हैं!'
+                      : 'You Are Already an Active Registered Member!'}
+                  </h4>
+                  <p className="text-xs text-emerald-800 mt-0.5">
+                    {lang === 'hi'
+                      ? `सदस्यता क्रमांक: ${userProfile?.memberId || 'सत्यापित'} • संस्थान के नियमानुसार पुनः सदस्यता आवेदन की आवश्यकता नहीं है।`
+                      : `Member ID: ${userProfile?.memberId || 'Verified'} • Under trust rules, re-registration is not required.`}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all flex-shrink-0"
+              >
+                <span>{lang === 'hi' ? 'मेरा डैशबोर्ड व पहचान पत्र' : 'My Dashboard & ID'}</span>
+                <span>→</span>
+              </Link>
+            </div>
+          )}
+
           <div className="bg-gradient-to-br from-[#FFF8EF] via-[#FFF5E6] to-[#FFE9CC] rounded-3xl p-6 sm:p-10 border-2 border-[#E9B44C]/60 shadow-card flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="space-y-3">
               <span className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60">
@@ -110,14 +143,24 @@ export const MembershipPage = ({ onOpenJoinModal, onOpenVolunteerModal, onOpenRe
                 / {lang === 'hi' ? 'प्रति वर्ष' : 'per year'}
               </span>
 
-              <button
-                type="button"
-                onClick={onOpenJoinModal}
-                className="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'आवेदन करें' : 'Apply Now'}</span>
-              </button>
+              {isMember ? (
+                <Link
+                  to="/dashboard"
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{lang === 'hi' ? 'सदस्यता सक्रिय (डैशबोर्ड देखें)' : 'Active Member (Dashboard)'}</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenJoinModal}
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{lang === 'hi' ? 'आवेदन करें' : 'Apply Now'}</span>
+                </button>
+              )}
             </div>
           </div>
 

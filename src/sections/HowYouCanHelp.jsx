@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { Heart, UserPlus, Users, Share2, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Heart, UserPlus, Users, Share2, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolunteerModal }) => {
   const { lang, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   const handleShare = () => {
     const text = lang === 'hi'
@@ -80,14 +83,25 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
-              <button
-                type="button"
-                onClick={onOpenJoinModal}
-                className="inline-flex items-center gap-1.5 text-xs font-black text-primary hover:text-secondary transition-colors"
-              >
-                <span>{t.howToHelp.cards[1].action}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {isMember ? (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-800 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>{lang === 'hi' ? 'सदस्यता सक्रिय (डैशबोर्ड देखें)' : 'Active Member (Dashboard)'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenJoinModal}
+                  className="inline-flex items-center gap-1.5 text-xs font-black text-primary hover:text-secondary transition-colors"
+                >
+                  <span>{t.howToHelp.cards[1].action}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 

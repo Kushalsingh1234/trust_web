@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import TrustLogo from '../components/TrustLogo';
 import { Heart, UserPlus, ShieldCheck, MapPin, Award, HandHeart, Users, BookOpen, Sparkles, Phone } from 'lucide-react';
 
 export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   const visualCardContent = (
     <div className="relative flex flex-col items-center justify-center text-center select-none py-2 sm:py-6 lg:py-8">
@@ -147,23 +150,42 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                 </Link>
 
                 {/* Pillar 4: Membership */}
-                <button
-                  type="button"
-                  onClick={onOpenJoinModal}
-                  className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-5 h-5 rounded-md bg-orange-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                      <Sparkles className="w-3 h-3" />
+                {isMember ? (
+                  <Link
+                    to="/dashboard"
+                    className="p-2 sm:p-2.5 rounded-xl bg-emerald-50/80 hover:bg-emerald-50 border border-emerald-400 shadow-xs transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                        <ShieldCheck className="w-3 h-3" />
+                      </div>
+                      <span className="font-extrabold text-[11px] sm:text-xs text-emerald-950">
+                        {lang === 'hi' ? 'सदस्यता सक्रिय' : 'Active Member'}
+                      </span>
                     </div>
-                    <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
-                      {lang === 'hi' ? '₹२०० सदस्यता' : 'Membership'}
-                    </span>
-                  </div>
-                  <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
-                    {lang === 'hi' ? 'वार्षिक सहयोग व सेवा सदस्यता' : '₹200/yr Annual Membership'}
-                  </p>
-                </button>
+                    <p className="text-[9px] sm:text-[10px] text-emerald-700 leading-tight font-semibold">
+                      {lang === 'hi' ? 'पहचान पत्र व रसीद (डैशबोर्ड)' : 'ID & Receipt Dashboard'}
+                    </p>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenJoinModal}
+                    className="p-2 sm:p-2.5 rounded-xl bg-white/85 hover:bg-white border border-[#E9B44C]/40 hover:border-primary shadow-xs transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className="w-5 h-5 rounded-md bg-orange-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                        <Sparkles className="w-3 h-3" />
+                      </div>
+                      <span className="font-extrabold text-[11px] sm:text-xs text-[#382719] group-hover:text-primary transition-colors">
+                        {lang === 'hi' ? '₹२०० सदस्यता' : 'Membership'}
+                      </span>
+                    </div>
+                    <p className="text-[9px] sm:text-[10px] text-[#666666] leading-tight font-medium">
+                      {lang === 'hi' ? 'वार्षिक सहयोग व सेवा सदस्यता' : '₹200/yr Annual Membership'}
+                    </p>
+                  </button>
+                )}
               </div>
 
               {/* Action Buttons: Primary Full-Width on Mobile, Companion Grid */}
@@ -179,14 +201,24 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
 
                 {/* Secondary Companion Actions: 2 columns on mobile, row on desktop */}
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={onOpenJoinModal}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-full bg-secondary hover:bg-primary text-white font-bold text-xs sm:text-base shadow-deep-saffron transition-all transform hover:-translate-y-0.5 active:scale-[0.98] text-center"
-                  >
-                    <UserPlus className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{lang === 'hi' ? 'सदस्य बनें' : 'Join Member'}</span>
-                  </button>
+                  {isMember ? (
+                    <Link
+                      to="/dashboard"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-base shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.98] text-center"
+                    >
+                      <ShieldCheck className="w-4 h-4 flex-shrink-0 text-emerald-200" />
+                      <span className="truncate">{lang === 'hi' ? 'सदस्य डैशबोर्ड' : 'My Dashboard'}</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onOpenJoinModal}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 sm:py-3.5 rounded-xl sm:rounded-full bg-secondary hover:bg-primary text-white font-bold text-xs sm:text-base shadow-deep-saffron transition-all transform hover:-translate-y-0.5 active:scale-[0.98] text-center"
+                    >
+                      <UserPlus className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{lang === 'hi' ? 'सदस्य बनें' : 'Join Member'}</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"

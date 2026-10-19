@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { submitAssistanceRequest } from '../firebase/services';
@@ -35,17 +36,19 @@ const QUICK_AMOUNTS = ['5000', '10000', '25000', '50000', '100000'];
 
 export const HelpRequestModal = ({ isOpen, onClose }) => {
   const { lang } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const printRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState(() => {
     const isMock = typeof window !== 'undefined' && window.location.search.includes('submitted=true');
     return {
-      fullName: isMock ? 'राजेश कुमार मिश्र' : '',
+      fullName: isMock ? 'राजेश कुमार मिश्र' : (userProfile?.fullName || userProfile?.displayName || ''),
       fatherHusbandName: isMock ? 'श्री बैजनाथ मिश्र' : '',
-      mobile: isMock ? '9876543210' : '',
-      whatsapp: isMock ? '9876543210' : '',
+      mobile: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
+      whatsapp: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
       location: isMock ? 'मकान नं. 24, निकट प्राचीन शिव मंदिर, रूस्तमपुर' : '',
       cityDistrict: 'गोरखपुर (Gorakhpur)',
       state: 'उत्तर प्रदेश (UP)',
@@ -58,6 +61,27 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
       isConsentGiven: true
     };
   });
+
+  // Protected action: require login
+  useEffect(() => {
+    if (isOpen && !currentUser) {
+      onClose();
+      navigate('/login', {
+        state: { from: location, message: 'Please sign in to continue' }
+      });
+    }
+  }, [isOpen, currentUser]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || userProfile.displayName || '',
+        mobile: prev.mobile || userProfile.phone || userProfile.mobile || '',
+        whatsapp: prev.whatsapp || userProfile.phone || userProfile.mobile || ''
+      }));
+    }
+  }, [userProfile]);
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(() => {

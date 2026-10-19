@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import TrustLogo from '../components/TrustLogo';
-import { Globe, Heart, ArrowUp } from 'lucide-react';
+import { Globe, Heart, ArrowUp, ShieldCheck } from 'lucide-react';
 
 export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, onNavigateAdmin }) => {
   const { lang, toggleLanguage, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -92,17 +95,27 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
                   <span>{t.nav.donate}</span>
                 </Link>
 
-                <Link
-                  to="/membership"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
-                >
-                  <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
-                </Link>
+                {isMember ? (
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition-all"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-200" />
+                    <span>{lang === 'hi' ? 'सदस्यता सक्रिय' : 'Active Member'}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/membership"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-sm transition-all"
+                  >
+                    <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
+                  </Link>
+                )}
               </div>
 
               <div className="space-y-2 pt-1 text-xs text-[#FFF8EF]/80">
                 <Link
-                  to="/member"
+                  to="/dashboard"
                   className="block hover:text-[#E9B44C] transition-colors text-left py-1"
                 >
                   → {lang === 'hi' ? 'सदस्य डैशबोर्ड एवं पहचान पत्र' : 'Member Dashboard & ID'}

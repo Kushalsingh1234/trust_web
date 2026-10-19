@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight } from 'lucide-react';
+import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight, Download } from 'lucide-react';
 
 export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
   const { lang, t } = useLanguage();
@@ -148,10 +148,10 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
               <button
                 type="button"
                 onClick={onOpenReceiptModal}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FFF8EF] text-primary border border-primary/40 font-bold text-xs shadow-sm transition-all"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-white to-amber-500/10 hover:bg-white text-secondary hover:text-primary border-2 border-[#E9B44C] font-black text-xs sm:text-sm shadow-xs transition-all active:scale-[0.98]"
               >
-                <FileText className="w-4 h-4" />
-                <span>{t.donate.openReceiptModal}</span>
+                <Download className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{lang === 'hi' ? 'डिजिटल रसीद जनरेट एवं डाउनलोड करें' : 'Generate & Download Digital Receipt'}</span>
               </button>
               <p className="text-[11px] text-[#454545] font-medium text-center mt-1">
                 {t.donate.receiptGenDesc}

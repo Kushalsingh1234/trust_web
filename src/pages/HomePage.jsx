@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import Hero from '../sections/Hero';
 import Impact from '../sections/Impact';
@@ -22,6 +23,8 @@ export const HomePage = ({
   onSelectImage
 }) => {
   const { lang, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   usePageMeta(
     lang === 'hi' ? 'मुख्य पृष्ठ • राष्ट्र हित, सनातन हित, परिवार हित' : 'Home • Sanatan Sanskar Seva Sansthan',
@@ -280,14 +283,24 @@ export const HomePage = ({
               <span>{lang === 'hi' ? 'समर्पण निधि / दान करें' : 'Donate Now'}</span>
             </Link>
 
-            <button
-              type="button"
-              onClick={onOpenJoinModal}
-              className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-full bg-white hover:bg-[#FFF8EF] text-[#382719] hover:text-primary font-black text-sm sm:text-base border-2 border-[#E9B44C] shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-95"
-            >
-              <UserPlus className="w-4 h-4 text-primary flex-shrink-0" />
-              <span>{lang === 'hi' ? 'सदस्य बनें (₹200/वर्ष)' : 'Join Member (₹200/yr)'}</span>
-            </button>
+            {isMember ? (
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-full bg-white hover:bg-emerald-50 text-emerald-800 hover:text-emerald-950 font-black text-sm sm:text-base border-2 border-emerald-500 shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-95"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{lang === 'hi' ? 'सदस्यता सक्रिय (डैशबोर्ड देखें)' : 'Active Member (View Dashboard)'}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenJoinModal}
+                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-full bg-white hover:bg-[#FFF8EF] text-[#382719] hover:text-primary font-black text-sm sm:text-base border-2 border-[#E9B44C] shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-95"
+              >
+                <UserPlus className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{lang === 'hi' ? 'सदस्य बनें (₹200/वर्ष)' : 'Join Member (₹200/yr)'}</span>
+              </button>
+            )}
           </div>
         </div>
       </section>

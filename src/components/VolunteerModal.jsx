@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { submitVolunteerApplication } from '../firebase/services';
@@ -16,10 +17,12 @@ const VOLUNTEER_AREAS = [
 export const VolunteerModal = ({ isOpen, onClose }) => {
   const { lang, toggleLanguage } = useLanguage();
   const { currentUser, userProfile } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
-    fullName: userProfile?.displayName || '',
-    mobile: userProfile?.mobile || '',
+    fullName: userProfile?.fullName || userProfile?.displayName || '',
+    mobile: userProfile?.phone || userProfile?.mobile || '',
     email: userProfile?.email || '',
     cityOrDistrict: 'गोरखपुर (Gorakhpur)',
     availability: 'weekends', // 'weekends' | 'full_time' | 'few_hours_daily'
@@ -30,6 +33,27 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // Protected action: require login
+  useEffect(() => {
+    if (isOpen && !currentUser) {
+      onClose();
+      navigate('/login', {
+        state: { from: location, message: 'Please sign in to continue' }
+      });
+    }
+  }, [isOpen, currentUser]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || userProfile.displayName || '',
+        mobile: prev.mobile || userProfile.phone || userProfile.mobile || '',
+        email: prev.email || userProfile.email || ''
+      }));
+    }
+  }, [userProfile]);
 
   if (!isOpen) return null;
 

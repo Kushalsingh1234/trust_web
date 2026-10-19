@@ -9,6 +9,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  onSnapshot,
   serverTimestamp,
   runTransaction
 } from 'firebase/firestore';
@@ -96,6 +98,28 @@ export const submitMembershipApplication = async (data, applicantUid) => {
   };
 
   const docRef = await addDoc(colRef, applicationDoc);
+
+  // Also save to unified 'memberships' collection
+  try {
+    await addDoc(collection(db, 'memberships'), {
+      uid: applicantUid || null,
+      fullName: data.fullName.trim(),
+      phone: data.mobile.trim(),
+      fatherHusbandName: data.fatherHusbandName ? data.fatherHusbandName.trim() : '',
+      address: data.villageOrLocality ? data.villageOrLocality.trim() : '',
+      district: data.district ? data.district.trim() : '',
+      state: data.state ? data.state.trim() : '',
+      category: data.category || 'catB',
+      annualFee: data.category === 'catA' ? 0 : 200,
+      amount: data.category === 'catA' ? 0 : 200,
+      status: 'pending',
+      adminNote: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (e) {
+    console.warn("Could not mirror to memberships collection:", e);
+  }
 
   // Save reference in browser localStorage so member dashboard can load it even if submitted before account creation
   try {
@@ -258,6 +282,26 @@ export const submitPaymentRecord = async (paymentData, userUid) => {
 
   const ref = await addDoc(colRef, docData);
 
+  // Also save to unified 'donations' collection
+  try {
+    await addDoc(collection(db, 'donations'), {
+      uid: userUid || null,
+      donorName: paymentData.payerName.trim(),
+      donorPhone: paymentData.payerMobile.trim(),
+      amount: Number(paymentData.amount) || 0,
+      purpose: paymentData.purpose || 'samarpan',
+      paymentMethod: paymentData.paymentMethod || 'upi',
+      utrNumber: paymentData.utrNumber.trim().toUpperCase(),
+      notes: paymentData.notes || '',
+      status: 'pending',
+      adminNote: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (e) {
+    console.warn("Could not mirror to donations collection:", e);
+  }
+
   try {
     const saved = JSON.parse(localStorage.getItem('rsssst_my_payment_ids') || '[]');
     saved.unshift(ref.id);
@@ -412,6 +456,26 @@ export const submitAssistanceRequest = async (requestData, applicantUid) => {
 
   const docRef = await addDoc(colRef, data);
 
+  // Also save to unified 'helpRequests' collection
+  try {
+    await addDoc(collection(db, 'helpRequests'), {
+      uid: applicantUid || null,
+      fullName: requestData.fullName.trim(),
+      phone: requestData.mobile.trim(),
+      address: `${requestData.location || ''} ${requestData.cityDistrict || ''}`.trim(),
+      helpType: requestData.category || 'medical',
+      amountNeeded: Number(requestData.amountNeeded) || null,
+      description: requestData.description.trim(),
+      urgency: requestData.urgency || 'urgent',
+      status: 'pending',
+      adminNote: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (e) {
+    console.warn("Could not mirror to helpRequests collection:", e);
+  }
+
   try {
     const saved = JSON.parse(localStorage.getItem('rsssst_my_help_ids') || '[]');
     saved.unshift(docRef.id);
@@ -507,6 +571,27 @@ export const submitVolunteerApplication = async (data, userUid) => {
   };
 
   const docRef = await addDoc(colRef, docData);
+
+  // Also save to unified 'volunteers' collection
+  try {
+    await addDoc(collection(db, 'volunteers'), {
+      uid: userUid || null,
+      fullName: data.fullName.trim(),
+      phone: data.mobile.trim(),
+      email: data.email ? data.email.trim() : '',
+      preferredAreas: data.preferredAreas || [],
+      availability: data.availability || 'weekends',
+      experience: data.experience ? data.experience.trim() : '',
+      cityOrDistrict: data.cityOrDistrict.trim(),
+      status: 'pending',
+      adminNote: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (e) {
+    console.warn("Could not mirror to volunteers collection:", e);
+  }
+
   return { id: docRef.id, ...docData };
 };
 
@@ -664,3 +749,249 @@ export const getDashboardStats = async () => {
     };
   }
 };
+
+// -------------------------------------------------------------
+// 7. UNIFIED CORE FORMS & REALTIME SUBSCRIPTIONS
+// (memberships, volunteers, donations, helpRequests)
+// -------------------------------------------------------------
+
+export const createMembership = async (data, uid) => {
+  const docData = {
+    uid: uid || null,
+    applicantUid: uid || null,
+    fullName: data.fullName?.trim() || '',
+    phone: data.phone?.trim() || data.mobile?.trim() || '',
+    category: data.category || 'catB',
+    fatherHusbandName: data.fatherHusbandName?.trim() || '',
+    address: data.address?.trim() || data.villageOrLocality?.trim() || '',
+    district: data.district?.trim() || '',
+    state: data.state?.trim() || '',
+    pincode: data.pincode?.trim() || '',
+    annualFee: data.category === 'catA' ? 0 : 200,
+    amount: data.amount ? Number(data.amount) : (data.category === 'catA' ? 0 : 200),
+    status: 'pending',
+    adminNote: '',
+    createdAt: serverTimestamp(),
+    submittedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  // Primary: membershipApplications
+  const docRef = await addDoc(collection(db, 'membershipApplications'), docData);
+  // Secondary: mirror to memberships
+  try {
+    await setDoc(doc(db, 'memberships', docRef.id), docData);
+  } catch (e) {}
+  return { id: docRef.id, ...docData };
+};
+
+export const createVolunteer = async (data, uid) => {
+  const docData = {
+    uid: uid || null,
+    applicantUid: uid || null,
+    fullName: data.fullName?.trim() || '',
+    phone: data.phone?.trim() || '',
+    email: data.email?.trim() || '',
+    preferredAreas: data.preferredAreas || [],
+    availability: data.availability || 'weekends',
+    experience: data.experience?.trim() || '',
+    cityOrDistrict: data.cityOrDistrict?.trim() || '',
+    status: 'pending',
+    adminNote: '',
+    createdAt: serverTimestamp(),
+    submittedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  // Primary: volunteerApplications
+  const docRef = await addDoc(collection(db, 'volunteerApplications'), docData);
+  // Secondary: mirror to volunteers
+  try {
+    await setDoc(doc(db, 'volunteers', docRef.id), docData);
+  } catch (e) {}
+  return { id: docRef.id, ...docData };
+};
+
+export const createDonation = async (data, uid) => {
+  const docData = {
+    uid: uid || null,
+    payerUid: uid || null,
+    donorName: data.donorName?.trim() || data.fullName?.trim() || '',
+    donorPhone: data.donorPhone?.trim() || data.phone?.trim() || '',
+    amount: Number(data.amount) || 0,
+    claimedAmount: Number(data.amount) || 0,
+    purpose: data.purpose || 'samarpan',
+    paymentMethod: data.paymentMethod || 'upi',
+    utrNumber: (data.utrNumber || data.paymentId || '').trim().toUpperCase(),
+    paymentId: (data.utrNumber || data.paymentId || '').trim().toUpperCase(),
+    notes: data.notes?.trim() || '',
+    status: 'pending',
+    verificationStatus: 'pending_verification',
+    adminNote: '',
+    createdAt: serverTimestamp(),
+    submittedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  // Primary: payments
+  const docRef = await addDoc(collection(db, 'payments'), docData);
+  // Secondary: mirror to donations
+  try {
+    await setDoc(doc(db, 'donations', docRef.id), docData);
+  } catch (e) {}
+  return { id: docRef.id, ...docData };
+};
+
+export const createHelpRequest = async (data, uid) => {
+  const docData = {
+    uid: uid || null,
+    applicantUid: uid || null,
+    fullName: data.fullName?.trim() || '',
+    phone: data.phone?.trim() || '',
+    address: data.address?.trim() || data.location?.trim() || '',
+    helpType: data.helpType || data.category || 'general_welfare',
+    category: data.helpType || data.category || 'general_welfare',
+    amountNeeded: data.amountNeeded ? Number(data.amountNeeded) : null,
+    description: data.description?.trim() || '',
+    urgency: data.urgency || 'normal',
+    status: 'pending',
+    adminNote: '',
+    createdAt: serverTimestamp(),
+    submittedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  // Primary: assistanceRequests
+  const docRef = await addDoc(collection(db, 'assistanceRequests'), docData);
+  // Secondary: mirror to helpRequests
+  try {
+    await setDoc(doc(db, 'helpRequests', docRef.id), docData);
+  } catch (e) {}
+  return { id: docRef.id, ...docData };
+};
+
+// Aliases mapping for dual-collection resilience
+const COLLECTION_ALIASES = {
+  memberships: ['memberships', 'membershipApplications'],
+  donations: ['donations', 'payments'],
+  helpRequests: ['helpRequests', 'assistanceRequests'],
+  volunteers: ['volunteers', 'volunteerApplications']
+};
+
+// Realtime User Subscriptions (onSnapshot with dual-collection union)
+export const subscribeUserCollection = (collectionName, uid, callback) => {
+  if (!uid) {
+    callback([]);
+    return () => {};
+  }
+
+  const targets = COLLECTION_ALIASES[collectionName] || [collectionName];
+  const resultsByTarget = {};
+
+  const emitMerged = () => {
+    const map = new Map();
+    for (const target of targets) {
+      const list = resultsByTarget[target] || [];
+      list.forEach(item => {
+        // Merge or replace
+        map.set(item.id, { ...map.get(item.id), ...item });
+      });
+    }
+    const combined = Array.from(map.values());
+    combined.sort((a, b) => {
+      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+      return tB - tA;
+    });
+    callback(combined);
+  };
+
+  const unsubs = targets.map(target => {
+    try {
+      const colRef = collection(db, target);
+      // Query by uid or applicantUid / payerUid
+      const q = query(colRef, where('uid', '==', uid));
+      return onSnapshot(q, (snapshot) => {
+        resultsByTarget[target] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        emitMerged();
+      }, (err) => {
+        // If permission error on primary/alias, ignore and continue
+        resultsByTarget[target] = [];
+        emitMerged();
+      });
+    } catch (e) {
+      return () => {};
+    }
+  });
+
+  return () => {
+    unsubs.forEach(u => u && u());
+  };
+};
+
+// Realtime Admin Subscriptions (onSnapshot with dual-collection union)
+export const subscribeAllCollection = (collectionName, callback) => {
+  const targets = COLLECTION_ALIASES[collectionName] || [collectionName];
+  const resultsByTarget = {};
+
+  const emitMerged = () => {
+    const map = new Map();
+    for (const target of targets) {
+      const list = resultsByTarget[target] || [];
+      list.forEach(item => {
+        map.set(item.id, { ...map.get(item.id), ...item });
+      });
+    }
+    const combined = Array.from(map.values());
+    combined.sort((a, b) => {
+      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+      return tB - tA;
+    });
+    callback(combined);
+  };
+
+  const unsubs = targets.map(target => {
+    try {
+      const colRef = collection(db, target);
+      return onSnapshot(colRef, (snapshot) => {
+        resultsByTarget[target] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        emitMerged();
+      }, (err) => {
+        resultsByTarget[target] = [];
+        emitMerged();
+      });
+    } catch (e) {
+      return () => {};
+    }
+  });
+
+  return () => {
+    unsubs.forEach(u => u && u());
+  };
+};
+
+// Admin Review (Approve / Reject) across both collections
+export const reviewDocument = async (collectionName, docId, { status, adminNote, reason }, adminUid) => {
+  const updatePayload = {
+    status: status, // 'approved' | 'rejected'
+    adminNote: adminNote || reason || '',
+    reviewedAt: serverTimestamp(),
+    reviewedBy: adminUid || 'admin',
+    updatedAt: serverTimestamp()
+  };
+  if (reason) {
+    updatePayload.rejectionReason = reason;
+  }
+
+  const targets = COLLECTION_ALIASES[collectionName] || [collectionName];
+  for (const target of targets) {
+    try {
+      const docRef = doc(db, target, docId);
+      await updateDoc(docRef, updatePayload);
+    } catch (e) {}
+  }
+
+  return updatePayload;
+};
+

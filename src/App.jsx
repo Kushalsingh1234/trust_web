@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './sections/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
+
+// Guards
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 // Modals
 import ReceiptGeneratorModal from './components/ReceiptGeneratorModal';
@@ -14,7 +19,6 @@ import ImageLightboxModal from './components/ImageLightboxModal';
 import JoinTrustModal from './components/JoinTrustModal';
 import PaymentModal from './components/PaymentModal';
 import VolunteerModal from './components/VolunteerModal';
-import LoginModal from './components/LoginModal';
 
 // Dedicated Pages
 import HomePage from './pages/HomePage';
@@ -26,7 +30,8 @@ import EventsPage from './pages/EventsPage';
 import GalleryPage from './pages/GalleryPage';
 import TransparencyPage from './pages/TransparencyPage';
 import ContactPage from './pages/ContactPage';
-import MemberDashboard from './pages/MemberDashboard';
+import LoginPage from './pages/LoginPage';
+import UserDashboardPage from './pages/UserDashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
@@ -46,9 +51,6 @@ function AppContent() {
   });
   const [volunteerModalOpen, setVolunteerModalOpen] = useState(() => {
     return typeof window !== 'undefined' && window.location.search.includes('modal=volunteer');
-  });
-  const [loginModalOpen, setLoginModalOpen] = useState(() => {
-    return typeof window !== 'undefined' && (location.pathname === '/login' || window.location.search.includes('modal=login'));
   });
 
   const [activeLightbox, setActiveLightbox] = useState(null);
@@ -76,13 +78,21 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
-  // Full-screen dashboards have their own internal layout and navigation
+  // Full-screen dashboards with their own dedicated layouts
   if (location.pathname.startsWith('/admin')) {
-    return <AdminDashboard onNavigateHome={() => navigate('/')} />;
+    return (
+      <AdminRoute>
+        <AdminDashboard onNavigateHome={() => navigate('/')} />
+      </AdminRoute>
+    );
   }
 
   if (location.pathname.startsWith('/member') || location.pathname.startsWith('/dashboard')) {
-    return <MemberDashboard onNavigateHome={() => navigate('/')} />;
+    return (
+      <ProtectedRoute>
+        <UserDashboardPage onNavigateHome={() => navigate('/')} />
+      </ProtectedRoute>
+    );
   }
 
   return (
@@ -93,9 +103,9 @@ function AppContent() {
       {/* Persistent Pinned Navigation Bar */}
       <Navbar
         onOpenReceiptModal={() => setReceiptModalOpen(true)}
-        onOpenLoginModal={() => setLoginModalOpen(true)}
+        onOpenLoginModal={() => navigate('/login')}
         onOpenJoinModal={() => setJoinModalOpen(true)}
-        onNavigateMember={() => navigate('/member')}
+        onNavigateMember={() => navigate('/dashboard')}
         onNavigateAdmin={() => navigate('/admin')}
       />
 
@@ -115,7 +125,11 @@ function AppContent() {
             }
           />
 
-          {/* 2. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}
+          {/* 2. Authentication: Login / Sign Up */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<LoginPage />} />
+
+          {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}
           <Route
             path="/about"
             element={
@@ -125,7 +139,7 @@ function AppContent() {
             }
           />
 
-          {/* 3. Full Dedicated Programs Page (Labor welfare, Sanskars, Cow care, etc.) */}
+          {/* 4. Full Dedicated Programs Page (Labor welfare, Sanskars, Cow care, etc.) */}
           <Route
             path="/programs"
             element={
@@ -136,18 +150,20 @@ function AppContent() {
             }
           />
 
-          {/* 4. Full Dedicated Donate Page (Bank of India, Real QR, Tax Info, Receipt) */}
+          {/* 5. Protected Donate Page (Requires login) */}
           <Route
             path="/donate"
             element={
-              <DonatePage
-                onOpenReceiptModal={() => setReceiptModalOpen(true)}
-                onOpenPaymentModal={() => setPaymentModalOpen(true)}
-              />
+              <ProtectedRoute message="Please sign in to continue">
+                <DonatePage
+                  onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                  onOpenPaymentModal={() => setPaymentModalOpen(true)}
+                />
+              </ProtectedRoute>
             }
           />
 
-          {/* 5. Full Dedicated Membership Page (₹200 Rules, 3 Member Types, ID Privileges) */}
+          {/* 6. Full Dedicated Membership Page (₹200 Rules, 3 Member Types, ID Privileges) */}
           <Route
             path="/membership"
             element={
@@ -169,7 +185,7 @@ function AppContent() {
             }
           />
 
-          {/* 6. Full Dedicated Events & Announcements Page */}
+          {/* 7. Full Dedicated Events & Announcements Page */}
           <Route
             path="/events"
             element={<EventsPage />}
@@ -179,7 +195,7 @@ function AppContent() {
             element={<EventsPage />}
           />
 
-          {/* 7. Full Dedicated Filterable Photo Gallery */}
+          {/* 8. Full Dedicated Filterable Photo Gallery */}
           <Route
             path="/gallery"
             element={
@@ -189,7 +205,7 @@ function AppContent() {
             }
           />
 
-          {/* 8. Full Dedicated Institutional Transparency & Legal Certifications */}
+          {/* 9. Full Dedicated Institutional Transparency & Legal Certifications */}
           <Route
             path="/transparency"
             element={
@@ -199,7 +215,7 @@ function AppContent() {
             }
           />
 
-          {/* 9. Full Dedicated Contact & Dual Gorakhpur Offices Page */}
+          {/* 10. Full Dedicated Contact & Dual Gorakhpur Offices Page */}
           <Route
             path="/contact"
             element={<ContactPage />}
@@ -224,7 +240,7 @@ function AppContent() {
       <Footer
         onOpenReceiptModal={() => setReceiptModalOpen(true)}
         onOpenJoinModal={() => setJoinModalOpen(true)}
-        onNavigateMember={() => navigate('/member')}
+        onNavigateMember={() => navigate('/dashboard')}
         onNavigateAdmin={() => navigate('/admin')}
       />
 
@@ -237,16 +253,7 @@ function AppContent() {
         onClose={() => setJoinModalOpen(false)}
         onOpenLogin={() => {
           setJoinModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-      />
-
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        onOpenJoin={() => {
-          setLoginModalOpen(false);
-          setJoinModalOpen(true);
+          navigate('/login');
         }}
       />
 
@@ -284,9 +291,11 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </LanguageProvider>
   );
