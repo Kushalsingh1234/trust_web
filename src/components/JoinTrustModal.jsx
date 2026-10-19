@@ -89,6 +89,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
   const [existingStatus, setExistingStatus] = useState(null); // 'approved' | 'pending' | null
   const [existingData, setExistingData] = useState(null);
   const [checkingExisting, setCheckingExisting] = useState(false);
+  const [forceNewApplication, setForceNewApplication] = useState(false);
 
   // Subscribe to settings/payment in realtime
   useEffect(() => {
@@ -112,6 +113,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
       navigate('/login', {
         state: { from: location, message: 'Please sign in to continue' }
       });
+    }
+    if (!isOpen) {
+      setForceNewApplication(false);
     }
   }, [isOpen, currentUser]);
 
@@ -137,6 +141,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
         return;
       }
 
+      // If user profile is actively an approved member
       if (userProfile?.isMember === true) {
         if (isMounted) {
           setExistingStatus('approved');
@@ -151,6 +156,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
         return;
       }
 
+      // If not an active member in userProfile, check for currently pending application
       setCheckingExisting(true);
       try {
         const qApps = query(
@@ -160,15 +166,18 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
         const snap = await getDocs(qApps);
         if (isMounted && !snap.empty) {
           const apps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          const approved = apps.find(a => a.status === 'approved');
+          // Note: Any old approved application is disregarded if userProfile.isMember !== true (e.g. member was removed)
           const pending = apps.find(a => a.status === 'pending');
-          if (approved) {
-            setExistingStatus('approved');
-            setExistingData(approved);
-          } else if (pending) {
+          if (pending) {
             setExistingStatus('pending');
             setExistingData(pending);
+          } else {
+            setExistingStatus(null);
+            setExistingData(null);
           }
+        } else if (isMounted) {
+          setExistingStatus(null);
+          setExistingData(null);
         }
       } catch (err) {
         console.warn("Could not check existing membership application:", err);
@@ -181,8 +190,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
     return () => { isMounted = false; };
   }, [isOpen, currentUser, userProfile]);
 
-  const isAlreadyMember = Boolean(userProfile?.isMember === true || existingStatus === 'approved');
-  const isPendingMember = Boolean(!isAlreadyMember && existingStatus === 'pending');
+  // Strictly active member: only when userProfile.isMember === true
+  const isAlreadyMember = Boolean(userProfile?.isMember === true);
+  const isPendingMember = Boolean(!isAlreadyMember && !forceNewApplication && existingStatus === 'pending');
 
   if (!isOpen) return null;
 
@@ -328,6 +338,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
 
   const resetForm = () => {
     setSubmittedRef(null);
+    setForceNewApplication(false);
     onClose();
   };
 
@@ -525,8 +536,16 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', onOp
                 </button>
                 <button
                   type="button"
+                  onClick={() => setForceNewApplication(true)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#FFF8EF] hover:bg-[#FFEECB] text-[#382719] font-bold text-sm border border-[#E9B44C] transition-all"
+                >
+                  <UserPlus className="w-4 h-4 text-primary" />
+                  <span>{lang === 'hi' ? 'नया सदस्यता आवेदन भरें' : 'Submit New Application'}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={resetForm}
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-[#FFF8EF] text-[#382719] font-bold text-sm border border-[#E9B44C] transition-all"
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-[#FFF8EF] text-[#382719] font-bold text-sm border border-gray-300 transition-all"
                 >
                   {lang === 'hi' ? 'बंद करें' : 'Close'}
                 </button>

@@ -57,21 +57,21 @@ export const submitMembershipWithPaymentId = async ({
   const isCatA = category === 'catA';
   const cleanPaymentId = paymentId ? paymentId.trim().toUpperCase() : null;
 
-  // Guard 1: Prevent duplicate membership if applicant is already an approved member
+  // Guard 1: Prevent duplicate membership ONLY if applicant is CURRENTLY an active approved member
   if (uid) {
     try {
       const uSnap = await getDoc(doc(db, 'users', uid));
-      if (uSnap.exists() && uSnap.data().isMember) {
+      if (uSnap.exists() && uSnap.data().isMember === true) {
         throw new Error(
-          `आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के पंजीकृत सदस्य हैं (सदस्यता क्रमांक: ${uSnap.data().memberId || 'सत्यापित'})। एक ही सदस्य पुनः उसी सदस्यता हेतु आवेदन नहीं कर सकता।`
+          `आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के सक्रिय सदस्य हैं (सदस्यता क्रमांक: ${uSnap.data().memberId || 'सत्यापित'})। एक ही सदस्य पुनः उसी सदस्यता हेतु आवेदन नहीं कर सकता।`
         );
       }
     } catch (err) {
-      if (err.message && err.message.includes("पंजीकृत सदस्य")) throw err;
+      if (err.message && err.message.includes("सक्रिय सदस्य")) throw err;
     }
   }
 
-  // Guard 2: Prevent duplicate if applicant already has a pending application awaiting admin review
+  // Guard 2: If applicant previously had pending applications, supersede them when submitting fresh
   if (uid) {
     try {
       const qPending = query(
@@ -80,17 +80,16 @@ export const submitMembershipWithPaymentId = async ({
         where('status', '==', 'pending')
       );
       const sPending = await getDocs(qPending);
-      if (!sPending.empty) {
-        throw new Error(
-          "आपका सदस्यता आवेदन पहले से व्यवस्थापक सत्यापन हेतु प्रक्रियाधीन (Pending) है। कृपया स्वीकृति की प्रतीक्षा करें।"
-        );
+      for (const pDoc of sPending.docs) {
+        await updateDoc(pDoc.ref, {
+          status: 'superseded',
+          supersededAt: serverTimestamp()
+        });
       }
-    } catch (err) {
-      if (err.message && err.message.includes("प्रक्रियाधीन")) throw err;
-    }
+    } catch (err) {}
   }
 
-  // Guard 3: Prevent duplicate membership by phone number (if approved)
+  // Guard 3: Prevent duplicate membership by phone number ONLY if an active approved member with that phone number exists
   if (phone) {
     try {
       const qPhone = query(
@@ -100,32 +99,21 @@ export const submitMembershipWithPaymentId = async ({
       );
       const sPhone = await getDocs(qPhone);
       if (!sPhone.empty) {
-        const approvedDoc = sPhone.docs[0].data();
-        throw new Error(
-          `इस मोबाइल नंबर से पहले ही सदस्यता स्वीकृत है (सदस्यता क्रमांक: ${approvedDoc.memberId || 'सत्यापित'})। पुनः नया सदस्यता आवेदन मान्य नहीं है।`
-        );
+        for (const appDoc of sPhone.docs) {
+          const approvedDoc = appDoc.data();
+          const targetUserUid = approvedDoc.applicantUid || approvedDoc.uid;
+          if (targetUserUid && targetUserUid !== uid) {
+            const uDoc = await getDoc(doc(db, 'users', targetUserUid));
+            if (uDoc.exists() && uDoc.data().isMember === true) {
+              throw new Error(
+                `इस मोबाइल नंबर से पहले ही सक्रिय सदस्यता मान्य है (सदस्यता क्रमांक: ${approvedDoc.memberId || 'सत्यापित'})।`
+              );
+            }
+          }
+        }
       }
     } catch (err) {
-      if (err.message && err.message.includes("सदस्यता स्वीकृत")) throw err;
-    }
-  }
-
-  // Guard 4: Prevent duplicate membership by phone number (if pending)
-  if (phone) {
-    try {
-      const qPhonePending = query(
-        collection(db, 'membershipApplications'),
-        where('mobile', '==', phone.trim()),
-        where('status', '==', 'pending')
-      );
-      const sPhonePending = await getDocs(qPhonePending);
-      if (!sPhonePending.empty) {
-        throw new Error(
-          "इस मोबाइल नंबर से पहले ही एक सदस्यता आवेदन प्रक्रियाधीन (Pending) है। कृपया व्यवस्थापक स्वीकृति की प्रतीक्षा करें।"
-        );
-      }
-    } catch (err) {
-      if (err.message && err.message.includes("प्रक्रियाधीन")) throw err;
+      if (err.message && err.message.includes("सक्रिय सदस्यता")) throw err;
     }
   }
 
@@ -554,6 +542,45 @@ export const removeMember = async (membershipId, uid, reason, adminUid) => {
     } catch (e) {}
   }
 
+  // Fallback 1: Check members collection
+  if (!targetUid) {
+    try {
+      const mDoc = await getDoc(doc(db, 'members', membershipId));
+      if (mDoc.exists()) {
+        const d = mDoc.data();
+        targetUid = d.uid || d.userUid || null;
+      }
+    } catch (e) {}
+  }
+
+  // Fallback 2: Check users by memberId or phone from application record
+  if (!targetUid) {
+    try {
+      let recordData = null;
+      const appSnap = await getDoc(doc(db, 'membershipApplications', membershipId));
+      if (appSnap.exists()) {
+        recordData = appSnap.data();
+      } else {
+        const memSnap = await getDoc(doc(db, 'memberships', membershipId));
+        if (memSnap.exists()) recordData = memSnap.data();
+      }
+
+      if (recordData) {
+        if (recordData.memberId) {
+          const qM = query(collection(db, 'users'), where('memberId', '==', recordData.memberId));
+          const sM = await getDocs(qM);
+          if (!sM.empty) targetUid = sM.docs[0].id;
+        }
+        if (!targetUid && (recordData.mobile || recordData.phone)) {
+          const p = (recordData.mobile || recordData.phone).trim();
+          const qP = query(collection(db, 'users'), where('phone', '==', p));
+          const sP = await getDocs(qP);
+          if (!sP.empty) targetUid = sP.docs[0].id;
+        }
+      }
+    } catch (e) {}
+  }
+
   try {
     await updateDoc(doc(db, 'membershipApplications', membershipId), payload);
   } catch (e) {}
@@ -574,6 +601,35 @@ export const removeMember = async (membershipId, uid, reason, adminUid) => {
       });
     }
   } catch (e) {}
+
+  // Also clean up any other approved or pending application records for this user
+  if (targetUid) {
+    try {
+      const qUserApps = query(
+        collection(db, 'membershipApplications'),
+        where('applicantUid', '==', targetUid)
+      );
+      const sUserApps = await getDocs(qUserApps);
+      for (const docItem of sUserApps.docs) {
+        if (docItem.id !== membershipId && (docItem.data().status === 'approved' || docItem.data().status === 'pending')) {
+          await updateDoc(docItem.ref, payload);
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const qUserMems = query(
+        collection(db, 'memberships'),
+        where('applicantUid', '==', targetUid)
+      );
+      const sUserMems = await getDocs(qUserMems);
+      for (const docItem of sUserMems.docs) {
+        if (docItem.id !== membershipId && (docItem.data().status === 'approved' || docItem.data().status === 'pending')) {
+          await updateDoc(docItem.ref, payload);
+        }
+      }
+    } catch (e) {}
+  }
 
   // Strictly clear isMember, memberId, and category from users/{targetUid}
   if (targetUid) {

@@ -269,7 +269,7 @@ export const AuthProvider = ({ children }) => {
           profileUnsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
-              setUserProfile(prev => ({ ...(prev || {}), ...data }));
+              setUserProfile(data);
               if (data.role === 'admin') {
                 setIsAdmin(true);
               }

@@ -59,7 +59,7 @@ import {
 
 export const AdminDashboard = ({ onNavigateHome }) => {
   const { lang, toggleLanguage } = useLanguage();
-  const { currentUser, userProfile, isAdmin, logout } = useAuth();
+  const { currentUser, userProfile, isAdmin, logout, refreshUserData } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -252,6 +252,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
         const targetUid = selectedItem.uid || selectedItem.applicantUid || selectedItem.userUid;
         await removeMember(selectedItem.id, targetUid, removeReasonInput.trim(), currentUser?.uid || 'admin');
+        if (refreshUserData && (!targetUid || targetUid === currentUser?.uid)) {
+          await refreshUserData();
+        }
         toast.success(`Member ${selectedItem.memberId || ''} removed successfully.`);
       }
 
