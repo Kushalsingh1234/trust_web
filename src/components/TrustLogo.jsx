@@ -6,13 +6,14 @@ export const TrustLogo = ({
   lang = 'en', 
   containerClassName = '',
   hasBackground = false,
-  animated = false
+  animated = false,
+  showOrbit = true
 }) => {
   return (
     <div className={`flex items-center ${showText ? 'gap-3' : 'justify-center'} ${containerClassName}`}>
       <div className={`relative flex-shrink-0 ${className}`}>
         <svg 
-          viewBox="-110 -110 220 220" 
+          viewBox="-125 -125 250 250" 
           className="w-full h-full select-none overflow-visible"
           aria-label="Rashtriya Sanatan Sanskar Seva Sansthan Emblem"
         >
@@ -197,6 +198,20 @@ export const TrustLogo = ({
             opacity="0.12" 
             filter="url(#discSunGlow)" 
           />
+
+          {/* Background Sacred Celestial Orbit Line - 100% Mathematically Perfect Circle */}
+          {showOrbit && (
+            <circle 
+              cx="0" 
+              cy="0" 
+              r="114" 
+              fill="none" 
+              stroke="#E9B44C" 
+              strokeWidth="0.85" 
+              strokeDasharray="3.5 4.5" 
+              opacity="0.55" 
+            />
+          )}
 
           {/* Celestial Radiating Sun Rays (Chakra) - Spins only on desktop if animated */}
           <g className={animated ? "celestial-spin" : ""}>

@@ -12,12 +12,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
       {/* Concentric Logo Centerpiece */}
       <div className="relative flex items-center justify-center">
         {/* Ambient Celestial Glowing Aura - Exact Center of Logo (Pulse only on desktop) */}
-        <div className="absolute w-[125%] h-[125%] rounded-full bg-gradient-to-tr from-[#E87516]/20 via-[#E9B44C]/25 to-amber-200/15 blur-3xl pointer-events-none -z-10 opacity-75 md:opacity-100 md:animate-pulse"></div>
-
-        {/* Subtle Concentric Dashed Ring - Desktop Only Rotation */}
-        <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none -z-10">
-          <div className="w-[114%] h-[114%] rounded-full border border-dashed border-[#E9B44C]/35 md:animate-[spin_80s_linear_infinite_reverse]"></div>
-        </div>
+        <div className="absolute w-[120%] h-[120%] aspect-square rounded-full bg-gradient-to-tr from-[#E87516]/20 via-[#E9B44C]/25 to-amber-200/15 blur-3xl pointer-events-none -z-10 opacity-75 md:opacity-100 md:animate-pulse"></div>
 
         {/* The Big Freestanding Emblem */}
         <div className="relative group cursor-pointer transform md:hover:scale-105 transition-all duration-500">
