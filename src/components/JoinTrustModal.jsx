@@ -9,6 +9,7 @@ import { uploadImageToCloudinary } from '../utils/cloudinaryService';
 import {
   X,
   UserPlus,
+  Users,
   ShieldCheck,
   CheckCircle2,
   Copy,
@@ -28,12 +29,13 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) => {
+export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', initialType = 'member' }) => {
   const { lang, toggleLanguage } = useLanguage();
   const { currentUser, userProfile, registerWithUsername } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
+  const [joinType, setJoinType] = useState(initialType || 'member'); // 'member' | 'volunteer'
   const [paymentSettings, setPaymentSettings] = useState(DEFAULT_PAYMENT_SETTINGS);
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
@@ -77,6 +79,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
 
   useEffect(() => {
     if (isOpen) {
+      if (initialType) {
+        setJoinType(initialType);
+      }
       if (!currentUser) {
         setFormData({
           fullName: '',
@@ -114,7 +119,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
         }));
       }
     }
-  }, [isOpen, currentUser, userProfile, defaultCategory]);
+  }, [isOpen, currentUser, userProfile, defaultCategory, initialType]);
 
   if (!isOpen) return null;
 
@@ -204,6 +209,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
     if (!validate()) return;
 
     setIsSubmitting(true);
+    const isVolunteer = joinType === 'volunteer';
     try {
       let uid = currentUser?.uid;
 
@@ -215,7 +221,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
           fullName: formData.fullName.trim(),
           phone: formData.mobile.trim(),
           email: formData.email.trim(),
-          role: 'member'
+          role: isVolunteer ? 'volunteer' : 'member'
         });
         uid = userCred.uid;
       }
@@ -230,7 +236,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
         ? formData.utrNumber.trim()
         : `SCREENSHOT_${Date.now()}`;
 
-      // 3. Submit Membership Application with Payment Proof
+      // 3. Submit Membership / Volunteer Application with Payment Proof
       await submitMembershipWithPaymentId({
         fullName: formData.fullName.trim(),
         phone: formData.mobile.trim(),
@@ -239,7 +245,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
         district: formData.district.trim(),
         state: formData.state.trim(),
         pincode: formData.pincode.trim(),
-        category: formData.category || 'catB',
+        category: isVolunteer ? 'catC' : (formData.category || 'catB'),
+        memberType: isVolunteer ? 'volunteer' : 'member',
+        role: isVolunteer ? 'volunteer' : 'member',
         claimedAmount: 200,
         paymentId: paymentReference,
         paymentDate: new Date().toISOString().split('T')[0],
@@ -256,15 +264,19 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
       } catch {}
 
       toast.success(
-        lang === 'hi'
-          ? 'सदस्यता आवेदन सफलतापूर्वक प्रेषित! आपका सदस्य डैशबोर्ड खोला जा रहा है।'
-          : 'Membership application submitted! Opening your Member Dashboard.'
+        isVolunteer
+          ? (lang === 'hi'
+              ? 'सनातन स्वयंसेवक पंजीकरण आवेदन सफलतापूर्वक प्रेषित! आपका डैशबोर्ड खोला जा रहा है।'
+              : 'Volunteer application submitted! Opening your Dashboard.')
+          : (lang === 'hi'
+              ? 'सदस्यता आवेदन सफलतापूर्वक प्रेषित! आपका सदस्य डैशबोर्ड खोला जा रहा है।'
+              : 'Membership application submitted! Opening your Member Dashboard.')
       );
 
       onClose();
       navigate('/dashboard');
     } catch (err) {
-      console.error('Membership submission error:', err);
+      console.error('Submission error:', err);
       const errMsg = err.message || (lang === 'hi' ? 'आवेदन जमा करने में त्रुटि' : 'Failed to submit application');
       toast.error(errMsg);
       setErrors({ form: errMsg });
@@ -273,22 +285,32 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
     }
   };
 
+  const isVolunteer = joinType === 'volunteer';
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       <div className="relative bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary via-[#EA6F0B] to-secondary text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0">
+        <div className={`px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between flex-shrink-0 text-white ${
+          isVolunteer
+            ? 'bg-gradient-to-r from-emerald-800 via-emerald-700 to-amber-700'
+            : 'bg-gradient-to-r from-primary via-[#EA6F0B] to-secondary'
+        }`}>
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/15 border border-white/30 text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-sm flex-shrink-0">
-              <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              {isVolunteer ? <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
             </div>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-lg font-black font-hindi-heading truncate">
-                {lang === 'hi' ? 'ट्रस्ट सदस्यता पंजीकरण प्रपत्र' : 'Trust Membership Registration Form'}
+                {isVolunteer
+                  ? (lang === 'hi' ? 'सनातन स्वयंसेवक पंजीकरण प्रपत्र' : 'Trust Volunteer Registration Form')
+                  : (lang === 'hi' ? 'ट्रस्ट सदस्यता पंजीकरण प्रपत्र' : 'Trust Membership Registration Form')}
               </h2>
               <p className="text-[10px] sm:text-xs text-white/90 truncate">
-                {lang === 'hi' ? 'वार्षिक सहयोग शुल्क ₹200 • अधिकृत डिजिटल पहचान पत्र' : 'Annual Fee ₹200 • Official Digital Member Card'}
+                {isVolunteer
+                  ? (lang === 'hi' ? 'वार्षिक सहयोग शुल्क ₹200 • स्वयंसेवक टैग • डिजिटल स्वयंसेवक पहचान पत्र' : 'Annual Fee ₹200 • Volunteer Tag • Digital Volunteer Card')
+                  : (lang === 'hi' ? 'वार्षिक सहयोग शुल्क ₹200 • सदस्य टैग • डिजिटल सदस्य पहचान पत्र' : 'Annual Fee ₹200 • Member Tag • Digital Member Card')}
               </p>
             </div>
           </div>
@@ -314,6 +336,67 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
 
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 text-left">
+          {/* Top Role Selector Tabs: Choose Member vs Volunteer */}
+          <div className="mb-5 bg-gradient-to-r from-amber-50 to-orange-50 p-3 sm:p-4 rounded-2xl border border-amber-200/80 shadow-2xs">
+            <label className="block text-xs font-black text-[#382719] mb-2 uppercase tracking-wide">
+              {lang === 'hi' ? '१. जुड़ने का प्रकार चुनें (Choose Role / Tag) *' : '1. Choose Joining Role / Tag *'}
+            </label>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setJoinType('member')}
+                className={`p-3 rounded-xl border-2 flex items-center gap-2.5 sm:gap-3 text-left transition-all ${
+                  joinType === 'member'
+                    ? 'bg-white border-primary shadow-md ring-2 ring-primary/25 text-[#382719]'
+                    : 'bg-white/70 border-amber-200/60 hover:bg-white text-[#666666]'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  joinType === 'member' ? 'bg-primary text-white shadow-xs' : 'bg-amber-100 text-primary'
+                }`}>
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-black text-xs sm:text-sm block truncate font-hindi-heading">
+                    {lang === 'hi' ? 'ट्रस्ट सदस्य (Member)' : 'Trust Member'}
+                  </span>
+                  <span className="text-[10px] text-[#777777] block truncate">
+                    {lang === 'hi' ? '🛡️ सदस्य टैग (Member Tag)' : 'Official Member Tag'}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJoinType('volunteer')}
+                className={`p-3 rounded-xl border-2 flex items-center gap-2.5 sm:gap-3 text-left transition-all ${
+                  joinType === 'volunteer'
+                    ? 'bg-white border-emerald-600 shadow-md ring-2 ring-emerald-500/25 text-[#382719]'
+                    : 'bg-white/70 border-emerald-200/60 hover:bg-white text-[#666666]'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  joinType === 'volunteer' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  <Users className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-black text-xs sm:text-sm block truncate font-hindi-heading">
+                    {lang === 'hi' ? 'सनातन स्वयंसेवक (Volunteer)' : 'Trust Volunteer'}
+                  </span>
+                  <span className="text-[10px] text-[#777777] block truncate">
+                    {lang === 'hi' ? '🤝 स्वयंसेवक टैग (Volunteer Tag)' : 'Volunteer Tag'}
+                  </span>
+                </div>
+              </button>
+            </div>
+            <p className="text-[11px] text-[#777777] mt-2 italic">
+              {lang === 'hi'
+                ? '* दोनों हेतु प्रक्रिया एवं ₹200 वार्षिक सहयोग शुल्क एक समान है। केवल आपका पद / टैग और अधिकृत पहचान पत्र भिन्न होगा।'
+                : '* Same registration process & ₹200 fee apply for both. Your profile will receive the respective tag and distinct ID card.'}
+            </p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {errors.form && (
@@ -738,7 +821,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
                 <span>
                   {isSubmitting
                     ? (lang === 'hi' ? 'आवेदन व भुगतान प्रमाण जमा हो रहा है...' : 'Submitting Application & Proof...')
-                    : (lang === 'hi' ? 'सदस्यता आवेदन एवं भुगतान प्रमाण जमा करें' : 'Submit Membership & Payment Proof')}
+                    : isVolunteer
+                    ? (lang === 'hi' ? '🤝 स्वयंसेवक आवेदन एवं प्रमाण जमा करें' : 'Submit Volunteer Application & Proof')
+                    : (lang === 'hi' ? '🛡️ सदस्यता आवेदन एवं प्रमाण जमा करें' : 'Submit Membership Application & Proof')}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>

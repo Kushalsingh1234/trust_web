@@ -36,6 +36,8 @@ export const submitMembershipWithPaymentId = async ({
   state = 'Uttar Pradesh',
   pincode = '273016',
   category = 'catB',
+  memberType = 'member', // 'member' | 'volunteer'
+  role = 'member',
   claimedAmount = 200,
   paymentId,
   paymentDate,
@@ -56,24 +58,33 @@ export const submitMembershipWithPaymentId = async ({
   serviceAreas = [],
   experience = ''
 }) => {
-  const isCatA = category === 'catA';
+  const isVolunteerRole = memberType === 'volunteer' || category === 'catC';
+  const effectiveCategory = isVolunteerRole ? 'catC' : (category || 'catB');
+  const isCatA = effectiveCategory === 'catA';
   const cleanPaymentId = paymentId ? paymentId.trim().toUpperCase() : null;
 
-  // Guard 1: Prevent duplicate membership ONLY if applicant is CURRENTLY an active approved member
+  // Guard 1: Prevent duplicate application ONLY if applicant is ALREADY active in THIS specific role
   if (uid) {
     try {
       const uSnap = await getDoc(doc(db, 'users', uid));
-      if (uSnap.exists() && uSnap.data().isMember === true) {
-        throw new Error(
-          `आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के सक्रिय सदस्य हैं (सदस्यता क्रमांक: ${uSnap.data().memberId || 'सत्यापित'})। एक ही सदस्य पुनः उसी सदस्यता हेतु आवेदन नहीं कर सकता।`
-        );
+      if (uSnap.exists()) {
+        const uData = uSnap.data();
+        if (!isVolunteerRole && uData.isMember === true) {
+          throw new Error(
+            `आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के सक्रिय सदस्य हैं (सदस्यता क्रमांक: ${uData.memberId || 'सत्यापित'})। (आप स्वयंसेवक हेतु आवेदन कर सकते हैं)`
+          );
+        } else if (isVolunteerRole && (uData.isVolunteer === true || uData.volunteerStatus === 'approved')) {
+          throw new Error(
+            `आप पहले से ही राष्ट्रीय सनातन संस्कार सेवा संस्थान के सक्रिय स्वयंसेवक हैं (आईडी: ${uData.volunteerId || uData.memberId || 'सत्यापित'})। (आप ट्रस्ट सदस्यता हेतु आवेदन कर सकते हैं)`
+          );
+        }
       }
     } catch (err) {
-      if (err.message && err.message.includes("सक्रिय सदस्य")) throw err;
+      if (err.message && (err.message.includes("सक्रिय सदस्य") || err.message.includes("सक्रिय स्वयंसेवक"))) throw err;
     }
   }
 
-  // Guard 2: If applicant previously had pending applications, supersede them when submitting fresh
+  // Guard 2: If applicant previously had pending applications OF THIS SAME ROLE, supersede them
   if (uid) {
     try {
       const qPending = query(
@@ -83,10 +94,14 @@ export const submitMembershipWithPaymentId = async ({
       );
       const sPending = await getDocs(qPending);
       for (const pDoc of sPending.docs) {
-        await updateDoc(pDoc.ref, {
-          status: 'superseded',
-          supersededAt: serverTimestamp()
-        });
+        const pData = pDoc.data();
+        const pIsVol = pData.memberType === 'volunteer' || pData.category === 'catC';
+        if (pIsVol === isVolunteerRole) {
+          await updateDoc(pDoc.ref, {
+            status: 'superseded',
+            supersededAt: serverTimestamp()
+          });
+        }
       }
     } catch (err) {}
   }
@@ -206,7 +221,9 @@ export const submitMembershipWithPaymentId = async ({
     district: district.trim(),
     state: state.trim(),
     pincode: pincode.trim(),
-    category: category || 'catB',
+    category: isVolunteerRole ? 'catC' : (category || 'catB'),
+    memberType: isVolunteerRole ? 'volunteer' : 'member',
+    role: isVolunteerRole ? 'volunteer' : 'member',
     annualFee: Number(claimedAmount) || 200,
     claimedAmount: Number(claimedAmount) || 200,
     amount: Number(claimedAmount) || 200,
@@ -221,7 +238,7 @@ export const submitMembershipWithPaymentId = async ({
     workplace: workplace ? workplace.trim() : null,
     focusArea: focusArea ? focusArea.trim() : null,
     // Category C
-    availability: availability ? availability.trim() : null,
+    availability: availability ? availability.trim() : 'weekends',
     serviceAreas: Array.isArray(serviceAreas) ? serviceAreas : [],
     experience: experience ? experience.trim() : null,
     status: 'pending',
@@ -234,6 +251,38 @@ export const submitMembershipWithPaymentId = async ({
   const newAppRef = doc(collection(db, 'membershipApplications'));
   await setDoc(newAppRef, membershipDocData);
 
+  // If Volunteer role, also mirror into volunteer collections
+  if (isVolunteerRole) {
+    try {
+      const volData = {
+        uid: uid || null,
+        applicantUid: uid || null,
+        membershipApplicationId: newAppRef.id,
+        fullName: fullName.trim(),
+        mobile: phone.trim(),
+        phone: phone.trim(),
+        cityOrDistrict: district.trim(),
+        availability: availability || 'weekends',
+        experience: experience ? experience.trim() : '',
+        category: 'catC',
+        memberType: 'volunteer',
+        role: 'volunteer',
+        amount: Number(claimedAmount) || 200,
+        paymentId: cleanPaymentId,
+        paymentProofType: paymentProofType || 'utr',
+        paymentScreenshotUrl: paymentScreenshotUrl || null,
+        status: 'pending',
+        submittedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'volunteers', newAppRef.id), volData);
+      await setDoc(doc(db, 'volunteerApplications', newAppRef.id), volData);
+    } catch (vErr) {
+      console.warn("Could not mirror to volunteer collections:", vErr);
+    }
+  }
+
   // Save payment tracking entry in payments collection
   try {
     const paymentDocRef = doc(collection(db, 'payments'));
@@ -242,7 +291,7 @@ export const submitMembershipWithPaymentId = async ({
       uid: uid || null,
       amount: Number(claimedAmount) || 200,
       claimedAmount: Number(claimedAmount) || 200,
-      purpose: 'membership_fee',
+      purpose: isVolunteerRole ? 'volunteer_registration' : 'membership_fee',
       paymentId: cleanPaymentId,
       utrNumber: cleanPaymentId,
       paymentProofType: paymentProofType || 'utr',
@@ -251,7 +300,8 @@ export const submitMembershipWithPaymentId = async ({
       status: 'pending',
       payerName: fullName.trim(),
       payerPhone: phone.trim(),
-      category: category || 'catB',
+      category: isVolunteerRole ? 'catC' : (category || 'catB'),
+      memberType: isVolunteerRole ? 'volunteer' : 'member',
       membershipId: newAppRef.id,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -271,8 +321,8 @@ export const submitMembershipWithPaymentId = async ({
     await setDoc(paymentIdRef, {
       uid: uid || null,
       claimedAmount: Number(claimedAmount) || 200,
-      purpose: 'membership_fee',
-      entityType: 'membership',
+      purpose: isVolunteerRole ? 'volunteer_registration' : 'membership_fee',
+      entityType: isVolunteerRole ? 'volunteer' : 'membership',
       createdAt: serverTimestamp()
     });
   } catch (e) {}
@@ -280,19 +330,33 @@ export const submitMembershipWithPaymentId = async ({
   // Update users/{uid} document with active application status
   if (uid) {
     try {
-      await setDoc(doc(db, 'users', uid), {
-        hasAppliedMembership: true,
-        membershipApplicationId: newAppRef.id,
-        membershipStatus: 'pending',
-        category: category || 'catB',
-        claimedAmount: Number(claimedAmount) || 200,
-        annualFee: Number(claimedAmount) || 200,
-        paymentId: cleanPaymentId,
-        paymentProofType: paymentProofType || 'utr',
-        paymentScreenshotUrl: paymentScreenshotUrl || null,
-        appliedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      if (isVolunteerRole) {
+        await setDoc(doc(db, 'users', uid), {
+          hasAppliedVolunteer: true,
+          volunteerApplicationId: newAppRef.id,
+          volunteerStatus: 'pending',
+          role: 'volunteer',
+          volunteerPaymentId: cleanPaymentId,
+          volunteerProofType: paymentProofType || 'utr',
+          volunteerScreenshotUrl: paymentScreenshotUrl || null,
+          appliedVolunteerAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
+        await setDoc(doc(db, 'users', uid), {
+          hasAppliedMembership: true,
+          membershipApplicationId: newAppRef.id,
+          membershipStatus: 'pending',
+          category: category || 'catB',
+          claimedAmount: Number(claimedAmount) || 200,
+          annualFee: Number(claimedAmount) || 200,
+          paymentId: cleanPaymentId,
+          paymentProofType: paymentProofType || 'utr',
+          paymentScreenshotUrl: paymentScreenshotUrl || null,
+          appliedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
     } catch (e) {
       console.warn("Could not update user profile with membership status:", e);
     }
@@ -301,20 +365,31 @@ export const submitMembershipWithPaymentId = async ({
   // Cache in browser localStorage strictly scoped to user UID
   try {
     if (uid) {
-      const userAppKey = `rsssst_my_membership_app_${uid}`;
-      const userIdsKey = `rsssst_my_app_ids_${uid}`;
-      const saved = JSON.parse(localStorage.getItem(userIdsKey) || '[]');
-      if (!saved.includes(newAppRef.id)) saved.unshift(newAppRef.id);
-      localStorage.setItem(userIdsKey, JSON.stringify(saved.slice(0, 20)));
-      localStorage.setItem(userAppKey, JSON.stringify({
-        id: newAppRef.id,
-        ...membershipDocData,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      }));
+      if (isVolunteerRole) {
+        const userVolKey = `rsssst_my_volunteer_app_${uid}`;
+        localStorage.setItem(userVolKey, JSON.stringify({
+          id: newAppRef.id,
+          ...membershipDocData,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }));
+      } else {
+        const userAppKey = `rsssst_my_membership_app_${uid}`;
+        const userIdsKey = `rsssst_my_app_ids_${uid}`;
+        const saved = JSON.parse(localStorage.getItem(userIdsKey) || '[]');
+        if (!saved.includes(newAppRef.id)) saved.unshift(newAppRef.id);
+        localStorage.setItem(userIdsKey, JSON.stringify(saved.slice(0, 20)));
+        localStorage.setItem(userAppKey, JSON.stringify({
+          id: newAppRef.id,
+          ...membershipDocData,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }));
+      }
     }
     // Purge unscoped cross-user leak keys
     localStorage.removeItem('rsssst_my_membership_app');
+    localStorage.removeItem('rsssst_my_volunteer_app');
     localStorage.removeItem('rsssst_my_app_ids');
     localStorage.removeItem('rsssst_last_app_mobile');
   } catch (e) {}
@@ -394,7 +469,10 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
       await setDoc(memberCounterRef, { seq: nextMemberSeq }, { merge: true });
     } catch (e2) {}
   }
-  const memberId = `TRUST-M-${String(nextMemberSeq).padStart(4, '0')}`;
+  const isVolunteerRecord = memData.memberType === 'volunteer' || memData.category === 'catC';
+  const memberId = isVolunteerRecord
+    ? `TRUST-V-${String(nextMemberSeq).padStart(4, '0')}`
+    : `TRUST-M-${String(nextMemberSeq).padStart(4, '0')}`;
 
   // 3. Generate sequential Receipt Number for paid members
   let receiptNumber = null;
@@ -423,6 +501,9 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
   const approvalPayload = {
     status: 'approved',
     memberId,
+    volunteerId: isVolunteerRecord ? memberId : null,
+    cardType: isVolunteerRecord ? 'volunteer' : 'member',
+    memberType: isVolunteerRecord ? 'volunteer' : 'member',
     memberSince: serverTimestamp(),
     verifiedAmount: numVerified,
     receiptNumber,
@@ -451,6 +532,26 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
     updateSuccess = true;
   } catch (e) {}
 
+  // If volunteer, also update volunteers & volunteerApplications collection
+  if (isVolunteerRecord) {
+    try {
+      await updateDoc(doc(db, 'volunteers', membershipId), {
+        status: 'approved',
+        volunteerId: memberId,
+        approvedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {}
+    try {
+      await updateDoc(doc(db, 'volunteerApplications', membershipId), {
+        status: 'approved',
+        volunteerId: memberId,
+        approvedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {}
+  }
+
   if (!updateSuccess) {
     throw new Error("Missing or insufficient permissions to update membership application.");
   }
@@ -460,13 +561,26 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
   if (targetUid) {
     try {
       const userRef = doc(db, 'users', targetUid);
-      await setDoc(userRef, {
-        isMember: true,
-        memberId,
-        memberSince: serverTimestamp(),
-        category: memData.category || 'catB',
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      if (isVolunteerRecord) {
+        await setDoc(userRef, {
+          isVolunteer: true,
+          volunteerId: memberId,
+          volunteerStatus: 'approved',
+          volunteerSince: serverTimestamp(),
+          role: 'volunteer',
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
+        await setDoc(userRef, {
+          isMember: true,
+          memberId,
+          memberSince: serverTimestamp(),
+          membershipStatus: 'approved',
+          category: memData.category || 'catB',
+          role: 'member',
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
     } catch (e) {
       console.warn("Could not update user profile with membership status:", e);
     }
@@ -479,6 +593,9 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
     await addDoc(collection(db, 'members'), {
       membershipNumber: memberId,
       memberId: memberId,
+      volunteerId: isVolunteerRecord ? memberId : null,
+      cardType: isVolunteerRecord ? 'volunteer' : 'member',
+      memberType: isVolunteerRecord ? 'volunteer' : 'member',
       userUid: targetUid || null,
       uid: targetUid || null,
       applicationId: membershipId,
@@ -488,7 +605,7 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
       phone: memData.phone || memData.mobile || '',
       district: memData.district || '',
       state: memData.state || '',
-      category: memData.category || 'catB',
+      category: isVolunteerRecord ? 'catC' : (memData.category || 'catB'),
       status: 'active',
       membershipFee: numVerified,
       paymentStatus: isCatA ? 'exempted' : 'verified',

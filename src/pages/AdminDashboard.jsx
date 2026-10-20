@@ -512,14 +512,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               {lang === 'hi' ? 'English' : 'हिंदी'}
             </button>
 
-            <Link
-              to="/about"
-              className="p-2 rounded-xl text-white/80 hover:bg-white/10 text-xs font-bold flex items-center gap-1.5"
-              title={lang === 'hi' ? 'ट्रस्ट परिचय' : 'About Trust'}
-            >
-              <Home className="w-4 h-4 text-[#E9B44C]" />
-              <span className="hidden sm:inline text-xs">{lang === 'hi' ? 'ट्रस्ट परिचय' : 'About'}</span>
-            </Link>
 
             <button
               type="button"
@@ -1251,6 +1243,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                     lang={lang}
                                   />
                                   <span className="font-black text-sm">{name}</span>
+                                  {item.memberType === 'volunteer' || item.category === 'catC' ? (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                      🤝 स्वयंसेवक
+                                    </span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                      🛡️ सदस्य
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[10px] font-mono text-secondary mt-0.5">
                                   {item.username ? `@${item.username}` : (item.uid ? `UID: ${item.uid.slice(0, 8)}...` : '')}
@@ -1409,17 +1410,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               {activeTab === 'memberships' && (
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    {item.category === 'catA' ? (
+                                    {item.memberType === 'volunteer' || item.category === 'catC' ? (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        🤝 स्वयंसेवक (Volunteer)
+                                      </span>
+                                    ) : item.category === 'catA' ? (
                                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
                                         Cat A (निराश्रित/सहायता)
                                       </span>
-                                    ) : item.category === 'catC' ? (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-secondary/10 text-secondary">
-                                        Cat C (कार्यकर्ता)
-                                      </span>
                                     ) : (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-primary/10 text-primary">
-                                        Cat B (साधारण सदस्य)
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                                        🛡️ सदस्य (Member)
                                       </span>
                                     )}
                                     {item.category === 'catA' ? (

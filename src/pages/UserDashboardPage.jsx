@@ -9,6 +9,7 @@ import VolunteerModal from '../components/VolunteerModal';
 import MemberBadge from '../components/MemberBadge';
 import DigitalIdCard from '../components/DigitalIdCard';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
+import JoinTrustModal from '../components/JoinTrustModal';
 import { getPaymentSettings, submitDonationWithPaymentId } from '../firebase/paymentService';
 import { subscribeUserCollection, getPublishedAnnouncements } from '../firebase/services';
 import { uploadImageToCloudinary } from '../utils/cloudinaryService';
@@ -71,11 +72,18 @@ export const UserDashboardPage = () => {
   const [loading, setLoading] = useState(true);
 
   // Modals state
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [joinModalType, setJoinModalType] = useState('member'); // 'member' | 'volunteer'
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [volunteerModalOpen, setVolunteerModalOpen] = useState(false);
   const [donateModalOpen, setDonateModalOpen] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(null);
   const [viewingCard, setViewingCard] = useState(null); // DigitalIdCard data
+
+  const handleOpenJoinModal = (type = 'member') => {
+    setJoinModalType(type);
+    setJoinModalOpen(true);
+  };
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -275,34 +283,38 @@ export const UserDashboardPage = () => {
     setDonations([]);
   }, [currentUser?.uid]);
 
-  // Compute effective memberships (seamlessly combines Firestore realtime with user profile & local cache)
+  // Compute effective memberships (strictly general/patron members, not volunteer records)
   const effectiveMemberships = React.useMemo(() => {
     // Strictly isolate to current logged-in user
     const userOwnedMemberships = memberships.filter((m) => {
       if (!currentUser?.uid) return false;
-      return m.uid === currentUser.uid || m.applicantUid === currentUser.uid;
+      const isOwner = m.uid === currentUser.uid || m.applicantUid === currentUser.uid;
+      const isVolunteerRecord = m.memberType === 'volunteer' || m.role === 'volunteer' || m.category === 'catC';
+      return isOwner && !isVolunteerRecord;
     });
 
     if (userOwnedMemberships.length > 0) return userOwnedMemberships;
 
     // Check if userProfile indicates an active or pending membership
     if (userProfile?.isMember || userProfile?.memberId || userProfile?.hasAppliedMembership || userProfile?.membershipApplicationId || userProfile?.membershipStatus) {
-      return [{
-        id: userProfile.membershipApplicationId || userProfile.memberId || 'MEM-APP-ACTIVE',
-        fullName: userProfile.fullName || 'सदस्य',
-        phone: userProfile.phone || '',
-        category: userProfile.category || userProfile.membershipCategory || 'catB',
-        claimedAmount: userProfile.claimedAmount || 200,
-        annualFee: userProfile.annualFee || userProfile.claimedAmount || 200,
-        paymentId: userProfile.paymentId || 'SUBMITTED',
-        paymentProofType: userProfile.paymentProofType || 'utr',
-        paymentScreenshotUrl: userProfile.paymentScreenshotUrl || null,
-        status: userProfile.membershipStatus || (userProfile.isMember ? 'approved' : 'pending'),
-        receiptNumber: userProfile.receiptNumber || null,
-        receiptSent: Boolean(userProfile.feeReceiptSent),
-        memberId: userProfile.memberId || null,
-        createdAt: userProfile.memberSince || userProfile.appliedAt || new Date()
-      }];
+      if (userProfile?.role !== 'volunteer' || userProfile?.isMember) {
+        return [{
+          id: userProfile.membershipApplicationId || userProfile.memberId || 'MEM-APP-ACTIVE',
+          fullName: userProfile.fullName || 'सदस्य',
+          phone: userProfile.phone || '',
+          category: userProfile.category || userProfile.membershipCategory || 'catB',
+          claimedAmount: userProfile.claimedAmount || 200,
+          annualFee: userProfile.annualFee || userProfile.claimedAmount || 200,
+          paymentId: userProfile.paymentId || 'SUBMITTED',
+          paymentProofType: userProfile.paymentProofType || 'utr',
+          paymentScreenshotUrl: userProfile.paymentScreenshotUrl || null,
+          status: userProfile.membershipStatus || (userProfile.isMember ? 'approved' : 'pending'),
+          receiptNumber: userProfile.receiptNumber || null,
+          receiptSent: Boolean(userProfile.feeReceiptSent),
+          memberId: userProfile.memberId || null,
+          createdAt: userProfile.memberSince || userProfile.appliedAt || new Date()
+        }];
+      }
     }
 
     // Check localStorage cache from recent submission strictly for THIS user
@@ -313,7 +325,9 @@ export const UserDashboardPage = () => {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && (parsed.uid === currentUser.uid || parsed.applicantUid === currentUser.uid)) {
-            return [parsed];
+            if (parsed.memberType !== 'volunteer' && parsed.category !== 'catC') {
+              return [parsed];
+            }
           }
         }
       } catch (e) {}
@@ -322,24 +336,42 @@ export const UserDashboardPage = () => {
     return [];
   }, [memberships, userProfile, currentUser?.uid]);
 
-  // Compute effective volunteers
+  // Compute effective volunteers (from volunteers collection and volunteer tagged applications)
   const effectiveVolunteers = React.useMemo(() => {
     const userOwnedVolunteers = volunteers.filter((v) => {
       if (!currentUser?.uid) return false;
       return v.uid === currentUser.uid || v.applicantUid === currentUser.uid;
     });
 
-    if (userOwnedVolunteers.length > 0) return userOwnedVolunteers;
+    // Also include volunteer-tagged applications from memberships collection
+    const volunteerFromMemberships = memberships.filter((m) => {
+      if (!currentUser?.uid) return false;
+      const isOwner = m.uid === currentUser.uid || m.applicantUid === currentUser.uid;
+      return isOwner && (m.memberType === 'volunteer' || m.role === 'volunteer' || m.category === 'catC');
+    });
 
-    if (userProfile?.hasAppliedVolunteer || userProfile?.volunteerApplicationId || userProfile?.role === 'volunteer') {
+    const combined = [...userOwnedVolunteers];
+    for (const vm of volunteerFromMemberships) {
+      if (!combined.some(c => c.id === vm.id)) {
+        combined.push({
+          ...vm,
+          cardType: 'volunteer'
+        });
+      }
+    }
+    if (combined.length > 0) return combined;
+
+    if (userProfile?.hasAppliedVolunteer || userProfile?.volunteerApplicationId || userProfile?.role === 'volunteer' || userProfile?.isVolunteer) {
       return [{
         id: userProfile.volunteerApplicationId || 'VOL-APP-ACTIVE',
         fullName: userProfile.fullName || 'सनातन स्वयंसेवक',
         phone: userProfile.phone || '',
         cityOrDistrict: userProfile.cityOrDistrict || 'गोरखपुर',
         availability: 'weekends',
-        status: userProfile.volunteerStatus || 'pending',
-        createdAt: userProfile.appliedAt || new Date()
+        status: userProfile.volunteerStatus || (userProfile.isVolunteer ? 'approved' : 'pending'),
+        cardType: 'volunteer',
+        role: 'volunteer',
+        createdAt: userProfile.appliedVolunteerAt || userProfile.appliedAt || new Date()
       }];
     }
 
@@ -350,14 +382,14 @@ export const UserDashboardPage = () => {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && (parsed.uid === currentUser.uid || parsed.applicantUid === currentUser.uid)) {
-            return [parsed];
+            return [{ ...parsed, cardType: 'volunteer' }];
           }
         }
       } catch (e) {}
     }
 
     return [];
-  }, [volunteers, userProfile, currentUser?.uid]);
+  }, [volunteers, memberships, userProfile, currentUser?.uid]);
 
   // Compute membership status
   const approvedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'approved');
@@ -368,7 +400,12 @@ export const UserDashboardPage = () => {
 
   // Compute volunteer status
   const approvedVolunteer = effectiveVolunteers.find((v) => v.status?.toLowerCase() === 'approved');
-  const isVolunteer = Boolean(userProfile?.role === 'volunteer' || approvedVolunteer || effectiveVolunteers.length > 0);
+  const isVolunteer = Boolean(userProfile?.isVolunteer === true || userProfile?.role === 'volunteer' || approvedVolunteer || effectiveVolunteers.length > 0);
+  const volunteerId = isVolunteer ? (userProfile?.volunteerId || approvedVolunteer?.volunteerId || approvedVolunteer?.memberId || '') : '';
+
+  // Cross-application status booleans
+  const hasMemberApplication = Boolean(effectiveMemberships.length > 0 || isMember);
+  const hasVolunteerApplication = Boolean(effectiveVolunteers.length > 0 || approvedVolunteer || userProfile?.hasAppliedVolunteer);
 
   // Status Badge Component
   const renderStatusBadge = (status) => {
@@ -531,13 +568,38 @@ export const UserDashboardPage = () => {
                   <h1 className="text-xl sm:text-2xl font-black text-[#382719] font-hindi-heading">
                     {userProfile?.fullName || 'सदस्य (Member)'}
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                    {isMember
-                      ? (lang === 'hi' ? 'सत्यापित सदस्य (Verified Member)' : 'Verified Member')
-                      : isVolunteer
-                      ? (lang === 'hi' ? 'सनातन स्वयंसेवक (Volunteer)' : 'Trust Volunteer')
-                      : (lang === 'hi' ? 'पंजीकृत सदस्य (Member)' : 'Registered Member')}
-                  </span>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {hasMemberApplication && (
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        isMember
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}>
+                        {isMember
+                          ? (lang === 'hi' ? '🛡️ सत्यापित सदस्य (Member)' : '🛡️ Verified Member')
+                          : (lang === 'hi' ? '🛡️ सदस्य आवेदक (Pending)' : '🛡️ Member Applicant')}
+                      </span>
+                    )}
+
+                    {hasVolunteerApplication && (
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        approvedVolunteer || userProfile?.isVolunteer
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        {approvedVolunteer || userProfile?.isVolunteer
+                          ? (lang === 'hi' ? '🤝 सनातन स्वयंसेवक (Volunteer)' : '🤝 Sanatan Volunteer')
+                          : (lang === 'hi' ? '🤝 स्वयंसेवक आवेदक (Pending)' : '🤝 Volunteer Applicant')}
+                      </span>
+                    )}
+
+                    {!hasMemberApplication && !hasVolunteerApplication && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                        {lang === 'hi' ? 'पंजीकृत उपयोगकर्ता' : 'Registered User'}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-[#555555]">
@@ -561,17 +623,18 @@ export const UserDashboardPage = () => {
                   )}
                 </div>
 
-                {/* Member / Volunteer Card Action Buttons */}
+                {/* Member / Volunteer Card Action & Cross-Application Buttons */}
                 <div className="pt-1.5 flex flex-wrap items-center gap-2">
-                  {isMember && approvedMembership && (
+                  {/* Digital Member ID Card Button */}
+                  {isMember && (
                     <button
                       type="button"
                       onClick={() => setViewingCard({
-                        ...approvedMembership,
-                        fullName: userProfile?.fullName || approvedMembership.fullName,
+                        ...(approvedMembership || {}),
+                        fullName: userProfile?.fullName || approvedMembership?.fullName,
                         photoURL: userProfile?.photoURL,
-                        memberId: memberId || approvedMembership.memberId,
-                        membershipNumber: memberId || approvedMembership.memberId,
+                        memberId: memberId || approvedMembership?.memberId,
+                        membershipNumber: memberId || approvedMembership?.memberId,
                         status: 'approved',
                         cardType: 'member'
                       })}
@@ -579,26 +642,53 @@ export const UserDashboardPage = () => {
                       title="View Digital Member Card"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'डिजिटल सदस्यता पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
+                      <span>{lang === 'hi' ? 'डिजिटल सदस्य पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
                     </button>
                   )}
 
-                  {approvedVolunteer && (
+                  {/* Digital Volunteer ID Card Button */}
+                  {(approvedVolunteer || (isVolunteer && userProfile?.isVolunteer)) && (
                     <button
                       type="button"
                       onClick={() => setViewingCard({
-                        ...approvedVolunteer,
-                        fullName: userProfile?.fullName || approvedVolunteer.fullName,
+                        ...(approvedVolunteer || {}),
+                        fullName: userProfile?.fullName || approvedVolunteer?.fullName,
                         photoURL: userProfile?.photoURL,
-                        phone: userProfile?.phone || approvedVolunteer.phone,
+                        phone: userProfile?.phone || approvedVolunteer?.phone,
                         status: 'approved',
                         cardType: 'volunteer'
                       })}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-bold shadow-xs transition-all hover:scale-102"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-all hover:scale-102"
                       title="View Digital Volunteer Card"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
                       <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'Volunteer ID Card'}</span>
+                    </button>
+                  )}
+
+                  {/* Member applying to also become a Volunteer */}
+                  {!hasVolunteerApplication && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenJoinModal('volunteer')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all hover:scale-102 cursor-pointer"
+                      title={lang === 'hi' ? 'सनातन स्वयंसेवक के रूप में भी जुड़ें' : 'Also apply as a Volunteer'}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{lang === 'hi' ? '🤝 स्वयंसेवक भी बनें' : '🤝 Also Join as Volunteer'}</span>
+                    </button>
+                  )}
+
+                  {/* Volunteer applying to also become a Member */}
+                  {!hasMemberApplication && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenJoinModal('member')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs transition-all hover:scale-102 cursor-pointer"
+                      title={lang === 'hi' ? 'ट्रस्ट सदस्यता हेतु आवेदन करें' : 'Also apply as a Member'}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>{lang === 'hi' ? '🛡️ ट्रस्ट सदस्य भी बनें' : '🛡️ Also Join as Member'}</span>
                     </button>
                   )}
                 </div>
@@ -742,16 +832,24 @@ export const UserDashboardPage = () => {
             {effectiveMemberships.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
                 <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
-                  <UserPlus className="w-8 h-8" />
+                  <ShieldCheck className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-bold text-[#382719] font-hindi-heading">
                   {lang === 'hi' ? 'कोई सक्रिय सदस्यता आवेदन नहीं मिला' : "No active membership application"}
                 </h3>
-                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1">
+                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
                   {lang === 'hi'
-                    ? 'सदस्यता पंजीकरण मुख्य पृष्ठ (Landing Page) से पूर्ण किया जाता है।'
-                    : 'Membership registration is completed from the trust landing page.'}
+                    ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान के अधिकृत सदस्य बनें और डिजिटल सदस्य पहचान पत्र प्राप्त करें।'
+                    : 'Join as an official member of the Trust and receive your official Digital Member ID card.'}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => handleOpenJoinModal('member')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{lang === 'hi' ? '🛡️ ट्रस्ट सदस्यता हेतु आवेदन करें' : 'Apply for Trust Membership'}</span>
+                </button>
               </div>
             ) : (
               effectiveMemberships.map((item) => {
@@ -931,6 +1029,35 @@ export const UserDashboardPage = () => {
                 );
               })
             )}
+
+            {/* Cross-apply: Member can apply as Volunteer */}
+            {!hasVolunteerApplication && effectiveMemberships.length > 0 && (
+              <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-[#382719] font-hindi-heading">
+                      {lang === 'hi' ? '🤝 क्या आप सनातन स्वयंसेवक भी बनना चाहते हैं?' : '🤝 Also want to apply as a Sanatan Volunteer?'}
+                    </h4>
+                    <p className="text-xs text-[#666666]">
+                      {lang === 'hi'
+                        ? 'संस्कार जागरण शिविरों, सहायता अभियानों एवं कार्यक्रमों में स्वयंसेवक के रूप में सक्रिय भूमिका निभाएं।'
+                        : 'Participate actively in Vedic awareness camps, welfare drives and public events as a volunteer.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenJoinModal('volunteer')}
+                  className="shrink-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{lang === 'hi' ? '🤝 स्वयंसेवक भी बनें' : 'Apply as Volunteer'}</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -939,7 +1066,7 @@ export const UserDashboardPage = () => {
           <div className="space-y-4">
             {effectiveVolunteers.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
-                <div className="w-16 h-16 rounded-full bg-secondary/10 text-secondary flex items-center justify-center mx-auto mb-3">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-3">
                   <Users className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-bold text-[#382719] font-hindi-heading">
@@ -947,16 +1074,16 @@ export const UserDashboardPage = () => {
                 </h3>
                 <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
                   {lang === 'hi'
-                    ? 'संस्कार जागरण, वैदिक शिविर एवं सेवा कार्यों में निष्काम भाव से योगदान देने हेतु जुड़ें (कोई शुल्क नहीं)।'
-                    : 'Join our volunteer taskforce to organize Vedic awareness camps and humanitarian welfare drives (No fee required).'}
+                    ? 'संस्कार जागरण, वैदिक शिविर एवं सेवा कार्यों में निष्काम भाव से योगदान देने हेतु सनातन स्वयंसेवक के रूप में जुड़ें।'
+                    : 'Join our volunteer taskforce to organize Vedic awareness camps and humanitarian welfare drives.'}
                 </p>
                 <button
                   type="button"
-                  onClick={() => setVolunteerModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-xs transition-all"
+                  onClick={() => handleOpenJoinModal('volunteer')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>{lang === 'hi' ? 'स्वयंसेवक आवेदन पत्र भरें (निःशुल्क)' : 'Become a Volunteer'}</span>
+                  <Users className="w-4 h-4" />
+                  <span>{lang === 'hi' ? '🤝 सनातन स्वयंसेवक बनें' : 'Become a Volunteer'}</span>
                 </button>
               </div>
             ) : (
@@ -1024,7 +1151,7 @@ export const UserDashboardPage = () => {
                             status: 'approved',
                             cardType: 'volunteer'
                           })}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-xs transition-all"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
                           <span>{lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'View Volunteer ID Card'}</span>
@@ -1047,6 +1174,35 @@ export const UserDashboardPage = () => {
                   </div>
                 );
               })
+            )}
+
+            {/* Cross-apply: Volunteer can apply as Member */}
+            {!hasMemberApplication && effectiveVolunteers.length > 0 && (
+              <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-[#382719] font-hindi-heading">
+                      {lang === 'hi' ? '🛡️ क्या आप ट्रस्ट के अधिकृत सदस्य भी बनना चाहते हैं?' : '🛡️ Would you also like to become a Trust Member?'}
+                    </h4>
+                    <p className="text-xs text-[#666666]">
+                      {lang === 'hi'
+                        ? 'ट्रस्ट के आधिकारिक सदस्य बनें और संस्था का डिजिटल सदस्य पहचान पत्र प्राप्त करें।'
+                        : 'Join as an official member of the Trust and receive your official Digital Member ID.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenJoinModal('member')}
+                  className="shrink-0 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{lang === 'hi' ? '🛡️ ट्रस्ट सदस्य भी बनें' : 'Apply as Member'}</span>
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -1532,6 +1688,13 @@ export const UserDashboardPage = () => {
       <VolunteerModal
         isOpen={volunteerModalOpen}
         onClose={() => setVolunteerModalOpen(false)}
+      />
+
+      {/* Trust Joining Modal for Member or Volunteer Registration */}
+      <JoinTrustModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        initialType={joinModalType}
       />
 
       {/* Authentic Traditional Receipt Modal (Only available once sent by admin) */}
