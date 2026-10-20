@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, TRUST_ADMIN_PIN } from '../context/AuthContext';
 import TrustLogo from './TrustLogo';
 import { KeyRound, Eye, EyeOff, ArrowRight, Home, ShieldCheck } from 'lucide-react';
+
+const LOCKOUT_KEY = 'rsssst_admin_pin_locked_until';
+const ATTEMPTS_KEY = 'rsssst_admin_pin_attempts';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 export const AdminRoute = ({ children }) => {
   const { currentUser, userProfile, isAdmin, adminPinVerified, verifyPinForSession, loading } = useAuth();
@@ -11,24 +16,6 @@ export const AdminRoute = ({ children }) => {
   const [pinError, setPinError] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FFF8EF] flex flex-col items-center justify-center p-4">
-        <TrustLogo className="w-16 h-16 animate-pulse" showText={false} />
-      </div>
-    );
-  }
-
-  // If already authenticated as admin via Firestore role or session passkey PIN
-  if (isAdmin || userProfile?.role === 'admin' || adminPinVerified) {
-    return children;
-  }
-
-  const LOCKOUT_KEY = 'rsssst_admin_pin_locked_until';
-  const ATTEMPTS_KEY = 'rsssst_admin_pin_attempts';
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
 
   const [attempts, setAttempts] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -75,6 +62,19 @@ export const AdminRoute = ({ children }) => {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [lockedUntil]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF8EF] flex flex-col items-center justify-center p-4">
+        <TrustLogo className="w-16 h-16 animate-pulse" showText={false} />
+      </div>
+    );
+  }
+
+  // If already authenticated as admin via Firestore role or session passkey PIN
+  if (isAdmin || userProfile?.role === 'admin' || adminPinVerified) {
+    return children;
+  }
 
   // Passkey verification gate
   const handlePinSubmit = async (e) => {
