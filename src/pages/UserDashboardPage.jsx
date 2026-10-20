@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import TrustLogo from '../components/TrustLogo';
 import HelpRequestModal from '../components/HelpRequestModal';
-import JoinTrustModal from '../components/JoinTrustModal';
 import VolunteerModal from '../components/VolunteerModal';
 import MemberBadge from '../components/MemberBadge';
 import DigitalIdCard from '../components/DigitalIdCard';
@@ -73,7 +72,6 @@ export const UserDashboardPage = () => {
 
   // Modals state
   const [helpModalOpen, setHelpModalOpen] = useState(false);
-  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [volunteerModalOpen, setVolunteerModalOpen] = useState(false);
   const [donateModalOpen, setDonateModalOpen] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(null);
@@ -461,14 +459,6 @@ export const UserDashboardPage = () => {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setJoinModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 whitespace-nowrap"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>{lang === 'hi' ? 'पुनः सदस्यता आवेदन करें' : 'Apply for Membership Again'}</span>
-            </button>
           </div>
         )}
 
@@ -623,17 +613,6 @@ export const UserDashboardPage = () => {
                 <HandHeart className="w-4 h-4" />
                 <span>{lang === 'hi' ? 'सहायता प्रार्थना' : 'Request Help'}</span>
               </button>
-
-              {!isMember && effectiveMemberships.length === 0 && (
-                <button
-                  type="button"
-                  onClick={() => setJoinModalOpen(true)}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C] text-[#382719] font-bold text-xs shadow-xs transition-all"
-                >
-                  <UserPlus className="w-4 h-4 text-primary" />
-                  <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -755,21 +734,13 @@ export const UserDashboardPage = () => {
                   <UserPlus className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-bold text-[#382719] font-hindi-heading">
-                  {lang === 'hi' ? 'आपने अभी तक सदस्यता के लिए आवेदन नहीं किया है' : "You haven't applied for membership yet"}
+                  {lang === 'hi' ? 'कोई सक्रिय सदस्यता आवेदन नहीं मिला' : "No active membership application"}
                 </h3>
-                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
+                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1">
                   {lang === 'hi'
-                    ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान के अधिकृत सदस्य बनें (वार्षिक शुल्क मात्र ₹200)।'
-                    : 'Become an official recognized member of the Trust with membership certificate and ID privileges.'}
+                    ? 'सदस्यता पंजीकरण मुख्य पृष्ठ (Landing Page) से पूर्ण किया जाता है।'
+                    : 'Membership registration is completed from the trust landing page.'}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setJoinModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{lang === 'hi' ? 'सदस्यता आवेदन पत्र भरें' : 'Apply for Membership'}</span>
-                </button>
               </div>
             ) : (
               effectiveMemberships.map((item) => {
@@ -943,13 +914,6 @@ export const UserDashboardPage = () => {
                             <span>{item.rejectionReason || item.adminNote || (lang === 'hi' ? 'भुगतान संदर्भ अमान्य पाया गया।' : 'Payment reference could not be verified.')}</span>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setJoinModalOpen(true)}
-                          className="px-3 py-1.5 rounded-lg bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all whitespace-nowrap"
-                        >
-                          {lang === 'hi' ? 'पुनः आवेदन करें' : 'Re-apply'}
-                        </button>
                       </div>
                     )}
                   </div>
@@ -1553,10 +1517,6 @@ export const UserDashboardPage = () => {
         onClose={() => setHelpModalOpen(false)}
       />
 
-      <JoinTrustModal
-        isOpen={joinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-      />
 
       <VolunteerModal
         isOpen={volunteerModalOpen}

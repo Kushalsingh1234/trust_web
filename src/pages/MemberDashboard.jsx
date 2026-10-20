@@ -5,7 +5,6 @@ import TrustLogo from '../components/TrustLogo';
 import DigitalIdCard from '../components/DigitalIdCard';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import PaymentModal from '../components/PaymentModal';
-import JoinTrustModal from '../components/JoinTrustModal';
 import {
   getApplicationsForUser,
   getPaymentsForUser,
@@ -44,7 +43,6 @@ export const MemberDashboard = ({ onNavigateHome }) => {
 
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -174,16 +172,6 @@ export const MemberDashboard = ({ onNavigateHome }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-            {!latestApp && (
-              <button
-                type="button"
-                onClick={() => setJoinModalOpen(true)}
-                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'सदस्यता आवेदन जमा करें' : 'Apply for Membership'}</span>
-              </button>
-            )}
 
             <button
               type="button"
@@ -359,16 +347,8 @@ export const MemberDashboard = ({ onNavigateHome }) => {
               ) : (
                 <div className="text-center py-8 space-y-3">
                   <p className="text-xs text-[#666666]">
-                    {lang === 'hi' ? 'आपने अभी तक कोई सदस्यता आवेदन जमा नहीं किया है।' : 'No membership application found.'}
+                    {lang === 'hi' ? 'कोई सक्रिय सदस्यता आवेदन नहीं मिला।' : 'No membership application found.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setJoinModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{lang === 'hi' ? 'अभी सदस्यता आवेदन भरें' : 'Apply for Membership Now'}</span>
-                  </button>
                 </div>
               )}
             </div>
@@ -680,14 +660,6 @@ export const MemberDashboard = ({ onNavigateHome }) => {
         isOpen={paymentModalOpen}
         onClose={() => {
           setPaymentModalOpen(false);
-          refreshUserData();
-        }}
-      />
-
-      <JoinTrustModal
-        isOpen={joinModalOpen}
-        onClose={() => {
-          setJoinModalOpen(false);
           refreshUserData();
         }}
       />
