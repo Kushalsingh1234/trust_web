@@ -42,7 +42,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPinVerified, setAdminPinVerified] = useState(() => {
-    return sessionStorage.getItem('rsssst_admin_pin_verified') === 'true';
+    return localStorage.getItem('rsssst_admin_pin_verified') === 'true' ||
+           sessionStorage.getItem('rsssst_admin_pin_verified') === 'true';
   });
 
   // Fetch full user profile & member record from Firestore
@@ -85,6 +86,7 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
         setMemberRecord(null);
         setAdminPinVerified(false);
+        localStorage.removeItem('rsssst_admin_pin_verified');
         sessionStorage.removeItem('rsssst_admin_pin_verified');
       }
       setLoading(false);
@@ -140,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     setAdminPinVerified(true);
+    localStorage.setItem('rsssst_admin_pin_verified', 'true');
     sessionStorage.setItem('rsssst_admin_pin_verified', 'true');
     return user;
   };
@@ -147,6 +150,7 @@ export const AuthProvider = ({ children }) => {
   const verifyPinForSession = (pin) => {
     if (pin.trim() === TRUST_ADMIN_PIN) {
       setAdminPinVerified(true);
+      localStorage.setItem('rsssst_admin_pin_verified', 'true');
       sessionStorage.setItem('rsssst_admin_pin_verified', 'true');
       return true;
     }
@@ -155,6 +159,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     setAdminPinVerified(false);
+    localStorage.removeItem('rsssst_admin_pin_verified');
     sessionStorage.removeItem('rsssst_admin_pin_verified');
     await signOut(auth);
   };

@@ -27,15 +27,22 @@ import PaymentModal from './components/PaymentModal';
 import VolunteerModal from './components/VolunteerModal';
 import LoginModal from './components/LoginModal';
 
+import { useAuth } from './context/AuthContext';
+
 // Dedicated Sub-Pages
 import MemberDashboard from './pages/MemberDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
+  const { currentUser, isAdmin, loading } = useAuth();
+
   // Current route pathname tracking
   const [currentPath, setCurrentPath] = useState(() => {
     return typeof window !== 'undefined' ? window.location.pathname : '/';
   });
+
+  // Track if a logged-in user explicitly wants to preview the public site
+  const [viewPublicSite, setViewPublicSite] = useState(false);
 
   // Modals state
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -97,35 +104,82 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
-  // Route 1: Administrator Dashboard
+  // Brand loader while auth state restores from browser storage
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF8EF] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm font-bold text-[#382719] font-hindi-heading animate-pulse">
+          राष्ट्रीय सनातन संस्कार सेवा संस्थान...
+        </p>
+      </div>
+    );
+  }
+
+  // If a member, help seeker, or admin is logged in, the landing page is not shown to them;
+  // their dashboard is shown instead (unless they explicitly click to view public site).
+  if (currentUser && !viewPublicSite) {
+    if (isAdmin || currentPath === '/admin') {
+      return (
+        <AdminDashboard
+          onNavigateHome={() => {
+            setViewPublicSite(true);
+            navigateTo('/');
+          }}
+        />
+      );
+    }
+    return (
+      <MemberDashboard
+        onNavigateHome={() => {
+          setViewPublicSite(true);
+          navigateTo('/');
+        }}
+      />
+    );
+  }
+
+  // Route 1: Administrator Dashboard (Explicit URL)
   if (currentPath === '/admin') {
     return (
       <AdminDashboard
-        onNavigateHome={() => navigateTo('/')}
+        onNavigateHome={() => {
+          setViewPublicSite(true);
+          navigateTo('/');
+        }}
       />
     );
   }
 
-  // Route 2: Member Portal Dashboard
+  // Route 2: Member Portal Dashboard (Explicit URL)
   if (currentPath === '/member' || currentPath === '/dashboard') {
     return (
       <MemberDashboard
-        onNavigateHome={() => navigateTo('/')}
+        onNavigateHome={() => {
+          setViewPublicSite(true);
+          navigateTo('/');
+        }}
       />
     );
   }
 
-  // Route 3: Main Landing Page (Preserving original design, colors, hero & sections)
+  // Route 3: Main Landing Page
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
+    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white overflow-x-hidden w-full max-w-full">
       {/* Top Screen: Navbar & Hero unified on Warm Ivory #FFF8EF */}
-      <div className="bg-[#FFF8EF] relative">
+      <div className="bg-[#FFF8EF] relative overflow-x-hidden w-full">
         <Navbar
           onOpenReceiptModal={() => setReceiptModalOpen(true)}
           onOpenLoginModal={() => setLoginModalOpen(true)}
           onOpenJoinModal={() => setJoinModalOpen(true)}
-          onNavigateMember={() => navigateTo('/member')}
-          onNavigateAdmin={() => navigateTo('/admin')}
+          onNavigateMember={() => {
+            setViewPublicSite(false);
+            navigateTo('/member');
+          }}
+          onNavigateAdmin={() => {
+            setViewPublicSite(false);
+            navigateTo('/admin');
+          }}
         />
         <Hero
           onOpenReceiptModal={() => setReceiptModalOpen(true)}
@@ -134,7 +188,7 @@ function AppContent() {
         />
       </div>
 
-      <main className="flex-1">
+      <main className="flex-1 w-full overflow-x-hidden">
         {/* 2. About Us & Leadership */}
         <About />
 
@@ -183,8 +237,14 @@ function AppContent() {
       <Footer
         onOpenReceiptModal={() => setReceiptModalOpen(true)}
         onOpenJoinModal={() => setJoinModalOpen(true)}
-        onNavigateMember={() => navigateTo('/member')}
-        onNavigateAdmin={() => navigateTo('/admin')}
+        onNavigateMember={() => {
+          setViewPublicSite(false);
+          navigateTo('/member');
+        }}
+        onNavigateAdmin={() => {
+          setViewPublicSite(false);
+          navigateTo('/admin');
+        }}
       />
 
       {/* Persistent Floating Controls */}

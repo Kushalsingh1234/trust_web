@@ -1,7 +1,7 @@
 // Firebase Configuration for Rashtriya Sanatan Sanskar Seva Sansthan (Trust)
 // Initialized with secure environment variables and fallback production credentials
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -16,6 +16,15 @@ const firebaseConfig = {
 // Initialize Firebase safely without duplicate initialization
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Explicitly persist authentication in browser local storage across browser restarts
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.warn("Failed to set auth local persistence:", err);
+  });
+}
+
 export const db = getFirestore(app);
 
 export default app;
+

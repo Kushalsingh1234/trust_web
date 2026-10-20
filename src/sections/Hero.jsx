@@ -6,18 +6,12 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
   const { lang, t } = useLanguage();
 
   return (
-    <section className="relative overflow-hidden bg-transparent min-h-[calc(100vh-68px)] lg:min-h-[calc(100vh-76px)] flex flex-col justify-center py-8 sm:py-12 lg:py-16 border-b border-[#E9B44C]/30">
+    <section className="relative overflow-hidden w-full max-w-full bg-transparent min-h-[calc(100vh-68px)] lg:min-h-[calc(100vh-76px)] flex flex-col justify-center py-8 sm:py-12 lg:py-16 border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* Left Column: Heading, Mission, Badges & CTAs */}
           <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-left">
-            {/* Trust Identity Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFF8EF] border border-[#E9B44C]/70 text-[#382719] font-bold text-xs sm:text-sm shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              <span>{t.hero.badge}</span>
-            </div>
-
             {/* Main Title */}
             <div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#382719] leading-[1.15] tracking-tight font-hindi-heading">
@@ -93,7 +87,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               {/* Outer Golden decorative aura */}
-              <div className="absolute -inset-2.5 bg-gradient-to-tr from-accent/50 via-primary/30 to-secondary/30 rounded-3xl blur-md opacity-60"></div>
+              <div className="absolute inset-0 sm:-inset-2.5 bg-gradient-to-tr from-accent/50 via-primary/30 to-secondary/30 rounded-3xl blur-md opacity-60"></div>
               
               {/* Main Card with Real Event Collage */}
               <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
@@ -148,7 +142,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
               </div>
 
               {/* Floating Badge: 16 Sanskars */}
-              <div className="absolute -bottom-4 -left-3 sm:-left-6 bg-white p-2.5 rounded-xl shadow-card border border-[#E9B44C]/40 flex items-center gap-2 max-w-[200px]">
+              <div className="absolute -bottom-4 left-2 sm:-left-6 bg-white p-2.5 rounded-xl shadow-card border border-[#E9B44C]/40 flex items-center gap-2 max-w-[200px]">
                 <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs shadow-sm">
                   १६
                 </div>
@@ -163,7 +157,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
               </div>
 
               {/* Floating Badge: Bank of India */}
-              <div className="absolute -top-3 -right-2 sm:-right-4 bg-white px-3 py-1.5 rounded-xl shadow-card border border-[#E9B44C]/40 text-left">
+              <div className="absolute -top-3 right-2 sm:-right-4 bg-white px-3 py-1.5 rounded-xl shadow-card border border-[#E9B44C]/40 text-left">
                 <span className="text-[9px] text-[#666666] block uppercase font-bold">
                   {lang === 'hi' ? 'अधिकृत बैंक' : 'Official Bank'}
                 </span>
