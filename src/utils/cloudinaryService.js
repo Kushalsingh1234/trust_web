@@ -5,7 +5,8 @@
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'tzrl4vgy';
 const API_KEY = import.meta.env.VITE_CLOUDINARY_API_KEY || '932335977771118';
-const API_SECRET = import.meta.env.VITE_CLOUDINARY_API_SECRET || 'fha2UrincBtf-mwvrLa7USQBQmY';
+const API_SECRET = import.meta.env.VITE_CLOUDINARY_API_SECRET || '';
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '';
 
 /**
  * Compute SHA-1 hex string in browser or Node environment
@@ -68,16 +69,21 @@ export async function uploadImageToCloudinary(fileOrDataUrl, folder = 'trust_upl
       }
     }
 
-    const timestamp = Math.round(Date.now() / 1000);
-    const stringToSign = `folder=${folder}&timestamp=${timestamp}${API_SECRET}`;
-    const signature = await computeSha1(stringToSign);
-
     const formData = new FormData();
     formData.append('file', payload);
-    formData.append('api_key', API_KEY);
-    formData.append('timestamp', timestamp);
-    formData.append('folder', folder);
-    formData.append('signature', signature);
+
+    if (UPLOAD_PRESET) {
+      formData.append('upload_preset', UPLOAD_PRESET);
+      formData.append('folder', folder);
+    } else if (API_SECRET) {
+      const timestamp = Math.round(Date.now() / 1000);
+      const stringToSign = `folder=${folder}&timestamp=${timestamp}${API_SECRET}`;
+      const signature = await computeSha1(stringToSign);
+      formData.append('api_key', API_KEY);
+      formData.append('timestamp', timestamp);
+      formData.append('folder', folder);
+      formData.append('signature', signature);
+    }
 
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
       method: 'POST',

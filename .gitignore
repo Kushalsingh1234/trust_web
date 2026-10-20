@@ -3,3 +3,8 @@ dist
 dist-ssr
 *.local
 .DS_Store
+
+# Environment variables
+.env
+.env.*
+!.env.example
