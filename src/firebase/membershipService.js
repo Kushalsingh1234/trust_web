@@ -162,6 +162,39 @@ export const submitMembershipWithPaymentId = async ({
       // Ignore if unified collection permissions are still propagating
     }
 
+    // Update users/{uid} document with active application status
+    if (uid) {
+      try {
+        await setDoc(doc(db, 'users', uid), {
+          hasAppliedMembership: true,
+          membershipApplicationId: legacyRef.id,
+          membershipStatus: 'pending',
+          category: 'catA',
+          claimedAmount: 0,
+          annualFee: 0,
+          paymentId: 'EXEMPTED-₹0',
+          appliedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.warn("Could not update user profile with membership status:", e);
+      }
+    }
+
+    // Cache in browser localStorage
+    try {
+      const saved = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+      if (!saved.includes(legacyRef.id)) saved.unshift(legacyRef.id);
+      localStorage.setItem('rsssst_my_app_ids', JSON.stringify(saved.slice(0, 20)));
+      localStorage.setItem('rsssst_last_app_mobile', phone.trim());
+      localStorage.setItem('rsssst_my_membership_app', JSON.stringify({
+        id: legacyRef.id,
+        ...membershipData,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }));
+    } catch (e) {}
+
     return { id: legacyRef.id, paymentId: 'EXEMPTED-₹0' };
   }
 
@@ -268,6 +301,41 @@ export const submitMembershipWithPaymentId = async ({
       entityType: 'membership',
       createdAt: serverTimestamp()
     });
+  } catch (e) {}
+
+  // Update users/{uid} document with active application status
+  if (uid) {
+    try {
+      await setDoc(doc(db, 'users', uid), {
+        hasAppliedMembership: true,
+        membershipApplicationId: newAppRef.id,
+        membershipStatus: 'pending',
+        category: category || 'catB',
+        claimedAmount: Number(claimedAmount) || 200,
+        annualFee: Number(claimedAmount) || 200,
+        paymentId: cleanPaymentId,
+        paymentProofType: paymentProofType || 'utr',
+        paymentScreenshotUrl: paymentScreenshotUrl || null,
+        appliedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Could not update user profile with membership status:", e);
+    }
+  }
+
+  // Cache in browser localStorage for instant UI availability
+  try {
+    const saved = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+    if (!saved.includes(newAppRef.id)) saved.unshift(newAppRef.id);
+    localStorage.setItem('rsssst_my_app_ids', JSON.stringify(saved.slice(0, 20)));
+    localStorage.setItem('rsssst_last_app_mobile', phone.trim());
+    localStorage.setItem('rsssst_my_membership_app', JSON.stringify({
+      id: newAppRef.id,
+      ...membershipDocData,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    }));
   } catch (e) {}
 
   return { id: newAppRef.id, paymentId: cleanPaymentId };

@@ -592,6 +592,33 @@ export const submitVolunteerApplication = async (data, userUid) => {
     console.warn("Could not mirror to volunteers collection:", e);
   }
 
+  // Update users/{uid} document with active volunteer application status
+  if (userUid) {
+    try {
+      await setDoc(doc(db, 'users', userUid), {
+        hasAppliedVolunteer: true,
+        volunteerApplicationId: docRef.id,
+        volunteerStatus: 'pending',
+        role: 'volunteer',
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Could not update user profile with volunteer status:", e);
+    }
+  }
+
+  // Cache in localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('rsssst_my_volunteer_app', JSON.stringify({
+        id: docRef.id,
+        ...docData,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }));
+    } catch (e) {}
+  }
+
   return { id: docRef.id, ...docData };
 };
 
@@ -880,7 +907,8 @@ const COLLECTION_ALIASES = {
 
 // Realtime User Subscriptions (onSnapshot with dual-collection union)
 export const subscribeUserCollection = (collectionName, uid, callback) => {
-  if (!uid) {
+  const effectiveUid = uid || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('rsssst_auth_user') || '{}')?.uid : null);
+  if (!effectiveUid) {
     callback([]);
     return () => {};
   }
@@ -890,39 +918,96 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
 
   const emitMerged = () => {
     const map = new Map();
-    for (const target of targets) {
-      const list = resultsByTarget[target] || [];
+    for (const key of Object.keys(resultsByTarget)) {
+      const list = resultsByTarget[key] || [];
       list.forEach(item => {
-        // Merge or replace
         map.set(item.id, { ...map.get(item.id), ...item });
       });
     }
+
+    // Fallback: If map is empty and localStorage has a recently submitted application, include it!
+    if (map.size === 0 && typeof window !== 'undefined') {
+      try {
+        if (collectionName === 'memberships') {
+          const cached = localStorage.getItem('rsssst_my_membership_app');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            map.set(parsed.id || 'LOCAL-MEM', parsed);
+          }
+        } else if (collectionName === 'volunteers') {
+          const cached = localStorage.getItem('rsssst_my_volunteer_app');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            map.set(parsed.id || 'LOCAL-VOL', parsed);
+          }
+        }
+      } catch (e) {}
+    }
+
     const combined = Array.from(map.values());
     combined.sort((a, b) => {
-      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
-      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0));
+      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0));
       return tB - tA;
     });
     callback(combined);
   };
 
-  const unsubs = targets.map(target => {
+  const unsubs = [];
+
+  targets.forEach(target => {
     try {
       const colRef = collection(db, target);
-      // Query by uid or applicantUid / payerUid
-      const q = query(colRef, where('uid', '==', uid));
-      return onSnapshot(q, (snapshot) => {
-        resultsByTarget[target] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Listen on 'uid'
+      const qUid = query(colRef, where('uid', '==', effectiveUid));
+      const u1 = onSnapshot(qUid, (snapshot) => {
+        resultsByTarget[`${target}_uid`] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         emitMerged();
-      }, (err) => {
-        // If permission error on primary/alias, ignore and continue
-        resultsByTarget[target] = [];
+      }, () => {
+        resultsByTarget[`${target}_uid`] = [];
         emitMerged();
       });
-    } catch (e) {
-      return () => {};
-    }
+      unsubs.push(u1);
+
+      // Listen on 'applicantUid' (used in membershipApplications, volunteerApplications, assistanceRequests)
+      if (['membershipApplications', 'volunteerApplications', 'assistanceRequests'].includes(target)) {
+        const qAppUid = query(colRef, where('applicantUid', '==', effectiveUid));
+        const u2 = onSnapshot(qAppUid, (snapshot) => {
+          resultsByTarget[`${target}_appUid`] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          emitMerged();
+        }, () => {});
+        unsubs.push(u2);
+      }
+
+      // Listen on 'payerUid' (used in payments)
+      if (target === 'payments') {
+        const qPayerUid = query(colRef, where('payerUid', '==', effectiveUid));
+        const u3 = onSnapshot(qPayerUid, (snapshot) => {
+          resultsByTarget[`${target}_payerUid`] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          emitMerged();
+        }, () => {});
+        unsubs.push(u3);
+      }
+    } catch (e) {}
   });
+
+  // Direct fetch by local document IDs from localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const localIds = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+      if (collectionName === 'memberships' && localIds.length > 0) {
+        localIds.slice(0, 5).forEach(docId => {
+          getDoc(doc(db, 'membershipApplications', docId)).then(snap => {
+            if (snap.exists()) {
+              resultsByTarget[`direct_${docId}`] = [{ id: snap.id, ...snap.data() }];
+              emitMerged();
+            }
+          }).catch(() => {});
+        });
+      }
+    } catch (e) {}
+  }
 
   return () => {
     unsubs.forEach(u => u && u());

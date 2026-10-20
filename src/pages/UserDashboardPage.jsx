@@ -184,7 +184,7 @@ export const UserDashboardPage = () => {
     setIsUploadingPhoto(true);
     try {
       const res = await uploadImageToCloudinary(file, 'trust_profiles');
-      const photoURL = res.url;
+      const photoURL = typeof res === 'string' ? res : (res?.secure_url || res?.url);
 
       // Update Firestore users/{uid}
       if (currentUser?.uid) {
@@ -234,7 +234,7 @@ export const UserDashboardPage = () => {
       let uploadedScreenshotUrl = null;
       if (donateProofType === 'screenshot' && donateScreenshotFile) {
         const uploadRes = await uploadImageToCloudinary(donateScreenshotFile, 'trust_donations');
-        uploadedScreenshotUrl = uploadRes.url;
+        uploadedScreenshotUrl = typeof uploadRes === 'string' ? uploadRes : (uploadRes?.secure_url || uploadRes?.url);
       }
 
       await submitDonationWithPaymentId({
@@ -268,16 +268,85 @@ export const UserDashboardPage = () => {
     }
   };
 
+  // Compute effective memberships (seamlessly combines Firestore realtime with user profile & local cache)
+  const effectiveMemberships = React.useMemo(() => {
+    if (memberships.length > 0) return memberships;
+
+    // Check if userProfile indicates an active or pending membership
+    if (userProfile?.isMember || userProfile?.memberId || userProfile?.hasAppliedMembership || userProfile?.membershipApplicationId || userProfile?.membershipStatus) {
+      return [{
+        id: userProfile.membershipApplicationId || userProfile.memberId || 'MEM-APP-ACTIVE',
+        fullName: userProfile.fullName || 'सदस्य',
+        phone: userProfile.phone || '',
+        category: userProfile.category || userProfile.membershipCategory || 'catB',
+        claimedAmount: userProfile.claimedAmount || 200,
+        annualFee: userProfile.annualFee || userProfile.claimedAmount || 200,
+        paymentId: userProfile.paymentId || 'SUBMITTED',
+        paymentProofType: userProfile.paymentProofType || 'utr',
+        paymentScreenshotUrl: userProfile.paymentScreenshotUrl || null,
+        status: userProfile.membershipStatus || (userProfile.isMember ? 'approved' : 'pending'),
+        receiptNumber: userProfile.receiptNumber || null,
+        receiptSent: Boolean(userProfile.feeReceiptSent),
+        memberId: userProfile.memberId || null,
+        createdAt: userProfile.memberSince || userProfile.appliedAt || new Date()
+      }];
+    }
+
+    // Check localStorage cache from recent submission
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('rsssst_my_membership_app');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && (parsed.id || parsed.fullName)) {
+            return [parsed];
+          }
+        }
+      } catch (e) {}
+    }
+
+    return [];
+  }, [memberships, userProfile]);
+
+  // Compute effective volunteers
+  const effectiveVolunteers = React.useMemo(() => {
+    if (volunteers.length > 0) return volunteers;
+
+    if (userProfile?.hasAppliedVolunteer || userProfile?.volunteerApplicationId || userProfile?.role === 'volunteer') {
+      return [{
+        id: userProfile.volunteerApplicationId || 'VOL-APP-ACTIVE',
+        fullName: userProfile.fullName || 'सनातन स्वयंसेवक',
+        phone: userProfile.phone || '',
+        cityOrDistrict: userProfile.cityOrDistrict || 'गोरखपुर',
+        availability: 'weekends',
+        status: userProfile.volunteerStatus || 'pending',
+        createdAt: userProfile.appliedAt || new Date()
+      }];
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('rsssst_my_volunteer_app');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) return [parsed];
+        }
+      } catch (e) {}
+    }
+
+    return [];
+  }, [volunteers, userProfile]);
+
   // Compute membership status
-  const approvedMembership = memberships.find((m) => m.status?.toLowerCase() === 'approved');
-  const removedMembership = memberships.find((m) => m.status?.toLowerCase() === 'removed');
+  const approvedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'approved');
+  const removedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'removed');
   const isMember = Boolean(userProfile?.isMember === true || approvedMembership);
   const memberId = isMember ? (userProfile?.memberId || approvedMembership?.memberId || '') : '';
   const memberSince = isMember ? (userProfile?.memberSince || approvedMembership?.memberSince || approvedMembership?.approvedAt) : null;
 
   // Compute volunteer status
-  const approvedVolunteer = volunteers.find((v) => v.status?.toLowerCase() === 'approved');
-  const isVolunteer = Boolean(userProfile?.role === 'volunteer' || approvedVolunteer || volunteers.length > 0);
+  const approvedVolunteer = effectiveVolunteers.find((v) => v.status?.toLowerCase() === 'approved');
+  const isVolunteer = Boolean(userProfile?.role === 'volunteer' || approvedVolunteer || effectiveVolunteers.length > 0);
 
   // Status Badge Component
   const renderStatusBadge = (status) => {
@@ -555,7 +624,7 @@ export const UserDashboardPage = () => {
                 <span>{lang === 'hi' ? 'सहायता प्रार्थना' : 'Request Help'}</span>
               </button>
 
-              {!isMember && (
+              {!isMember && effectiveMemberships.length === 0 && (
                 <button
                   type="button"
                   onClick={() => setJoinModalOpen(true)}
@@ -624,7 +693,7 @@ export const UserDashboardPage = () => {
             <UserPlus className="w-4 h-4" />
             <span>{lang === 'hi' ? 'मेरी सदस्यता (My Membership)' : 'My Membership'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
-              {memberships.length}
+              {effectiveMemberships.length}
             </span>
           </button>
 
@@ -640,7 +709,7 @@ export const UserDashboardPage = () => {
             <Users className="w-4 h-4" />
             <span>{lang === 'hi' ? 'मेरी स्वयंसेवक सेवा (Volunteer)' : 'Volunteer Dashboard'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
-              {volunteers.length}
+              {effectiveVolunteers.length}
             </span>
           </button>
 
@@ -680,7 +749,7 @@ export const UserDashboardPage = () => {
         {/* Tab 1: My Membership */}
         {activeTab === 'memberships' && (
           <div className="space-y-4">
-            {memberships.length === 0 ? (
+            {effectiveMemberships.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
                 <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
                   <UserPlus className="w-8 h-8" />
@@ -703,7 +772,7 @@ export const UserDashboardPage = () => {
                 </button>
               </div>
             ) : (
-              memberships.map((item) => {
+              effectiveMemberships.map((item) => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
                 const isRemoved = item.status?.toLowerCase() === 'removed';
@@ -893,7 +962,7 @@ export const UserDashboardPage = () => {
         {/* Tab 2: Volunteer Dashboard */}
         {activeTab === 'volunteers' && (
           <div className="space-y-4">
-            {volunteers.length === 0 ? (
+            {effectiveVolunteers.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
                 <div className="w-16 h-16 rounded-full bg-secondary/10 text-secondary flex items-center justify-center mx-auto mb-3">
                   <Users className="w-8 h-8" />
@@ -916,7 +985,7 @@ export const UserDashboardPage = () => {
                 </button>
               </div>
             ) : (
-              volunteers.map((item) => {
+              effectiveVolunteers.map((item) => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
 

@@ -276,6 +276,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('rsssst_user_profile', JSON.stringify(profile));
     }
 
+    setCurrentUser(user);
     setUserProfile(profile);
     setIsAdmin(false);
     return user;
@@ -316,6 +317,7 @@ export const AuthProvider = ({ children }) => {
         displayName: userCredential.user.displayName
       }));
     }
+    setCurrentUser(userCredential.user);
     const profile = await fetchUserProfile(userCredential.user.uid);
     return { user: userCredential.user, profile };
   };
