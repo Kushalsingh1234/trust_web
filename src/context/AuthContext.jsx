@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
     );
   });
 
-  // Verify Admin PIN for current session
+  // Verify Admin PIN for current session (grants access to admin panel only)
   const verifyPinForSession = async (pin) => {
     if (pin && pin.trim() === TRUST_ADMIN_PIN) {
       if (typeof window !== 'undefined') {
@@ -96,8 +96,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('rsssst_admin_pin_verified', 'true');
       }
       setAdminPinVerified(true);
-      setIsAdmin(true);
-
       return true;
     }
     return false;
@@ -401,7 +399,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         currentUser,
         userProfile,
-        isAdmin: isAdmin || adminPinVerified || userProfile?.role === 'admin',
+        isAdmin: userProfile?.role === 'admin',
         adminPinVerified,
         verifyPinForSession,
         TRUST_ADMIN_PIN,

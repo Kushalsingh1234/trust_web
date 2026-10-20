@@ -79,16 +79,9 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
-  // If a member, help seeker, or admin is logged in and visits root '/',
-  // they shouldn't see the landing page; show their dashboard directly.
+  // If a member, help seeker, or user is logged in and visits root '/',
+  // they shouldn't see the landing page; show their member dashboard directly.
   if (currentUser && location.pathname === '/') {
-    if (isAdmin) {
-      return (
-        <AdminRoute>
-          <AdminDashboard onNavigateHome={() => navigate('/about')} />
-        </AdminRoute>
-      );
-    }
     return (
       <ProtectedRoute>
         <UserDashboardPage onNavigateHome={() => navigate('/about')} />
@@ -135,7 +128,7 @@ function AppContent() {
             path="/"
             element={
               currentUser ? (
-                <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
+                <Navigate to="/dashboard" replace />
               ) : (
                 <HomePage
                   onOpenReceiptModal={() => setReceiptModalOpen(true)}

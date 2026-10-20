@@ -74,12 +74,37 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   // Active Tab: 'helpRequests' | 'memberships' | 'members' | 'volunteers' | 'donations' | 'paymentSettings'
   const [activeTab, setActiveTab] = useState('helpRequests');
 
-  // Realtime datasets
-  const [helpRequests, setHelpRequests] = useState([]);
-  const [memberships, setMemberships] = useState([]);
-  const [membersList, setMembersList] = useState([]);
-  const [volunteers, setVolunteers] = useState([]);
-  const [donations, setDonations] = useState([]);
+  // Realtime datasets (initialized from local cache to prevent 0 on refresh)
+  const [helpRequests, setHelpRequests] = useState(() => {
+    try {
+      const c = localStorage.getItem('rsssst_cache_helpRequests');
+      return c ? JSON.parse(c) : [];
+    } catch { return []; }
+  });
+  const [memberships, setMemberships] = useState(() => {
+    try {
+      const c = localStorage.getItem('rsssst_cache_memberships');
+      return c ? JSON.parse(c) : [];
+    } catch { return []; }
+  });
+  const [membersList, setMembersList] = useState(() => {
+    try {
+      const c = localStorage.getItem('rsssst_cache_membersList');
+      return c ? JSON.parse(c) : [];
+    } catch { return []; }
+  });
+  const [volunteers, setVolunteers] = useState(() => {
+    try {
+      const c = localStorage.getItem('rsssst_cache_volunteers');
+      return c ? JSON.parse(c) : [];
+    } catch { return []; }
+  });
+  const [donations, setDonations] = useState(() => {
+    try {
+      const c = localStorage.getItem('rsssst_cache_donations');
+      return c ? JSON.parse(c) : [];
+    } catch { return []; }
+  });
   const [paymentSettings, setPaymentSettings] = useState(DEFAULT_PAYMENT_SETTINGS);
 
   // Search & Filter state
@@ -464,11 +489,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   सनातन संस्कार ट्रस्ट
                 </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-primary text-white">
-                  व्यवस्थापक पोर्टल (Admin)
+                  {lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin)' : 'Admin Portal'}
                 </span>
               </div>
               <span className="text-[11px] text-[#E9B44C] font-mono">
-                Admin UID: {currentUser?.uid?.slice(0, 10)}...
+                {lang === 'hi' ? 'सुरक्षित प्रशासनिक सत्र (Admin Management Session)' : 'Protected Admin Management Session'}
               </span>
             </div>
           </div>
@@ -478,7 +503,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               to="/dashboard"
               className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
             >
-              {lang === 'hi' ? 'उपयोगकर्ता डैशबोर्ड' : 'User View'}
+              {lang === 'hi' ? 'सदस्य डैशबोर्ड' : 'Member Dashboard'}
             </Link>
 
             <Link
@@ -1525,33 +1550,54 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   </button>
                                 )}
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenApprove(item)}
-                                  disabled={status === 'approved'}
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    status === 'approved'
-                                      ? 'opacity-40 cursor-not-allowed bg-emerald-100 text-emerald-400'
-                                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300'
-                                  }`}
-                                  title="Approve"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
+                                {/* Pending Actions: Approve & Reject */}
+                                {status === 'pending' && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenApprove(item)}
+                                      className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-all cursor-pointer"
+                                      title={lang === 'hi' ? 'स्वीकृत करें (Approve)' : 'Approve'}
+                                    >
+                                      <Check className="w-4 h-4" />
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenReject(item)}
-                                  disabled={status === 'rejected'}
-                                  className={`p-1.5 rounded-lg transition-all ${
-                                    status === 'rejected'
-                                      ? 'opacity-40 cursor-not-allowed bg-rose-100 text-rose-400'
-                                      : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300'
-                                  }`}
-                                  title="Reject"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenReject(item)}
+                                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-all cursor-pointer"
+                                      title={lang === 'hi' ? 'अस्वीकृत करें (Reject)' : 'Reject'}
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Approved Action for Memberships: Cancel / Revoke Membership */}
+                                {status === 'approved' && (activeTab === 'memberships' || activeTab === 'members') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRemoveMember(item)}
+                                    className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-all cursor-pointer"
+                                    title={lang === 'hi' ? 'सदस्यता रद्द करें (Cancel Membership)' : 'Cancel / Revoke Membership'}
+                                  >
+                                    <UserX className="w-4 h-4" />
+                                  </button>
+                                )}
+
+                                {/* Removed status indicator */}
+                                {status === 'removed' && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    {lang === 'hi' ? 'रद्द सदस्यता' : 'Cancelled'}
+                                  </span>
+                                )}
+
+                                {/* Rejected status indicator */}
+                                {status === 'rejected' && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-300">
+                                    {lang === 'hi' ? 'अस्वीकृत' : 'Rejected'}
+                                  </span>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1972,14 +2018,45 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </button>
               )}
 
-              {modalMode === 'removeMember' && (
+              {modalMode === 'view' && selectedItem.status === 'pending' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalMode('reject');
+                      setRejectReasonInput('');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>{lang === 'hi' ? 'अस्वीकृत करें' : 'Reject'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalMode('approve');
+                      setVerifiedAmountInput(String(selectedItem.claimedAmount || selectedItem.amount || 200));
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{lang === 'hi' ? 'स्वीकृत करें' : 'Approve'}</span>
+                  </button>
+                </>
+              )}
+
+              {modalMode === 'view' && selectedItem.status === 'approved' && (activeTab === 'memberships' || activeTab === 'members') && (
                 <button
                   type="button"
-                  onClick={handleConfirmAction}
-                  disabled={isProcessing}
-                  className="px-5 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  onClick={() => {
+                    setModalMode('removeMember');
+                    setRemoveReasonInput('');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5"
                 >
-                  {isProcessing ? 'Revoking...' : 'Confirm Remove Member'}
+                  <UserX className="w-4 h-4" />
+                  <span>{lang === 'hi' ? 'सदस्यता रद्द करें' : 'Cancel Membership'}</span>
                 </button>
               )}
             </div>

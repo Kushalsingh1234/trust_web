@@ -1019,6 +1019,19 @@ export const subscribeAllCollection = (collectionName, callback) => {
   const targets = COLLECTION_ALIASES[collectionName] || [collectionName];
   const resultsByTarget = {};
 
+  // 1. Emit cached data immediately to prevent 0 on refresh
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem(`rsssst_cache_${collectionName}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          callback(parsed);
+        }
+      }
+    } catch (e) {}
+  }
+
   const emitMerged = () => {
     const map = new Map();
     for (const target of targets) {
@@ -1033,6 +1046,13 @@ export const subscribeAllCollection = (collectionName, callback) => {
       const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
       return tB - tA;
     });
+
+    if (typeof window !== 'undefined' && combined.length > 0) {
+      try {
+        localStorage.setItem(`rsssst_cache_${collectionName}`, JSON.stringify(combined));
+      } catch (e) {}
+    }
+
     callback(combined);
   };
 
@@ -1043,7 +1063,10 @@ export const subscribeAllCollection = (collectionName, callback) => {
         resultsByTarget[target] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         emitMerged();
       }, (err) => {
-        resultsByTarget[target] = [];
+        console.warn(`Admin subscription notice on ${target}:`, err);
+        if (!resultsByTarget[target]) {
+          resultsByTarget[target] = [];
+        }
         emitMerged();
       });
     } catch (e) {

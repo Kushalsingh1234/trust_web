@@ -77,7 +77,7 @@ export const Navbar = ({
   // Primary Navigation Route Links
   const navLinks = [
     { 
-      to: currentUser ? (isAdmin ? '/admin' : '/dashboard') : '/', 
+      to: currentUser ? '/dashboard' : '/', 
       label: lang === 'hi' ? (currentUser ? 'डैशबोर्ड' : 'मुख्य पृष्ठ') : (currentUser ? 'Dashboard' : 'Home') 
     },
     { to: '/about', label: lang === 'hi' ? 'परिचय' : 'About' },
@@ -102,7 +102,7 @@ export const Navbar = ({
         
         {/* Brand Logo & Name */}
         <Link 
-          to={currentUser ? (isAdmin ? "/admin" : "/dashboard") : "/"} 
+          to={currentUser ? "/dashboard" : "/"} 
           className="flex items-center gap-2 sm:gap-3 group flex-shrink-0 min-w-0" 
           aria-label={currentUser ? "Dashboard" : "Home"}
         >

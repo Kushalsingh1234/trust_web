@@ -731,6 +731,19 @@ export const subscribeMembersList = (callback) => {
   let listUnified = [];
   let listLegacy = [];
 
+  // Emit cached members immediately to prevent 0 on refresh
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('rsssst_cache_membersList');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          callback(parsed);
+        }
+      }
+    } catch (e) {}
+  }
+
   const mergeAndEmit = () => {
     const map = new Map();
     listLegacy.forEach(item => map.set(item.id, item));
@@ -746,6 +759,12 @@ export const subscribeMembersList = (callback) => {
       return tB - tA;
     });
 
+    if (typeof window !== 'undefined' && combined.length > 0) {
+      try {
+        localStorage.setItem('rsssst_cache_membersList', JSON.stringify(combined));
+      } catch (e) {}
+    }
+
     callback(combined);
   };
 
@@ -753,7 +772,7 @@ export const subscribeMembersList = (callback) => {
     listUnified = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     mergeAndEmit();
   }, (err) => {
-    // Gracefully handle if unified permissions not yet propagated
+    console.warn("Unified members snapshot note:", err);
     mergeAndEmit();
   });
 
@@ -761,6 +780,7 @@ export const subscribeMembersList = (callback) => {
     listLegacy = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     mergeAndEmit();
   }, (err) => {
+    console.warn("Legacy applications snapshot note:", err);
     mergeAndEmit();
   });
 
