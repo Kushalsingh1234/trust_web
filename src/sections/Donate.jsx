@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight } from 'lucide-react';
+import { Copy, Check, QrCode, ShieldCheck, Heart, AlertCircle, FileText, ArrowRight, Download } from 'lucide-react';
 
 export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
   const { lang, t } = useLanguage();
@@ -19,11 +19,11 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
   };
 
   return (
-    <section id="donate" className="py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
+    <section id="donate" className="py-12 sm:py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-white border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
             {t.donate.tag}
           </span>
@@ -35,8 +35,8 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
           </p>
           <div className="w-20 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary mx-auto mt-4 rounded-full"></div>
 
-          {/* Quick Suggested Slabs */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+          {/* Quick Suggested Slabs (Swipeable on Mobile) */}
+          <div className="mt-6 sm:mt-8 flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 sm:flex-wrap sm:justify-center sm:pb-0 px-1">
             {[
               { amount: '₹200', label: lang === 'hi' ? 'वार्षिक सदस्यता' : 'Annual Member' },
               { amount: '₹501', label: lang === 'hi' ? 'शुभ समर्पण' : 'Auspicious' },
@@ -46,7 +46,7 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
             ].map((slab, i) => (
               <div
                 key={i}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#E9B44C]/40 shadow-sm text-xs font-black text-[#382719] hover:border-primary transition-all hover:bg-[#FFF8EF]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E9B44C]/40 shadow-sm text-xs font-black text-[#382719] hover:border-primary transition-all hover:bg-[#FFF8EF] whitespace-nowrap flex-shrink-0"
               >
                 <span className="text-primary font-mono">{slab.amount}</span>
                 <span className="text-[11px] text-secondary">({slab.label})</span>
@@ -56,47 +56,47 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
         </div>
 
         {/* Main Grid: Left Bank Box + Right QR Code & Fund Usage */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
           {/* Left Column: Verified Bank Details Box */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-[#E9B44C]/35 text-left space-y-6">
-            <div className="flex items-center justify-between border-b border-[#E9B44C]/25 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg border border-primary/20">
+          <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-8 shadow-card border border-[#E9B44C]/35 text-left space-y-5 sm:space-y-6">
+            <div className="flex items-center justify-between border-b border-[#E9B44C]/25 pb-4 gap-2">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg border border-primary/20 flex-shrink-0">
                   🏦
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-lg text-[#382719] font-hindi-heading">
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-base sm:text-lg text-[#382719] font-hindi-heading truncate">
                     {t.donate.bankTitle}
                   </h3>
-                  <span className="text-xs font-semibold text-trust-green flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>{lang === 'hi' ? 'सत्यापित ट्रस्ट बैंक खाता' : 'Verified Public Trust Bank Account'}</span>
+                  <span className="text-[11px] sm:text-xs font-semibold text-trust-green flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{lang === 'hi' ? 'सत्यापित ट्रस्ट बैंक खाता' : 'Verified Public Trust Bank Account'}</span>
                   </span>
                 </div>
               </div>
-              <span className="text-xs font-mono bg-[#FFF8EF] text-secondary px-3 py-1 rounded-full font-bold border border-[#E9B44C]/40">
+              <span className="text-xs font-mono bg-[#FFF8EF] text-secondary px-2.5 py-1 rounded-full font-bold border border-[#E9B44C]/40 flex-shrink-0">
                 Gorakhpur
               </span>
             </div>
 
             {/* Bank Spec Table */}
-            <div className="space-y-3.5 text-xs sm:text-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25 gap-1 sm:gap-2">
                 <span className="text-[#454545] font-semibold">{t.donate.bankName}:</span>
                 <span className="font-black text-[#382719]">{t.donate.bankNameVal}</span>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-primary/5 border border-primary/25">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/25 gap-1.5 sm:gap-2">
                 <span className="text-primary font-bold">{t.donate.accNo}:</span>
-                <div className="flex items-center gap-2 mt-1 sm:mt-0">
-                  <span className="font-mono font-black text-base sm:text-lg text-primary tracking-wider">
+                <div className="flex items-center justify-between sm:justify-end gap-2">
+                  <span className="font-mono font-black text-sm sm:text-lg text-primary tracking-wider break-all">
                     {t.donate.accNoVal}
                   </span>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(t.donate.accNoVal, 'acc')}
-                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm"
+                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm flex-shrink-0"
                     title={t.donate.copyAcc}
                   >
                     {copiedAcc ? <Check className="w-4 h-4 text-trust-green" /> : <Copy className="w-4 h-4" />}
@@ -104,16 +104,16 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25 gap-1.5 sm:gap-2">
                 <span className="text-[#454545] font-semibold">{t.donate.upiId}:</span>
-                <div className="flex items-center gap-2 mt-1 sm:mt-0">
-                  <span className="font-mono font-bold text-[#382719] text-sm">
+                <div className="flex items-center justify-between sm:justify-end gap-2">
+                  <span className="font-mono font-bold text-[#382719] text-xs sm:text-sm break-all">
                     {t.donate.upiIdVal}
                   </span>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(t.donate.upiIdVal, 'upi')}
-                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm"
+                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:border-primary text-[#382719] hover:text-primary transition-all active:scale-95 shadow-sm flex-shrink-0"
                     title={t.donate.copyUpi}
                   >
                     {copiedUpi ? <Check className="w-4 h-4 text-trust-green" /> : <Copy className="w-4 h-4" />}
@@ -121,13 +121,13 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
                   <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.ifsc}:</span>
-                  <span className="font-mono text-xs font-bold text-secondary">{t.donate.ifscVal}</span>
+                  <span className="font-mono text-xs font-bold text-secondary break-all">{t.donate.ifscVal}</span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
+                <div className="p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
                   <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.branch}:</span>
                   <span className="text-xs font-bold text-[#382719]">{t.donate.branchVal}</span>
                 </div>
@@ -148,10 +148,10 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
               <button
                 type="button"
                 onClick={onOpenReceiptModal}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FFF8EF] text-primary border border-primary/40 font-bold text-xs shadow-sm transition-all"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-white to-amber-500/10 hover:bg-white text-secondary hover:text-primary border-2 border-[#E9B44C] font-black text-xs sm:text-sm shadow-xs transition-all active:scale-[0.98]"
               >
-                <FileText className="w-4 h-4" />
-                <span>{t.donate.openReceiptModal}</span>
+                <Download className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{lang === 'hi' ? 'डिजिटल रसीद जनरेट एवं डाउनलोड करें' : 'Generate & Download Digital Receipt'}</span>
               </button>
               <p className="text-[11px] text-[#454545] font-medium text-center mt-1">
                 {t.donate.receiptGenDesc}

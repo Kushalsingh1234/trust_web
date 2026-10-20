@@ -79,19 +79,19 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-8 max-h-[94vh] flex flex-col">
         {/* Modal Top Bar */}
-        <div className="bg-primary text-white px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-sm">
+        <div className="bg-primary text-white px-4 sm:px-5 py-3.5 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-secondary text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
               ॐ
             </div>
-            <div>
-              <h3 className="font-bold text-base sm:text-lg leading-tight">
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-lg leading-tight truncate">
                 {t.receiptModal.title}
               </h3>
-              <p className="text-xs text-white/80">
+              <p className="text-[11px] sm:text-xs text-white/80 truncate">
                 {lang === 'hi' 
                   ? 'डिजिटल रसीद सृजन एवं ऑनलाइन सदस्यता विवरण' 
                   : 'Official Self-Generated Receipt & Membership Form'}
@@ -100,14 +100,14 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/10 text-white transition-colors"
+            className="p-2 rounded-full hover:bg-white/10 text-white transition-colors flex-shrink-0 ml-2"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 sm:p-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {!generated ? (
             /* Form Mode */
             <form onSubmit={handleGenerate} className="space-y-5">
@@ -336,17 +336,17 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                   : 'You can generate your verified receipt now. Official membership ID & trust calendar will be dispatched after admin approval pursuant to trust bylaws.'}
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50"
+                  className="min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 flex items-center justify-center"
                 >
                   {t.receiptModal.close}
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md transition-transform active:scale-95"
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md transition-transform active:scale-95 flex items-center justify-center"
                 >
                   {t.receiptModal.generateBtn}
                 </button>
@@ -387,7 +387,7 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
               <div
                 id="printable-receipt"
                 ref={receiptRef}
-                className="relative bg-[#FFF8EF] border-4 border-[#C65D13] rounded-xl p-5 sm:p-7 shadow-lg overflow-hidden text-[#382719] font-sans"
+                className="relative bg-[#FFF8EF] border-2 sm:border-4 border-[#C65D13] rounded-xl p-3.5 sm:p-7 shadow-lg overflow-hidden text-[#382719] font-sans"
                 style={{
                   backgroundImage: 'radial-gradient(#E9B44C 0.6px, transparent 0.6px)',
                   backgroundSize: '24px 24px'
@@ -405,45 +405,45 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                 />
 
                 {/* Trust Name Header */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="w-12 h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-2xl drop-shadow">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2 mb-2">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-base sm:text-2xl drop-shadow">
                     ॐ
                   </div>
-                  <div className="text-center flex-1 px-1">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#C65D13] font-hindi-heading leading-tight tracking-tight">
+                  <div className="text-center flex-1 px-1 min-w-0">
+                    <h2 className="text-base sm:text-2xl md:text-3xl font-extrabold text-[#C65D13] font-hindi-heading leading-tight tracking-tight">
                       राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
                     </h2>
-                    <p className="text-[11px] sm:text-xs text-[#454545] font-medium">
+                    <p className="text-[10px] sm:text-xs text-[#454545] font-medium">
                       मुख्य कार्यालय: शिवाजीनगर सेक्टर-2 (बागरानी) रूस्तमपुर, गोरखपुर, उ.प्र. - 273016
                     </p>
-                    <p className="text-[10px] sm:text-[11px] text-[#454545]">
+                    <p className="text-[9px] sm:text-[11px] text-[#454545]">
                       सम्पर्क एवं सहयोग कार्यस्थल: साकेतनगर (मधुर शहनाई लान के सामने) रूस्तमपुर, गोरखपुर
                     </p>
                   </div>
-                  <div className="w-12 h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-2xl drop-shadow">
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-base sm:text-2xl drop-shadow">
                     ॐ
                   </div>
                 </div>
 
                 {/* Motto Deep Saffron Strip */}
-                <div className="bg-[#C65D13] text-white text-center py-1 px-2 rounded-md font-bold text-xs sm:text-sm mb-4">
+                <div className="bg-[#C65D13] text-white text-center py-1 px-2 rounded-md font-bold text-[11px] sm:text-sm mb-4">
                   हमारा लक्ष्य — वैदिक 16 संस्कारों का संरक्षण एवं जनकल्याणकारी सेवा कार्य
                 </div>
 
                 {/* Receipt Title & Meta */}
-                <div className="flex items-center justify-between border-b border-[#E9B44C]/40 pb-2 mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#E9B44C]/40 pb-2 mb-4 gap-2">
                   <div>
-                    <span className="text-xs text-[#454545] block">क्र.म. / Receipt No:</span>
-                    <span className="font-mono font-bold text-sm text-[#C65D13]">{receiptNo}</span>
+                    <span className="text-[11px] sm:text-xs text-[#454545] block">क्र.म. / Receipt No:</span>
+                    <span className="font-mono font-bold text-xs sm:text-sm text-[#C65D13]">{receiptNo}</span>
                   </div>
-                  <div className="text-center">
-                    <h3 className="text-base sm:text-lg font-black text-[#382719] underline decoration-[#C65D13] decoration-2 underline-offset-4">
+                  <div className="text-left sm:text-center">
+                    <h3 className="text-sm sm:text-lg font-black text-[#382719] underline decoration-[#C65D13] decoration-2 underline-offset-4">
                       {receiptType === 'samarpan' ? 'सनातन संरक्षण — समर्पण निधि' : 'सनातन संस्थान — सदस्यता निधि'}
                     </h3>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs text-[#454545] block">दिनांक / Date:</span>
-                    <span className="font-semibold text-sm">{currentDate}</span>
+                  <div className="text-left sm:text-right">
+                    <span className="text-[11px] sm:text-xs text-[#454545] block">दिनांक / Date:</span>
+                    <span className="font-semibold text-xs sm:text-sm">{currentDate}</span>
                   </div>
                 </div>
 
@@ -497,7 +497,7 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Amount Box, Bank Info & QR Code Footer */}
-                <div className="mt-6 pt-4 border-t-2 border-[#E9B44C]/40 flex flex-wrap items-center justify-between gap-4">
+                <div className="mt-6 pt-4 border-t-2 border-[#E9B44C]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                   {/* Amount Box */}
                   <div className="flex items-center gap-2">
                     <div className="bg-[#C65D13] text-white px-3 py-2 rounded font-bold text-lg">
@@ -516,13 +516,13 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                     <p className="font-mono text-xs font-bold text-[#382719]">
                       खाता सं.: 135820110000012
                     </p>
-                    <p className="text-[10px] text-[#454545]">
+                    <p className="text-[10px] text-[#454545] break-all">
                       UPI: boim-135883270012@boi
                     </p>
                   </div>
 
                   {/* Signatures & Seal */}
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <div className="font-serif italic font-bold text-sm text-secondary">
                       बजरंगी दूबे
                     </div>
@@ -541,18 +541,18 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-3 no-print">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 no-print">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-[#454545] hover:bg-gray-50"
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold text-[#454545] hover:bg-gray-50 flex items-center justify-center"
                 >
                   {t.receiptModal.close}
                 </button>
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md"
+                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md"
                 >
                   <Download className="w-4 h-4" />
                   <span>{t.receiptModal.print}</span>

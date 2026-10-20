@@ -33,11 +33,11 @@ export const NewsEvents = () => {
   const displayItems = dynamicItems.length > 0 ? [...dynamicItems, ...t.news.items].slice(0, 6) : t.news.items;
 
   return (
-    <section id="news" className="py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
+    <section id="news" className="py-12 sm:py-16 lg:py-24 bg-[#FFF8EF] relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#382719] bg-white border border-[#E9B44C]/40 px-4 py-1 rounded-full shadow-sm">
             {t.news.tag}
           </span>
@@ -51,11 +51,11 @@ export const NewsEvents = () => {
         </div>
 
         {/* News Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {displayItems.map((item, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-3xl p-6 shadow-card hover:shadow-lift transition-all duration-300 border border-[#E9B44C]/35 flex flex-col justify-between text-left group hover:-translate-y-1 relative overflow-hidden"
+              className="bg-white rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-lift transition-all duration-300 border border-[#E9B44C]/35 flex flex-col justify-between text-left group hover:-translate-y-1 relative overflow-hidden"
             >
               {item.isDynamic && (
                 <div className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-bl-lg shadow-sm">
@@ -64,7 +64,7 @@ export const NewsEvents = () => {
               )}
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold text-secondary mb-3 bg-[#FFF8EF] px-3 py-1 rounded-full w-fit border border-[#E9B44C]/40">
-                  <Calendar className="w-3.5 h-3.5 text-secondary" />
+                  <Calendar className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
                   <span>{item.date}</span>
                 </div>
 

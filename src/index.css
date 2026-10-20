@@ -6,9 +6,10 @@
   html {
     scroll-behavior: smooth;
     font-family: 'Inter', system-ui, sans-serif;
-    overflow-x: hidden;
-    max-width: 100vw;
+    -webkit-tap-highlight-color: transparent;
     width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
   }
@@ -26,10 +27,12 @@
   body {
     background-color: #FFFFFF;
     color: #454545;
-    overflow-x: hidden;
-    max-width: 100vw;
     width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
     position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
   }
@@ -54,9 +57,25 @@
     line-height: 1.5;
   }
 
+  /* Prevent automatic iOS Safari zoom by enforcing min 16px font on mobile inputs */
+  @media screen and (max-width: 640px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
   h1, h2, h3, h4, h5, h6 {
     color: #382719;
   }
+}
+
+/* Utility to hide scrollbars on horizontal scroll tabs on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Radiant Sacred Saffron, Warm Ivory & Golden Accent Patterns */

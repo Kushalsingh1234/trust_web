@@ -1,9 +1,13 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { Heart, UserPlus, Users, Share2, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Heart, UserPlus, Users, Share2, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolunteerModal }) => {
   const { lang, t } = useLanguage();
+  const { currentUser, userProfile } = useAuth();
+  const isMember = Boolean(userProfile?.isMember === true);
 
   const handleShare = () => {
     const text = lang === 'hi'
@@ -18,11 +22,11 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
   };
 
   return (
-    <section id="how-to-help" className="py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
+    <section id="how-to-help" className="py-12 sm:py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-[#FFF8EF] border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
             {t.howToHelp.tag}
           </span>
@@ -36,7 +40,7 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
         </div>
 
         {/* 4 Helping Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           
           {/* 1. Samarpan Nidhi */}
           <div className="bg-[#FFF8EF] rounded-3xl p-6 border border-[#E9B44C]/35 flex flex-col justify-between shadow-card hover:shadow-card-hover transition-all duration-300 text-left hover:-translate-y-1">
@@ -52,13 +56,13 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
-              <a
-                href="#donate"
+              <Link
+                to="/donate"
                 className="inline-flex items-center gap-1.5 text-xs font-black text-secondary hover:text-primary transition-colors"
               >
                 <span>{t.howToHelp.cards[0].action}</span>
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -79,14 +83,25 @@ export const HowYouCanHelp = ({ onOpenReceiptModal, onOpenJoinModal, onOpenVolun
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#E9B44C]/25">
-              <button
-                type="button"
-                onClick={onOpenJoinModal}
-                className="inline-flex items-center gap-1.5 text-xs font-black text-primary hover:text-secondary transition-colors"
-              >
-                <span>{t.howToHelp.cards[1].action}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {isMember ? (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-800 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>{lang === 'hi' ? 'सदस्यता सक्रिय (डैशबोर्ड देखें)' : 'Active Member (Dashboard)'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenJoinModal}
+                  className="inline-flex items-center gap-1.5 text-xs font-black text-primary hover:text-secondary transition-colors"
+                >
+                  <span>{t.howToHelp.cards[1].action}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 

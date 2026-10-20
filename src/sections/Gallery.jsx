@@ -19,11 +19,11 @@ export const Gallery = ({ onSelectImage }) => {
   });
 
   return (
-    <section id="gallery" className="py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
+    <section id="gallery" className="py-12 sm:py-16 lg:py-24 bg-white relative border-b border-[#E9B44C]/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-secondary bg-[#FFF8EF] border border-[#E9B44C]/60 px-4 py-1 rounded-full shadow-sm">
             {t.gallery.tag}
           </span>
@@ -36,13 +36,13 @@ export const Gallery = ({ onSelectImage }) => {
           <div className="w-20 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary mx-auto mt-4 rounded-full"></div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+        {/* Category Tabs (Swipeable on Mobile) */}
+        <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar pb-2 sm:flex-wrap sm:justify-center sm:pb-0 px-1">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shadow-sm ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap flex-shrink-0 transition-all shadow-sm ${
                 activeCategory === cat.id
                   ? 'bg-primary text-white shadow-saffron font-black'
                   : 'bg-[#FFF8EF] text-[#454545] hover:bg-white hover:text-primary border border-[#E9B44C]/40 font-bold'
@@ -54,7 +54,7 @@ export const Gallery = ({ onSelectImage }) => {
         </div>
 
         {/* Gallery Grid (Responsive Columns) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredItems.map((img, idx) => {
             const webpSrc = img.src.replace(/\.(jpg|png)$/, '.webp');
             return (

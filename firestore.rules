@@ -2,49 +2,150 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.admin == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
     // 1. Users collection (Profiles)
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && 
+        (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin()) &&
+        !('isMember' in request.resource.data && request.resource.data.isMember == true) &&
+        !('memberId' in request.resource.data);
+      allow update: if isAdmin() || (resource.data.role == 'admin') || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isMember', 'memberId', 'memberSince'])
+      );
+      allow delete: if isAdmin() || (resource.data.role == 'admin');
     }
 
-    // 2. Membership Applications (Category A, B, C)
+    // 2. Usernames reservation index
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if !exists(/databases/$(database)/documents/usernames/$(username));
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // 3. Payment IDs unique reservation index
+    match /paymentIds/{paymentId} {
+      allow read: if true;
+      allow create: if !exists(/databases/$(database)/documents/paymentIds/$(paymentId));
+      allow update, delete: if isAdmin();
+    }
+
+    // 4. Sequential Counters (members, receipts)
+    match /counters/{counterId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 5. Settings (e.g. settings/payment, settings/trust)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 6. Memberships collection (Unified & Backward compatible)
+    match /memberships/{docId} {
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow create: if (
+        (!('uid' in request.resource.data) || request.resource.data.uid == null || (isAuthenticated() && request.resource.data.uid == request.auth.uid)) &&
+        request.resource.data.status == 'pending' &&
+        (!('verifiedAmount' in request.resource.data) || request.resource.data.verifiedAmount == null || request.resource.data.verifiedAmount == 0) &&
+        (!('receiptNumber' in request.resource.data) || request.resource.data.receiptNumber == null) &&
+        (!('memberId' in request.resource.data) || request.resource.data.memberId == null) &&
+        (!('memberSince' in request.resource.data) || request.resource.data.memberSince == null) &&
+        (!('approvedBy' in request.resource.data) || request.resource.data.approvedBy == null) &&
+        (!('approvedAt' in request.resource.data) || request.resource.data.approvedAt == null)
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // 7. Membership Applications (Active deployed collection)
     match /membershipApplications/{appId} {
-      allow read, write: if true;
+      allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
+      allow create: if !isAuthenticated() || request.resource.data.applicantUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // 3. Approved Members
-    match /members/{memberId} {
-      allow read, write: if true;
+    // 8. Donations collection
+    match /donations/{docId} {
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow create: if !isAuthenticated() || request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // 4. Payments & UTR Records
+    // 9. Payments collection
     match /payments/{paymentId} {
-      allow read, write: if true;
+      allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.payerUid == request.auth.uid)) || isAdmin();
+      allow create: if !isAuthenticated() || request.resource.data.payerUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // 5. Assistance Requests (Beneficiary Help Needs)
+    // 10. Help Requests collection
+    match /helpRequests/{docId} {
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow create: if !isAuthenticated() || request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // 11. Assistance Requests collection
     match /assistanceRequests/{requestId} {
-      allow read, write: if true;
+      allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
+      allow create: if !isAuthenticated() || request.resource.data.applicantUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // 6. Volunteer Applications
+    // 12. Volunteers collection
+    match /volunteers/{docId} {
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // 13. Volunteer Applications collection
     match /volunteerApplications/{appId} {
-      allow read, write: if true;
+      allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
     }
 
-    // 7. Announcements
-    match /announcements/{announcementId} {
-      allow read, write: if true;
-    }
-
-    // 8. Receipts
+    // 14. Receipts collection
     match /receipts/{receiptId} {
-      allow read, write: if true;
+      allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.payerUid == request.auth.uid)) || isAdmin();
+      allow write: if isAdmin();
     }
 
-    // 9. System Config & Counters
+    // 15. Members index
+    match /members/{memberId} {
+      allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.userUid == request.auth.uid)) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 16. Public / Institutional Content
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /systemConfig/{configId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { submitAssistanceRequest } from '../firebase/services';
@@ -35,17 +36,19 @@ const QUICK_AMOUNTS = ['5000', '10000', '25000', '50000', '100000'];
 
 export const HelpRequestModal = ({ isOpen, onClose }) => {
   const { lang } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const printRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState(() => {
     const isMock = typeof window !== 'undefined' && window.location.search.includes('submitted=true');
     return {
-      fullName: isMock ? 'राजेश कुमार मिश्र' : '',
+      fullName: isMock ? 'राजेश कुमार मिश्र' : (userProfile?.fullName || userProfile?.displayName || ''),
       fatherHusbandName: isMock ? 'श्री बैजनाथ मिश्र' : '',
-      mobile: isMock ? '9876543210' : '',
-      whatsapp: isMock ? '9876543210' : '',
+      mobile: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
+      whatsapp: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
       location: isMock ? 'मकान नं. 24, निकट प्राचीन शिव मंदिर, रूस्तमपुर' : '',
       cityDistrict: 'गोरखपुर (Gorakhpur)',
       state: 'उत्तर प्रदेश (UP)',
@@ -58,6 +61,27 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
       isConsentGiven: true
     };
   });
+
+  // Protected action: require login
+  useEffect(() => {
+    if (isOpen && !currentUser) {
+      onClose();
+      navigate('/login', {
+        state: { from: location, message: 'Please sign in to continue' }
+      });
+    }
+  }, [isOpen, currentUser]);
+
+  useEffect(() => {
+    if (userProfile) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || userProfile.displayName || '',
+        mobile: prev.mobile || userProfile.phone || userProfile.mobile || '',
+        whatsapp: prev.whatsapp || userProfile.phone || userProfile.mobile || ''
+      }));
+    }
+  }, [userProfile]);
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(() => {
@@ -226,22 +250,22 @@ _निवेदन: कृपया इस आवेदन की समीक�
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border-2 border-[#E9B44C]/40 max-w-2xl w-full overflow-hidden my-4 transition-all">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-[#E9B44C]/40 max-w-2xl w-full overflow-hidden my-auto sm:my-8 max-h-[94vh] flex flex-col transition-all">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#FFF8EF] via-[#FFF3E0] to-[#FFF8EF] px-5 py-4 border-b border-[#E9B44C]/40 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0 shadow-sm">
+        <div className="bg-gradient-to-r from-[#FFF8EF] via-[#FFF3E0] to-[#FFF8EF] px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E9B44C]/40 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0 shadow-sm">
               <HandHeart className="w-5 h-5 text-primary" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black tracking-wider uppercase text-secondary bg-primary/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase text-secondary bg-primary/10 px-2 py-0.5 rounded">
                   {lang === 'hi' ? 'जन सेवा एवं राहत' : 'Public Welfare Assistance'}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-[#382719] font-hindi-heading">
+              <h3 className="text-base sm:text-xl font-black text-[#382719] font-hindi-heading truncate">
                 {lang === 'hi' ? 'सहायता अनुरोध प्रपत्र (Ask for Help)' : 'Financial & Social Assistance Request'}
               </h3>
             </div>
@@ -249,18 +273,18 @@ _निवेदन: कृपया इस आवेदन की समीक�
           <button
             onClick={onClose}
             type="button"
-            className="p-1.5 rounded-full text-[#454545] hover:text-primary hover:bg-white/80 transition-colors"
+            className="p-2 rounded-full text-[#454545] hover:text-primary hover:bg-white/80 transition-colors flex-shrink-0 ml-2"
             aria-label="Close"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 sm:p-6 max-h-[82vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {!submitted ? (
             /* ================= FORM VIEW ================= */
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               {/* Trust assurance note */}
               <div className="p-3.5 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/50 flex items-start gap-3 text-xs sm:text-sm text-[#382719]">
                 <HelpCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
@@ -512,7 +536,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
                   <label className="block text-xs font-bold text-[#382719] mb-1.5">
                     {lang === 'hi' ? 'आवश्यकता की प्राथमिकता (Urgency)' : 'Urgency Level'}
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                     {[
                       { id: 'normal', labelHi: 'सामान्य (3-5 दिन)', labelEn: 'Normal (3-5d)', color: 'border-blue-300 hover:border-blue-500' },
                       { id: 'urgent', labelHi: 'अति आवश्यक (48 घंटे)', labelEn: 'Urgent (48h)', color: 'border-yellow-400 hover:border-yellow-600' },
@@ -522,7 +546,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
                         type="button"
                         key={lvl.id}
                         onClick={() => setFormData(prev => ({ ...prev, urgency: lvl.id }))}
-                        className={`text-xs py-2 px-2 rounded-xl font-bold border text-center transition-all ${
+                        className={`text-[11px] sm:text-xs py-2 px-1 sm:px-2 rounded-xl font-bold border text-center transition-all min-h-[44px] flex items-center justify-center ${
                           formData.urgency === lvl.id
                             ? 'bg-secondary text-white border-secondary shadow-sm'
                             : `bg-white text-[#454545] ${lvl.color}`
@@ -578,18 +602,18 @@ _निवेदन: कृपया इस आवेदन की समीक�
               </div>
 
               {/* Submit CTA */}
-              <div className="pt-3 border-t border-[#E9B44C]/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="pt-3 border-t border-[#E9B44C]/30 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-full border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-full border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
                 </button>
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <HandHeart className="w-5 h-5" />
                   <span>{lang === 'hi' ? 'सहायता अनुरोध प्रेषित करें' : 'Submit Assistance Request'}</span>
@@ -724,11 +748,11 @@ _निवेदन: कृपया इस आवेदन की समीक�
                   </span>
                 </a>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={handlePrint}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#382719] transition-colors"
+                    className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#382719] transition-colors"
                   >
                     <Printer className="w-4 h-4 text-primary" />
                     <span>{lang === 'hi' ? 'रसीद / पर्ची प्रिंट करें' : 'Print Application Slip'}</span>
@@ -737,7 +761,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#454545] transition-colors"
+                    className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#454545] transition-colors"
                   >
                     <HandHeart className="w-4 h-4 text-secondary" />
                     <span>{lang === 'hi' ? 'नया आवेदन करें' : 'New Application'}</span>
@@ -748,7 +772,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-xs font-bold text-gray-500 hover:text-gray-800 underline"
+                    className="min-h-[44px] inline-flex items-center justify-center text-xs font-bold text-gray-500 hover:text-gray-800 underline px-3"
                   >
                     {lang === 'hi' ? 'खिड़की बंद करें' : 'Close this window'}
                   </button>

@@ -1,45 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
-import Hero from './sections/Hero';
-import About from './sections/About';
-import Sanskars from './sections/Sanskars';
-import Guidelines from './sections/Guidelines';
-import Programs from './sections/Programs';
-import Impact from './sections/Impact';
-import Gallery from './sections/Gallery';
-import Trustees from './sections/Trustees';
-import HowYouCanHelp from './sections/HowYouCanHelp';
-import Donate from './sections/Donate';
-import Transparency from './sections/Transparency';
-import NewsEvents from './sections/NewsEvents';
-import Contact from './sections/Contact';
 import Footer from './sections/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 
-// Modals & Portals
+// Guards
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+
+// Modals
 import ReceiptGeneratorModal from './components/ReceiptGeneratorModal';
 import HelpRequestModal from './components/HelpRequestModal';
 import ImageLightboxModal from './components/ImageLightboxModal';
 import JoinTrustModal from './components/JoinTrustModal';
 import PaymentModal from './components/PaymentModal';
 import VolunteerModal from './components/VolunteerModal';
-import LoginModal from './components/LoginModal';
 
-import { useAuth } from './context/AuthContext';
-
-// Dedicated Sub-Pages
-import MemberDashboard from './pages/MemberDashboard';
+// Dedicated Pages
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import ProgramsPage from './pages/ProgramsPage';
+import DonatePage from './pages/DonatePage';
+import MembershipPage from './pages/MembershipPage';
+import EventsPage from './pages/EventsPage';
+import GalleryPage from './pages/GalleryPage';
+import TransparencyPage from './pages/TransparencyPage';
+import ContactPage from './pages/ContactPage';
+import LoginPage from './pages/LoginPage';
+import UserDashboardPage from './pages/UserDashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
-  const { currentUser, isAdmin, loading } = useAuth();
-
-  // Current route pathname tracking
-  const [currentPath, setCurrentPath] = useState(() => {
-    return typeof window !== 'undefined' ? window.location.pathname : '/';
-  });
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Track if a logged-in user explicitly wants to preview the public site
   const [viewPublicSite, setViewPublicSite] = useState(false);
@@ -50,44 +47,24 @@ function AppContent() {
     return typeof window !== 'undefined' && window.location.search.includes('modal=help');
   });
   const [joinModalOpen, setJoinModalOpen] = useState(() => {
-    return typeof window !== 'undefined' && (window.location.pathname === '/join' || window.location.search.includes('modal=join'));
+    return typeof window !== 'undefined' && window.location.search.includes('modal=join');
   });
   const [paymentModalOpen, setPaymentModalOpen] = useState(() => {
     return typeof window !== 'undefined' && window.location.search.includes('modal=pay');
   });
   const [volunteerModalOpen, setVolunteerModalOpen] = useState(() => {
-    return typeof window !== 'undefined' && (window.location.pathname === '/volunteer' || window.location.search.includes('modal=volunteer'));
-  });
-  const [loginModalOpen, setLoginModalOpen] = useState(() => {
-    return typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.search.includes('modal=login'));
+    return typeof window !== 'undefined' && window.location.search.includes('modal=volunteer');
   });
 
   const [activeLightbox, setActiveLightbox] = useState(null);
   const [lightboxList, setLightboxList] = useState([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  // Synchronize browser history / popstate
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const navigateTo = (path) => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', path);
-      setCurrentPath(path);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   // Lightbox controls
   const handleSelectImage = (img, index, list) => {
     setActiveLightbox(img);
-    setLightboxIndex(index);
-    setLightboxList(list);
+    setLightboxIndex(index || 0);
+    setLightboxList(list || [img]);
   };
 
   const handlePrevImage = () => {
@@ -104,168 +81,182 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
-  // Brand loader while auth state restores from browser storage
-  if (loading) {
+  // Full-screen dashboards with their own dedicated layouts
+  if (location.pathname.startsWith('/admin')) {
     return (
-      <div className="min-h-screen bg-[#FFF8EF] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-bold text-[#382719] font-hindi-heading animate-pulse">
-          राष्ट्रीय सनातन संस्कार सेवा संस्थान...
-        </p>
-      </div>
+      <AdminRoute>
+        <AdminDashboard onNavigateHome={() => navigate('/')} />
+      </AdminRoute>
     );
   }
 
-  // If a member, help seeker, or admin is logged in, the landing page is not shown to them;
-  // their dashboard is shown instead (unless they explicitly click to view public site).
-  if (currentUser && !viewPublicSite) {
-    if (isAdmin || currentPath === '/admin') {
-      return (
-        <AdminDashboard
-          onNavigateHome={() => {
-            setViewPublicSite(true);
-            navigateTo('/');
-          }}
-        />
-      );
-    }
+  if (location.pathname.startsWith('/member') || location.pathname.startsWith('/dashboard')) {
     return (
-      <MemberDashboard
-        onNavigateHome={() => {
-          setViewPublicSite(true);
-          navigateTo('/');
-        }}
-      />
+      <ProtectedRoute>
+        <UserDashboardPage onNavigateHome={() => navigate('/')} />
+      </ProtectedRoute>
     );
   }
 
-  // Route 1: Administrator Dashboard (Explicit URL)
-  if (currentPath === '/admin') {
-    return (
-      <AdminDashboard
-        onNavigateHome={() => {
-          setViewPublicSite(true);
-          navigateTo('/');
-        }}
-      />
-    );
-  }
-
-  // Route 2: Member Portal Dashboard (Explicit URL)
-  if (currentPath === '/member' || currentPath === '/dashboard') {
-    return (
-      <MemberDashboard
-        onNavigateHome={() => {
-          setViewPublicSite(true);
-          navigateTo('/');
-        }}
-      />
-    );
-  }
-
-  // Route 3: Main Landing Page
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white overflow-x-hidden w-full max-w-full">
-      {/* Top Screen: Navbar & Hero unified on Warm Ivory #FFF8EF */}
-      <div className="bg-[#FFF8EF] relative overflow-x-hidden w-full">
-        <Navbar
-          onOpenReceiptModal={() => setReceiptModalOpen(true)}
-          onOpenLoginModal={() => setLoginModalOpen(true)}
-          onOpenJoinModal={() => setJoinModalOpen(true)}
-          onNavigateMember={() => {
-            setViewPublicSite(false);
-            navigateTo('/member');
-          }}
-          onNavigateAdmin={() => {
-            setViewPublicSite(false);
-            navigateTo('/admin');
-          }}
-        />
-        <Hero
-          onOpenReceiptModal={() => setReceiptModalOpen(true)}
-          onOpenHelpModal={() => setHelpModalOpen(true)}
-          onOpenJoinModal={() => setJoinModalOpen(true)}
-        />
-      </div>
+    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
+      {/* Scroll restoration on route transition */}
+      <ScrollToTop />
 
-      <main className="flex-1 w-full overflow-x-hidden">
-        {/* 2. About Us & Leadership */}
-        <About />
+      {/* Persistent Pinned Navigation Bar */}
+      <Navbar
+        onOpenReceiptModal={() => setReceiptModalOpen(true)}
+        onOpenLoginModal={() => navigate('/login')}
+        onOpenJoinModal={() => setJoinModalOpen(true)}
+        onNavigateMember={() => navigate('/dashboard')}
+        onNavigateAdmin={() => navigate('/admin')}
+      />
 
-        {/* 3. 16 Vedic Sanskars (षोडश संस्कार) */}
-        <Sanskars />
+      {/* Main Content Area Routed Per Page */}
+      <main className="flex-1">
+        <Routes>
+          {/* 1. Lean Landing Page */}
+          <Route
+            path="/"
+            element={
+              <HomePage
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                onOpenHelpModal={() => setHelpModalOpen(true)}
+                onOpenJoinModal={() => setJoinModalOpen(true)}
+                onSelectImage={handleSelectImage}
+              />
+            }
+          />
 
-        {/* 4. 12 Family Guidelines (हमारा आग्रह) */}
-        <Guidelines />
+          {/* 2. Authentication: Login / Sign Up */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<LoginPage />} />
 
-        {/* 5. Core Programs & Pillars */}
-        <Programs />
+          {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}
+          <Route
+            path="/about"
+            element={
+              <AboutPage
+                onOpenJoinModal={() => setJoinModalOpen(true)}
+              />
+            }
+          />
 
-        {/* 6. Impact Counters */}
-        <Impact />
+          {/* 4. Full Dedicated Programs Page (Labor welfare, Sanskars, Cow care, etc.) */}
+          <Route
+            path="/programs"
+            element={
+              <ProgramsPage
+                onOpenHelpModal={() => setHelpModalOpen(true)}
+                onOpenVolunteerModal={() => setVolunteerModalOpen(true)}
+              />
+            }
+          />
 
-        {/* 7. Gallery with Masonry & Filters */}
-        <Gallery onSelectImage={handleSelectImage} />
+          {/* 5. Protected Donate Page (Requires login) */}
+          <Route
+            path="/donate"
+            element={
+              <ProtectedRoute message="Please sign in to continue">
+                <DonatePage
+                  onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                  onOpenPaymentModal={() => setPaymentModalOpen(true)}
+                />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* 8. Trustees & Executive Council */}
-        <Trustees />
+          {/* 6. Full Dedicated Membership Page (₹200 Rules, 3 Member Types, ID Privileges) */}
+          <Route
+            path="/membership"
+            element={
+              <MembershipPage
+                onOpenJoinModal={() => setJoinModalOpen(true)}
+                onOpenVolunteerModal={() => setVolunteerModalOpen(true)}
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+              />
+            }
+          />
+          <Route
+            path="/join"
+            element={
+              <MembershipPage
+                onOpenJoinModal={() => setJoinModalOpen(true)}
+                onOpenVolunteerModal={() => setVolunteerModalOpen(true)}
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+              />
+            }
+          />
 
-        {/* 9. How You Can Help */}
-        <HowYouCanHelp
-          onOpenReceiptModal={() => setReceiptModalOpen(true)}
-          onOpenJoinModal={() => setJoinModalOpen(true)}
-          onOpenVolunteerModal={() => setVolunteerModalOpen(true)}
-        />
+          {/* 7. Full Dedicated Events & Announcements Page */}
+          <Route
+            path="/events"
+            element={<EventsPage />}
+          />
+          <Route
+            path="/news"
+            element={<EventsPage />}
+          />
 
-        {/* 10. Official Bank & Donate Details */}
-        <Donate
-          onOpenReceiptModal={() => setReceiptModalOpen(true)}
-          onOpenPaymentModal={() => setPaymentModalOpen(true)}
-        />
+          {/* 8. Full Dedicated Filterable Photo Gallery */}
+          <Route
+            path="/gallery"
+            element={
+              <GalleryPage
+                onSelectImage={handleSelectImage}
+              />
+            }
+          />
 
-        {/* 11. Institutional Transparency */}
-        <Transparency />
+          {/* 9. Full Dedicated Institutional Transparency & Legal Certifications */}
+          <Route
+            path="/transparency"
+            element={
+              <TransparencyPage
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+              />
+            }
+          />
 
-        {/* 12. News & Field Events (Dynamic from Firestore) */}
-        <NewsEvents />
+          {/* 10. Full Dedicated Contact & Dual Gorakhpur Offices Page */}
+          <Route
+            path="/contact"
+            element={<ContactPage />}
+          />
 
-        {/* 13. Contact & Dual Gorakhpur Offices */}
-        <Contact />
+          {/* Fallback to Home */}
+          <Route
+            path="*"
+            element={
+              <HomePage
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                onOpenHelpModal={() => setHelpModalOpen(true)}
+                onOpenJoinModal={() => setJoinModalOpen(true)}
+                onSelectImage={handleSelectImage}
+              />
+            }
+          />
+        </Routes>
       </main>
 
-      {/* 14. Footer with Quick Portal & Legal Links */}
+      {/* Shared Footer Layout */}
       <Footer
         onOpenReceiptModal={() => setReceiptModalOpen(true)}
         onOpenJoinModal={() => setJoinModalOpen(true)}
-        onNavigateMember={() => {
-          setViewPublicSite(false);
-          navigateTo('/member');
-        }}
-        onNavigateAdmin={() => {
-          setViewPublicSite(false);
-          navigateTo('/admin');
-        }}
+        onNavigateMember={() => navigate('/dashboard')}
+        onNavigateAdmin={() => navigate('/admin')}
       />
 
-      {/* Persistent Floating Controls */}
+      {/* Floating Action Controls */}
       <FloatingWhatsApp />
 
-      {/* Interactive System Modals */}
+      {/* Interactive System Modals Accessible from All Pages */}
       <JoinTrustModal
         isOpen={joinModalOpen}
         onClose={() => setJoinModalOpen(false)}
         onOpenLogin={() => {
           setJoinModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-      />
-
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        onOpenJoin={() => {
-          setLoginModalOpen(false);
-          setJoinModalOpen(true);
+          navigate('/login');
         }}
       />
 
@@ -303,7 +294,11 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <ToastProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </LanguageProvider>
   );
