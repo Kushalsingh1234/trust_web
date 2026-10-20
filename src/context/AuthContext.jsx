@@ -3,7 +3,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import {
   doc,
@@ -37,9 +39,45 @@ export const formatAuthEmail = (identifier) => {
 export const TRUST_ADMIN_PIN = "273016";
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Restore user & profile immediately from localStorage to prevent flicker and keep session persistent
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('rsssst_auth_user');
+        return cached ? JSON.parse(cached) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [userProfile, setUserProfile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('rsssst_user_profile');
+        return cached ? JSON.parse(cached) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [isAdmin, setIsAdmin] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedProfile = localStorage.getItem('rsssst_user_profile');
+        const parsed = cachedProfile ? JSON.parse(cachedProfile) : null;
+        if (parsed?.role === 'admin') return true;
+        return localStorage.getItem('rsssst_admin_pin_verified') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  });
+
   const [loading, setLoading] = useState(true);
   const [adminPinVerified, setAdminPinVerified] = useState(() => {
     return (
@@ -118,7 +156,12 @@ export const AuthProvider = ({ children }) => {
       if (userSnap.exists()) {
         const data = userSnap.data();
         setUserProfile(data);
-        setIsAdmin(data.role === 'admin');
+        if (data.role === 'admin') {
+          setIsAdmin(true);
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('rsssst_user_profile', JSON.stringify(data));
+        }
         return data;
       } else {
         // Fallback profile if user document does not exist yet
@@ -130,12 +173,25 @@ export const AuthProvider = ({ children }) => {
         };
         setUserProfile(basicProfile);
         setIsAdmin(false);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('rsssst_user_profile', JSON.stringify(basicProfile));
+        }
         return basicProfile;
       }
     } catch (err) {
       console.warn("Could not fetch user profile from Firestore:", err);
-      setUserProfile(null);
-      setIsAdmin(false);
+      // Fallback to cached profile if available in localStorage
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('rsssst_user_profile');
+        if (cached) {
+          try {
+            const data = JSON.parse(cached);
+            setUserProfile(data);
+            if (data.role === 'admin') setIsAdmin(true);
+            return data;
+          } catch (e) {}
+        }
+      }
       return null;
     }
   };
@@ -179,6 +235,11 @@ export const AuthProvider = ({ children }) => {
     // 2. Convert username into internal email: username@trust-app.local
     const internalEmail = `${cleanUsername}@trust-app.local`;
 
+    // Ensure persistent login across browser sessions
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (e) {}
+
     // 3. Create Auth user with Firebase Email/Password
     const userCredential = await createUserWithEmailAndPassword(auth, internalEmail, password);
     const user = userCredential.user;
@@ -206,6 +267,15 @@ export const AuthProvider = ({ children }) => {
       console.error("Failed to write user profile to Firestore:", err);
     }
 
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rsssst_auth_user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName
+      }));
+      localStorage.setItem('rsssst_user_profile', JSON.stringify(profile));
+    }
+
     setUserProfile(profile);
     setIsAdmin(false);
     return user;
@@ -218,7 +288,6 @@ export const AuthProvider = ({ children }) => {
 
     // If identifier is not an email and not containing @, try checking if they entered real email
     if (raw.includes('@') && !raw.endsWith('@trust-app.local')) {
-      // Find user by real email if registered
       try {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('email', '==', raw.toLowerCase()));
@@ -234,7 +303,19 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
+    // Ensure persistent login across browser sessions
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (e) {}
+
     const userCredential = await signInWithEmailAndPassword(auth, authEmail, password);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rsssst_auth_user', JSON.stringify({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName
+      }));
+    }
     const profile = await fetchUserProfile(userCredential.user.uid);
     return { user: userCredential.user, profile };
   };
@@ -242,6 +323,8 @@ export const AuthProvider = ({ children }) => {
   // Logout
   const logout = async () => {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('rsssst_auth_user');
+      localStorage.removeItem('rsssst_user_profile');
       localStorage.removeItem('rsssst_admin_pin_verified');
       sessionStorage.removeItem('rsssst_admin_pin_verified');
     }
@@ -264,19 +347,29 @@ export const AuthProvider = ({ children }) => {
     let profileUnsub = null;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (profileUnsub) {
-        profileUnsub();
-        profileUnsub = null;
-      }
-
       if (user) {
+        setCurrentUser(user);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('rsssst_auth_user', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName
+          }));
+        }
+        if (profileUnsub) {
+          profileUnsub();
+          profileUnsub = null;
+        }
+
         await fetchUserProfile(user.uid);
         try {
           profileUnsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
               setUserProfile(data);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('rsssst_user_profile', JSON.stringify(data));
+              }
               if (data.role === 'admin') {
                 setIsAdmin(true);
               }
@@ -288,7 +381,12 @@ export const AuthProvider = ({ children }) => {
           console.warn("Could not attach profile listener:", e);
         }
       } else {
-        setUserProfile(null);
+        // If not explicit logout, check if session is still in localStorage
+        const hasCachedUser = typeof window !== 'undefined' && localStorage.getItem('rsssst_auth_user');
+        if (!hasCachedUser) {
+          setCurrentUser(null);
+          setUserProfile(null);
+        }
         if (
           typeof window !== 'undefined' && (
             sessionStorage.getItem('rsssst_admin_pin_verified') === 'true' ||
@@ -299,7 +397,7 @@ export const AuthProvider = ({ children }) => {
           try {
             signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016').catch(() => {});
           } catch (e) {}
-        } else {
+        } else if (!hasCachedUser) {
           setIsAdmin(false);
         }
       }

@@ -38,19 +38,13 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
         </div>
       </div>
 
-      {/* Trust Title & Location */}
+      {/* Trust Title */}
       <div className="mt-3 max-w-sm sm:max-w-md z-10 px-2">
         <h2 className="text-lg sm:text-xl lg:text-2xl font-black text-[#2E1E12] tracking-tight leading-tight font-hindi-heading">
           {lang === 'hi' 
             ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान' 
             : 'Rashtriya Sanatan Sanskar Seva Sansthan'}
         </h2>
-        <p className="text-xs sm:text-sm font-extrabold text-primary mt-1 tracking-wide">
-          {lang === 'hi' 
-            ? 'पंजीकृत लोक धर्मार्थ न्यास (ट्रस्ट) • गोरखपुर, उत्तर प्रदेश' 
-            : 'Registered Public Charitable Trust • Gorakhpur, UP'}
-        </p>
-        <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-[#E9B44C] to-transparent mx-auto mt-2"></div>
       </div>
     </div>
   );
@@ -64,14 +58,10 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
             
             {/* Left Column: Heading, Mission, 4 Pillars, Badges & CTAs */}
             <div className="lg:col-span-7 space-y-3.5 sm:space-y-4 text-left">
-              {/* Sacred Ribbon & Trust Status */}
+              {/* Sacred Ribbon */}
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 via-white to-amber-500/10 border border-[#E9B44C]/60 text-primary font-bold text-[11px] sm:text-xs shadow-xs">
                   <span className="font-hindi-heading">॥ ॐ धर्मो रक्षति रक्षितः ॥</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 border border-[#E9B44C]/60 text-[#382719] font-bold text-[11px] sm:text-xs shadow-xs max-w-full">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 md:animate-pulse flex-shrink-0"></span>
-                  <span className="truncate">{t.hero.badge}</span>
                 </div>
               </div>
 

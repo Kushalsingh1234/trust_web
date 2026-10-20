@@ -402,9 +402,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </Link>
 
             <Link
-              to="/"
+              to="/about"
               className="p-2 rounded-xl text-white/80 hover:bg-white/10 text-xs font-bold flex items-center gap-1"
-              title="Home"
+              title="About / Public Site"
             >
               <Home className="w-4 h-4 text-[#E9B44C]" />
             </Link>

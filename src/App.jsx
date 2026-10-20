@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
@@ -37,9 +37,7 @@ import AdminDashboard from './pages/AdminDashboard';
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Track if a logged-in user explicitly wants to preview the public site
-  const [viewPublicSite, setViewPublicSite] = useState(false);
+  const { currentUser, isAdmin } = useAuth();
 
   // Modals state
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -81,11 +79,28 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
+  // If a member, help seeker, or admin is logged in and visits root or login,
+  // they shouldn't see the landing page; show their dashboard directly.
+  if (currentUser && (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/signup')) {
+    if (isAdmin) {
+      return (
+        <AdminRoute>
+          <AdminDashboard onNavigateHome={() => navigate('/about')} />
+        </AdminRoute>
+      );
+    }
+    return (
+      <ProtectedRoute>
+        <UserDashboardPage onNavigateHome={() => navigate('/about')} />
+      </ProtectedRoute>
+    );
+  }
+
   // Full-screen dashboards with their own dedicated layouts
   if (location.pathname.startsWith('/admin')) {
     return (
       <AdminRoute>
-        <AdminDashboard onNavigateHome={() => navigate('/')} />
+        <AdminDashboard onNavigateHome={() => navigate('/about')} />
       </AdminRoute>
     );
   }
@@ -93,13 +108,13 @@ function AppContent() {
   if (location.pathname.startsWith('/member') || location.pathname.startsWith('/dashboard')) {
     return (
       <ProtectedRoute>
-        <UserDashboardPage onNavigateHome={() => navigate('/')} />
+        <UserDashboardPage onNavigateHome={() => navigate('/about')} />
       </ProtectedRoute>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white">
+    <div className="min-h-screen flex flex-col bg-white text-[#454545] selection:bg-primary selection:text-white w-full max-w-full overflow-x-hidden">
       {/* Scroll restoration on route transition */}
       <ScrollToTop />
 
@@ -113,24 +128,34 @@ function AppContent() {
       />
 
       {/* Main Content Area Routed Per Page */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         <Routes>
-          {/* 1. Lean Landing Page */}
+          {/* 1. Landing Page (Never shown to logged-in users; shows dashboard) */}
           <Route
             path="/"
             element={
-              <HomePage
-                onOpenReceiptModal={() => setReceiptModalOpen(true)}
-                onOpenHelpModal={() => setHelpModalOpen(true)}
-                onOpenJoinModal={() => setJoinModalOpen(true)}
-                onSelectImage={handleSelectImage}
-              />
+              currentUser ? (
+                <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
+              ) : (
+                <HomePage
+                  onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                  onOpenHelpModal={() => setHelpModalOpen(true)}
+                  onOpenJoinModal={() => setJoinModalOpen(true)}
+                  onSelectImage={handleSelectImage}
+                />
+              )
             }
           />
 
           {/* 2. Authentication: Login / Sign Up */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<LoginPage />} />
+          <Route 
+            path="/login" 
+            element={currentUser ? <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace /> : <LoginPage />} 
+          />
+          <Route 
+            path="/signup" 
+            element={currentUser ? <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace /> : <LoginPage />} 
+          />
 
           {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}
           <Route
@@ -224,16 +249,20 @@ function AppContent() {
             element={<ContactPage />}
           />
 
-          {/* Fallback to Home */}
+          {/* Fallback */}
           <Route
             path="*"
             element={
-              <HomePage
-                onOpenReceiptModal={() => setReceiptModalOpen(true)}
-                onOpenHelpModal={() => setHelpModalOpen(true)}
-                onOpenJoinModal={() => setJoinModalOpen(true)}
-                onSelectImage={handleSelectImage}
-              />
+              currentUser ? (
+                <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
+              ) : (
+                <HomePage
+                  onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                  onOpenHelpModal={() => setHelpModalOpen(true)}
+                  onOpenJoinModal={() => setJoinModalOpen(true)}
+                  onSelectImage={handleSelectImage}
+                />
+              )
             }
           />
         </Routes>

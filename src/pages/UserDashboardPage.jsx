@@ -195,7 +195,7 @@ export const UserDashboardPage = () => {
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-[#FFF8EF]/95 backdrop-blur-md border-b border-[#E9B44C]/30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <TrustLogo className="w-9 h-9" showText={false} lang={lang} />
             <div>
               <span className="font-extrabold text-[#382719] text-sm sm:text-base tracking-tight font-hindi-heading block leading-tight">
@@ -227,12 +227,12 @@ export const UserDashboardPage = () => {
             </button>
 
             <Link
-              to="/"
+              to="/about"
               className="p-2 rounded-xl text-[#382719] hover:bg-white border border-[#E9B44C]/40 text-xs font-bold flex items-center gap-1"
-              title="Home"
+              title="About Trust"
             >
               <Home className="w-4 h-4 text-primary" />
-              <span className="hidden md:inline">{lang === 'hi' ? 'मुख्य पृष्ठ' : 'Home'}</span>
+              <span className="hidden md:inline">{lang === 'hi' ? 'ट्रस्ट परिचय' : 'About'}</span>
             </Link>
 
             <button

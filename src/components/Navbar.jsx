@@ -76,7 +76,10 @@ export const Navbar = ({
 
   // Primary Navigation Route Links
   const navLinks = [
-    { to: '/', label: lang === 'hi' ? 'मुख्य पृष्ठ' : 'Home' },
+    { 
+      to: currentUser ? (isAdmin ? '/admin' : '/dashboard') : '/', 
+      label: lang === 'hi' ? (currentUser ? 'डैशबोर्ड' : 'मुख्य पृष्ठ') : (currentUser ? 'Dashboard' : 'Home') 
+    },
     { to: '/about', label: lang === 'hi' ? 'परिचय' : 'About' },
     { to: '/programs', label: lang === 'hi' ? 'सेवा प्रकल्प' : 'Programs' },
     { to: '/events', label: lang === 'hi' ? 'कार्यक्रम' : 'Events' },
@@ -85,25 +88,27 @@ export const Navbar = ({
   ];
 
   const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
+    if (path === '/' || path === '/dashboard' || path === '/admin') {
+      return location.pathname === path;
+    }
     return location.pathname.startsWith(path);
   };
 
   return (
     <header 
-      className="fixed top-0 left-0 right-0 z-50 w-full bg-[#FFF8EF]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(56,39,25,0.06)] border-b border-[#E9B44C]/30 transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 w-full max-w-full bg-[#FFF8EF]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(56,39,25,0.06)] border-b border-[#E9B44C]/30 transition-all duration-300"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Name */}
         <Link 
-          to="/" 
+          to={currentUser ? (isAdmin ? "/admin" : "/dashboard") : "/"} 
           className="flex items-center gap-2 sm:gap-3 group flex-shrink-0 min-w-0" 
-          aria-label="Home"
+          aria-label={currentUser ? "Dashboard" : "Home"}
         >
           <TrustLogo className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" showText={false} lang={lang} />
           <div className="flex items-center min-w-0">
-            <span className="font-extrabold text-[#382719] text-xs sm:text-lg md:text-xl tracking-tight font-hindi-heading group-hover:text-primary transition-colors truncate">
+            <span className="font-extrabold text-[#382719] text-xs sm:text-base lg:text-lg tracking-tight font-hindi-heading group-hover:text-primary transition-colors truncate">
               {lang === 'hi' ? 'सनातन संस्कार ' : 'Sanatan Sanskar '}
               <span className="text-primary font-black">
                 {lang === 'hi' ? 'ट्रस्ट' : 'Trust'}
@@ -132,52 +137,14 @@ export const Navbar = ({
           })}
         </nav>
 
-        {/* Right Actions: Highlighted CTAs, Language Toggle, Login */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+        {/* Right Actions: Language Toggle, Login & Hamburger Menu */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           
-          {/* Highlighted "Become a Member" / "Active Member" Button */}
-          {isMember ? (
-            <Link
-              to="/dashboard"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-400 shadow-xs transition-all active:scale-95"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{lang === 'hi' ? 'सदस्यता सक्रिय' : 'Active Member'}</span>
-            </Link>
-          ) : (
-            <Link
-              to="/membership"
-              className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C] shadow-xs transition-all active:scale-95"
-            >
-              <UserPlus className="w-3.5 h-3.5 text-primary" />
-              <span>{lang === 'hi' ? 'सदस्य बनें' : 'Join'}</span>
-            </Link>
-          )}
-
-          {/* Highlighted "Donate" Button */}
-          <Link
-            to="/donate"
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-xs font-black text-white bg-gradient-to-r from-primary via-[#EA6F0B] to-[#D65900] hover:from-secondary hover:to-primary shadow-saffron transition-all transform hover:-translate-y-0.5 active:scale-95"
-          >
-            <Heart className="w-3.5 h-3.5 fill-white text-white flex-shrink-0" />
-            <span>{lang === 'hi' ? 'दान / समर्पण' : 'Donate'}</span>
-          </Link>
-
-          {/* Direct "Receipt Download" Button */}
-          <button
-            type="button"
-            onClick={onOpenReceiptModal}
-            className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-xs transition-all active:scale-95"
-            title="Download Official Receipt"
-          >
-            <Download className="w-3.5 h-3.5 text-primary" />
-            <span>{lang === 'hi' ? 'रसीद' : 'Receipt'}</span>
-          </button>
           {/* Language Toggle Button */}
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-xs transition-all active:scale-95 whitespace-nowrap"
             aria-label={`Switch language to ${lang === 'en' ? 'Hindi' : 'English'}`}
           >
             <Globe className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
@@ -190,11 +157,11 @@ export const Navbar = ({
               <button
                 type="button"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-sm transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-xs transition-all active:scale-95"
                 aria-expanded={profileDropdownOpen}
                 aria-haspopup="true"
               >
-                <div className="w-5 h-5 rounded-full bg-primary text-white font-black text-[10px] flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-primary text-white font-black text-[11px] flex items-center justify-center flex-shrink-0">
                   {(userProfile?.fullName || userProfile?.username || 'U').charAt(0).toUpperCase()}
                 </div>
                 {(isMember && userProfile?.category) && (
@@ -206,8 +173,8 @@ export const Navbar = ({
                     lang={lang}
                   />
                 )}
-                <span className="hidden md:inline font-bold max-w-[100px] truncate">
-                  {userProfile?.fullName?.split(' ')[0] || userProfile?.username || 'My Profile'}
+                <span className="hidden md:inline font-bold max-w-[110px] truncate">
+                  {userProfile?.fullName?.split(' ')[0] || userProfile?.username || 'Profile'}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-secondary transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -282,11 +249,14 @@ export const Navbar = ({
           ) : (
             <Link
               to="/login"
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-xs transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
               title="Sign in or Create Account"
             >
-              <User className="w-3.5 h-3.5 text-secondary" />
-              <span>{lang === 'hi' ? 'लॉगिन / साइन अप' : 'Login / Sign Up'}</span>
+              <User className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
+              <span>
+                {lang === 'hi' ? 'लॉगिन' : 'Login'}
+                <span className="hidden sm:inline"> / {lang === 'hi' ? 'साइन अप' : 'Sign Up'}</span>
+              </span>
             </Link>
           )}
           <button
