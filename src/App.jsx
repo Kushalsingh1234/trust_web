@@ -79,9 +79,9 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
-  // If a member, help seeker, or admin is logged in and visits root or login,
+  // If a member, help seeker, or admin is logged in and visits root '/',
   // they shouldn't see the landing page; show their dashboard directly.
-  if (currentUser && (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/signup')) {
+  if (currentUser && location.pathname === '/') {
     if (isAdmin) {
       return (
         <AdminRoute>
@@ -150,11 +150,11 @@ function AppContent() {
           {/* 2. Authentication: Login / Sign Up */}
           <Route 
             path="/login" 
-            element={currentUser ? <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace /> : <LoginPage />} 
+            element={<LoginPage />} 
           />
           <Route 
             path="/signup" 
-            element={currentUser ? <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace /> : <LoginPage />} 
+            element={<LoginPage />} 
           />
 
           {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}

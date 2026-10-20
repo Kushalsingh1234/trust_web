@@ -52,13 +52,13 @@ service cloud.firestore {
     // 4. Sequential Counters (members, receipts)
     match /counters/{counterId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     // 5. Settings (e.g. settings/payment, settings/trust)
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     // 6. Memberships collection (Unified & Backward compatible)
@@ -74,79 +74,79 @@ service cloud.firestore {
         (!('approvedBy' in request.resource.data) || request.resource.data.approvedBy == null) &&
         (!('approvedAt' in request.resource.data) || request.resource.data.approvedAt == null)
       );
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 7. Membership Applications (Active deployed collection)
     match /membershipApplications/{appId} {
       allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
       allow create: if !isAuthenticated() || request.resource.data.applicantUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 8. Donations collection
     match /donations/{docId} {
       allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
       allow create: if !isAuthenticated() || request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 9. Payments collection
     match /payments/{paymentId} {
       allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.payerUid == request.auth.uid)) || isAdmin();
       allow create: if !isAuthenticated() || request.resource.data.payerUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 10. Help Requests collection
     match /helpRequests/{docId} {
       allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
       allow create: if !isAuthenticated() || request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 11. Assistance Requests collection
     match /assistanceRequests/{requestId} {
       allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
       allow create: if !isAuthenticated() || request.resource.data.applicantUid == request.auth.uid || request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 12. Volunteers collection
     match /volunteers/{docId} {
       allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
       allow create: if true;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 13. Volunteer Applications collection
     match /volunteerApplications/{appId} {
       allow read: if (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.uid == request.auth.uid)) || isAdmin();
       allow create: if true;
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isAuthenticated();
     }
 
     // 14. Receipts collection
     match /receipts/{receiptId} {
       allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.payerUid == request.auth.uid)) || isAdmin();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     // 15. Members index
     match /members/{memberId} {
       allow read: if (isAuthenticated() && (resource.data.uid == request.auth.uid || resource.data.userUid == request.auth.uid)) || isAdmin();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     // 16. Public / Institutional Content
     match /announcements/{announcementId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
 
     match /systemConfig/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isAuthenticated();
     }
   }
 }

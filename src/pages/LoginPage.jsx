@@ -20,7 +20,7 @@ import {
 
 export const LoginPage = () => {
   const { lang, t } = useLanguage();
-  const { loginWithUsername, registerWithUsername, currentUser } = useAuth();
+  const { loginWithUsername, registerWithUsername, currentUser, userProfile, logout, isAdmin } = useAuth();
   const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,13 +48,6 @@ export const LoginPage = () => {
   // Destination to return after successful login
   const returnUrl = location.state?.from?.pathname || new URLSearchParams(location.search).get('redirect') || '/dashboard';
   const noticeMessage = location.state?.message;
-
-  // If already logged in, redirect away
-  useEffect(() => {
-    if (currentUser) {
-      navigate(returnUrl, { replace: true });
-    }
-  }, [currentUser, navigate, returnUrl]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -193,6 +186,39 @@ export const LoginPage = () => {
           <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-2.5 text-xs text-amber-900 font-semibold text-left">
             <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
             <span>{noticeMessage}</span>
+          </div>
+        )}
+
+        {/* Banner if already logged in */}
+        {currentUser && (
+          <div className="bg-amber-50/90 border-b border-amber-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-amber-900">
+            <div className="flex items-center gap-2 text-center sm:text-left">
+              <span className="font-semibold text-amber-800">
+                {lang === 'hi' ? 'वर्तमान लॉगिन:' : 'Signed in:'}
+              </span>
+              <span className="font-bold text-primary">
+                {userProfile?.fullName || currentUser.displayName || currentUser.email} (@{userProfile?.username || 'user'})
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  toast.info(lang === 'hi' ? 'लॉग आउट सफल। अब अपने सदस्य खाते से लॉगिन करें।' : 'Logged out. Please sign in with your member account.');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
+              >
+                {lang === 'hi' ? 'लॉग आउट / खाता बदलें' : 'Logout / Switch'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(isAdmin ? '/admin' : '/dashboard')}
+                className="px-2.5 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold text-[11px] transition-colors cursor-pointer"
+              >
+                {lang === 'hi' ? 'डैशबोर्ड →' : 'Dashboard →'}
+              </button>
+            </div>
           </div>
         )}
 

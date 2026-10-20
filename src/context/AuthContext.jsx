@@ -98,45 +98,6 @@ export const AuthProvider = ({ children }) => {
       setAdminPinVerified(true);
       setIsAdmin(true);
 
-      // Authenticate administrative session in Firebase Auth so Firestore security rules recognize the admin
-      try {
-        if (!auth.currentUser || auth.currentUser.email !== 'admin@trust-app.local') {
-          let cred;
-          try {
-            cred = await signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-          } catch (err) {
-            if (
-              err.code === 'auth/user-not-found' ||
-              err.code === 'auth/invalid-credential' ||
-              err.code === 'auth/invalid-login-credentials'
-            ) {
-              cred = await createUserWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-            } else {
-              throw err;
-            }
-          }
-
-          if (cred?.user) {
-            const adminProf = {
-              uid: cred.user.uid,
-              username: 'admin',
-              fullName: 'व्यवस्थापक (Trust Admin)',
-              role: 'admin',
-              accountStatus: 'active',
-              updatedAt: serverTimestamp()
-            };
-            try {
-              await setDoc(doc(db, 'users', cred.user.uid), adminProf, { merge: true });
-            } catch (e) {}
-            setCurrentUser(cred.user);
-            setUserProfile(adminProf);
-            localStorage.setItem('rsssst_auth_user', JSON.stringify(cred.user));
-            localStorage.setItem('rsssst_user_profile', JSON.stringify(adminProf));
-          }
-        }
-      } catch (err) {
-        console.warn("Admin auth sync note:", err);
-      }
       return true;
     }
     return false;
@@ -153,6 +114,8 @@ export const AuthProvider = ({ children }) => {
         setUserProfile(data);
         if (data.role === 'admin') {
           setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
         }
         if (typeof window !== 'undefined') {
           localStorage.setItem('rsssst_user_profile', JSON.stringify(data));
@@ -182,7 +145,7 @@ export const AuthProvider = ({ children }) => {
           try {
             const data = JSON.parse(cached);
             setUserProfile(data);
-            if (data.role === 'admin') setIsAdmin(true);
+            setIsAdmin(data.role === 'admin');
             return data;
           } catch (e) {}
         }
@@ -269,11 +232,14 @@ export const AuthProvider = ({ children }) => {
         displayName: user.displayName
       }));
       localStorage.setItem('rsssst_user_profile', JSON.stringify(profile));
+      localStorage.removeItem('rsssst_admin_pin_verified');
+      sessionStorage.removeItem('rsssst_admin_pin_verified');
     }
 
     setCurrentUser(user);
     setUserProfile(profile);
     setIsAdmin(false);
+    setAdminPinVerified(false);
     return user;
   };
 
@@ -314,6 +280,15 @@ export const AuthProvider = ({ children }) => {
     }
     setCurrentUser(userCredential.user);
     const profile = await fetchUserProfile(userCredential.user.uid);
+    const userIsAdmin = profile?.role === 'admin';
+    setIsAdmin(userIsAdmin);
+    if (!userIsAdmin) {
+      setAdminPinVerified(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('rsssst_admin_pin_verified');
+        sessionStorage.removeItem('rsssst_admin_pin_verified');
+      }
+    }
     return { user: userCredential.user, profile };
   };
 

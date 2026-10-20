@@ -12,47 +12,7 @@ import {
   serverTimestamp,
   runTransaction
 } from 'firebase/firestore';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from './config';
-
-/**
- * Ensures the client is authenticated with administrator credentials for privileged Firestore operations
- */
-export const ensureAdminAuth = async () => {
-  if (auth.currentUser && auth.currentUser.email === 'admin@trust-app.local') {
-    return auth.currentUser;
-  }
-
-  try {
-    const cred = await signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-    return cred.user;
-  } catch (err) {
-    if (
-      err.code === 'auth/user-not-found' ||
-      err.code === 'auth/invalid-credential' ||
-      err.code === 'auth/invalid-login-credentials'
-    ) {
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-        try {
-          await setDoc(doc(db, 'users', cred.user.uid), {
-            uid: cred.user.uid,
-            username: 'admin',
-            fullName: 'व्यवस्थापक (Trust Admin)',
-            role: 'admin',
-            accountStatus: 'active',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        } catch (e) {}
-        return cred.user;
-      } catch (createErr) {
-        console.warn("Could not create admin account:", createErr);
-      }
-    }
-  }
-  return auth.currentUser;
-};
+import { db } from './config';
 
 /**
  * Rashtriya Sanatan Sanskar Seva Sansthan (Trust)
@@ -389,10 +349,6 @@ export const submitMembershipWithPaymentId = async ({
  * - Sets users/{uid}.isMember = true
  */
 export const approveMembership = async (membershipId, verifiedAmount = 200, adminUid = 'admin') => {
-  try {
-    await ensureAdminAuth();
-  } catch (e) {}
-
   const currentYear = new Date().getFullYear();
 
   // 1. Locate membership doc across collections (prioritize deployed 'membershipApplications')
@@ -608,10 +564,6 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
  * Admin: Reject Membership
  */
 export const rejectMembership = async (membershipId, reason, adminUid) => {
-  try {
-    await ensureAdminAuth();
-  } catch (e) {}
-
   const payload = {
     status: 'rejected',
     rejectionReason: reason || 'Payment details could not be verified by trust administration.',
@@ -633,10 +585,6 @@ export const rejectMembership = async (membershipId, reason, adminUid) => {
  * Admin: Remove Member
  */
 export const removeMember = async (membershipId, uid, reason, adminUid) => {
-  try {
-    await ensureAdminAuth();
-  } catch (e) {}
-
   const payload = {
     status: 'removed',
     removedAt: serverTimestamp(),
@@ -827,10 +775,6 @@ export const subscribeMembersList = (callback) => {
  * Allows user to download their official receipt on their dashboard
  */
 export const markReceiptSent = async (collectionName, docId, adminUid) => {
-  try {
-    await ensureAdminAuth();
-  } catch (e) {}
-
   const currentYear = new Date().getFullYear();
   let nextSeq = Date.now() % 8000 + 1001;
   const sysCounterRef = doc(db, 'systemConfig', 'counters');
