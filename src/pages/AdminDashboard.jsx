@@ -17,7 +17,8 @@ import {
   rejectMembership,
   removeMember,
   subscribeMembersList,
-  markReceiptSent
+  markReceiptSent,
+  ensureAdminAuth
 } from '../firebase/membershipService';
 import {
   approveDonationPayment,
@@ -175,6 +176,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   // Realtime subscriptions
   useEffect(() => {
+    ensureAdminAuth().catch(console.warn);
     const unsubHelp = subscribeAllCollection('helpRequests', (data) => setHelpRequests(data));
     const unsubMem = subscribeAllCollection('memberships', (data) => setMemberships(data));
     const unsubVol = subscribeAllCollection('volunteers', (data) => setVolunteers(data));

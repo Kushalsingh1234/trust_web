@@ -98,49 +98,44 @@ export const AuthProvider = ({ children }) => {
       setAdminPinVerified(true);
       setIsAdmin(true);
 
-      // If no Firebase Auth user is signed in (e.g. Incognito or direct /admin visit),
-      // authenticate an official administrative session so Firestore security rules succeed
-      if (!auth.currentUser) {
-        try {
-          const cred = await signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-          setCurrentUser(cred.user);
-          await fetchUserProfile(cred.user.uid);
-        } catch (err) {
-          if (
-            err.code === 'auth/user-not-found' ||
-            err.code === 'auth/invalid-credential' ||
-            err.code === 'auth/invalid-login-credentials'
-          ) {
-            try {
-              const cred = await createUserWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
-              const adminProf = {
-                uid: cred.user.uid,
-                username: 'admin',
-                fullName: 'व्यवस्थापक (Trust Admin)',
-                role: 'admin',
-                accountStatus: 'active',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-              };
-              try {
-                await setDoc(doc(db, 'users', cred.user.uid), adminProf, { merge: true });
-              } catch (e) {}
-              setCurrentUser(cred.user);
-              setUserProfile(adminProf);
-            } catch (createErr) {
-              console.warn("Could not create admin auth user:", createErr);
+      // Authenticate administrative session in Firebase Auth so Firestore security rules recognize the admin
+      try {
+        if (!auth.currentUser || auth.currentUser.email !== 'admin@trust-app.local') {
+          let cred;
+          try {
+            cred = await signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
+          } catch (err) {
+            if (
+              err.code === 'auth/user-not-found' ||
+              err.code === 'auth/invalid-credential' ||
+              err.code === 'auth/invalid-login-credentials'
+            ) {
+              cred = await createUserWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016');
+            } else {
+              throw err;
             }
           }
+
+          if (cred?.user) {
+            const adminProf = {
+              uid: cred.user.uid,
+              username: 'admin',
+              fullName: 'व्यवस्थापक (Trust Admin)',
+              role: 'admin',
+              accountStatus: 'active',
+              updatedAt: serverTimestamp()
+            };
+            try {
+              await setDoc(doc(db, 'users', cred.user.uid), adminProf, { merge: true });
+            } catch (e) {}
+            setCurrentUser(cred.user);
+            setUserProfile(adminProf);
+            localStorage.setItem('rsssst_auth_user', JSON.stringify(cred.user));
+            localStorage.setItem('rsssst_user_profile', JSON.stringify(adminProf));
+          }
         }
-      } else if (currentUser?.uid) {
-        // If user is currently logged in, promote their role in Firestore
-        try {
-          const userRef = doc(db, 'users', currentUser.uid);
-          await setDoc(userRef, { role: 'admin', updatedAt: serverTimestamp() }, { merge: true });
-          setUserProfile(prev => ({ ...prev, role: 'admin' }));
-        } catch (e) {
-          console.warn("Could not promote role in Firestore:", e);
-        }
+      } catch (err) {
+        console.warn("Admin auth sync note:", err);
       }
       return true;
     }
