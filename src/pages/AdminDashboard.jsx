@@ -221,13 +221,16 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     };
   }, []);
 
-  const handleLogout = async () => {
+  const handleExitAdmin = async () => {
     try {
-      await logout();
-      toast.info(lang === 'hi' ? 'लॉगआउट सफल' : 'Logged out');
-      navigate('/');
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('rsssst_admin_pin_verified');
+        localStorage.removeItem('rsssst_admin_pin_verified');
+      }
+      toast.info(lang === 'hi' ? 'एडमिन सत्र सुरक्षित समाप्त हुआ।' : 'Admin session closed.');
+      navigate('/about');
     } catch (err) {
-      toast.error('Logout error: ' + err.message);
+      toast.error('Exit error: ' + err.message);
     }
   };
 
@@ -499,28 +502,31 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/dashboard"
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all"
             >
-              {lang === 'hi' ? 'सदस्य डैशबोर्ड' : 'Member Dashboard'}
-            </Link>
+              {lang === 'hi' ? 'English' : 'हिंदी'}
+            </button>
 
             <Link
               to="/about"
-              className="p-2 rounded-xl text-white/80 hover:bg-white/10 text-xs font-bold flex items-center gap-1"
-              title="About / Public Site"
+              className="p-2 rounded-xl text-white/80 hover:bg-white/10 text-xs font-bold flex items-center gap-1.5"
+              title={lang === 'hi' ? 'ट्रस्ट परिचय' : 'About Trust'}
             >
               <Home className="w-4 h-4 text-[#E9B44C]" />
+              <span className="hidden sm:inline text-xs">{lang === 'hi' ? 'ट्रस्ट परिचय' : 'About'}</span>
             </Link>
 
             <button
               type="button"
-              onClick={handleLogout}
-              className="px-3 py-1.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+              onClick={handleExitAdmin}
+              className="px-3 py-1.5 rounded-xl bg-red-600/90 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              title={lang === 'hi' ? 'एडमिन सत्र बंद करें' : 'Exit Admin Panel'}
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>{lang === 'hi' ? 'लॉगआउट' : 'Logout'}</span>
+              <span>{lang === 'hi' ? 'एडमिन सत्र बंद करें' : 'Exit Admin'}</span>
             </button>
           </div>
         </div>
@@ -2015,6 +2021,22 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isProcessing ? 'Processing...' : 'Confirm Reject'}
+                </button>
+              )}
+
+              {modalMode === 'removeMember' && (
+                <button
+                  type="button"
+                  onClick={handleConfirmAction}
+                  disabled={isProcessing}
+                  className="px-5 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UserX className="w-4 h-4" />
+                  <span>
+                    {isProcessing
+                      ? (lang === 'hi' ? 'रद्द किया जा रहा है...' : 'Revoking...')
+                      : (lang === 'hi' ? 'सदस्यता रद्द करें (Confirm Revoke)' : 'Confirm Remove Member')}
+                  </span>
                 </button>
               )}
 
