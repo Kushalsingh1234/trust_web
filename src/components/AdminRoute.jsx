@@ -71,8 +71,8 @@ export const AdminRoute = ({ children }) => {
     );
   }
 
-  // If already authenticated as admin via Firestore role or session passkey PIN
-  if (isAdmin || userProfile?.role === 'admin' || adminPinVerified) {
+  // Access strictly granted only when Admin PIN is verified for this session
+  if (adminPinVerified) {
     return children;
   }
 

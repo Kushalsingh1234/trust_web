@@ -247,7 +247,7 @@ function AppContent() {
             path="*"
             element={
               currentUser ? (
-                <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
+                <Navigate to="/dashboard" replace />
               ) : (
                 <HomePage
                   onOpenReceiptModal={() => setReceiptModalOpen(true)}

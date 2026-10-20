@@ -67,7 +67,7 @@ import {
 
 export const AdminDashboard = ({ onNavigateHome }) => {
   const { lang, toggleLanguage } = useLanguage();
-  const { currentUser, userProfile, isAdmin, logout, refreshUserData } = useAuth();
+  const { currentUser, userProfile, isAdmin, logout, refreshUserData, clearAdminSession } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -223,14 +223,16 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   const handleExitAdmin = async () => {
     try {
+      if (clearAdminSession) clearAdminSession();
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('rsssst_admin_pin_verified');
         localStorage.removeItem('rsssst_admin_pin_verified');
       }
-      toast.info(lang === 'hi' ? 'एडमिन सत्र सुरक्षित समाप्त हुआ।' : 'Admin session closed.');
-      navigate('/about');
+      await logout();
+      toast.info(lang === 'hi' ? 'व्यवस्थापक सत्र सुरक्षित समाप्त हुआ।' : 'Admin session closed.');
+      navigate('/');
     } catch (err) {
-      toast.error('Exit error: ' + err.message);
+      navigate('/');
     }
   };
 

@@ -423,18 +423,7 @@ export const UserDashboardPage = () => {
               </span>
             </div>
           </Link>
-
           <div className="flex items-center gap-2 sm:gap-3">
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-bold shadow-xs hover:bg-secondary transition-all flex items-center gap-1.5"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{lang === 'hi' ? 'व्यवस्थापक पैनल' : 'Admin Panel'}</span>
-              </Link>
-            )}
-
             <button
               type="button"
               onClick={toggleLanguage}
@@ -543,13 +532,11 @@ export const UserDashboardPage = () => {
                     {userProfile?.fullName || 'सदस्य (Member)'}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                    {userProfile?.role === 'admin'
-                      ? 'व्यवस्थापक (Admin)'
-                      : isMember
-                      ? 'सत्यापित सदस्य (Verified Member)'
+                    {isMember
+                      ? (lang === 'hi' ? 'सत्यापित सदस्य (Verified Member)' : 'Verified Member')
                       : isVolunteer
-                      ? 'सनातन स्वयंसेवक (Volunteer)'
-                      : 'पंजीकृत सदस्य (Member)'}
+                      ? (lang === 'hi' ? 'सनातन स्वयंसेवक (Volunteer)' : 'Trust Volunteer')
+                      : (lang === 'hi' ? 'पंजीकृत सदस्य (Member)' : 'Registered Member')}
                   </span>
                 </div>
 

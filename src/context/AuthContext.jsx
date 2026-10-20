@@ -64,27 +64,13 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
-  const [isAdmin, setIsAdmin] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedProfile = localStorage.getItem('rsssst_user_profile');
-        const parsed = cachedProfile ? JSON.parse(cachedProfile) : null;
-        if (parsed?.role === 'admin') return true;
-        return localStorage.getItem('rsssst_admin_pin_verified') === 'true';
-      } catch (e) {
-        return false;
-      }
-    }
-    return false;
-  });
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [adminPinVerified, setAdminPinVerified] = useState(() => {
     return (
-      typeof window !== 'undefined' && (
-        localStorage.getItem('rsssst_admin_pin_verified') === 'true' ||
-        sessionStorage.getItem('rsssst_admin_pin_verified') === 'true'
-      )
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem('rsssst_admin_pin_verified') === 'true'
     );
   });
 
@@ -93,12 +79,21 @@ export const AuthProvider = ({ children }) => {
     if (pin && pin.trim() === TRUST_ADMIN_PIN) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('rsssst_admin_pin_verified', 'true');
-        localStorage.setItem('rsssst_admin_pin_verified', 'true');
+        localStorage.removeItem('rsssst_admin_pin_verified');
       }
       setAdminPinVerified(true);
       return true;
     }
     return false;
+  };
+
+  // Clear admin session passkey verification
+  const clearAdminSession = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('rsssst_admin_pin_verified');
+      localStorage.removeItem('rsssst_admin_pin_verified');
+    }
+    setAdminPinVerified(false);
   };
 
   // Fetch full user profile from Firestore at users/{uid}
@@ -109,12 +104,15 @@ export const AuthProvider = ({ children }) => {
 
       if (userSnap.exists()) {
         const data = userSnap.data();
-        setUserProfile(data);
+        // Members and registered users are never admin
         if (data.role === 'admin') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
+          data.role = 'user';
+          try {
+            updateDoc(userRef, { role: 'user', updatedAt: serverTimestamp() }).catch(() => {});
+          } catch (e) {}
         }
+        setUserProfile(data);
+        setIsAdmin(false);
         if (typeof window !== 'undefined') {
           localStorage.setItem('rsssst_user_profile', JSON.stringify(data));
         }
@@ -387,19 +385,7 @@ export const AuthProvider = ({ children }) => {
           setCurrentUser(null);
           setUserProfile(null);
         }
-        if (
-          typeof window !== 'undefined' && (
-            sessionStorage.getItem('rsssst_admin_pin_verified') === 'true' ||
-            localStorage.getItem('rsssst_admin_pin_verified') === 'true'
-          )
-        ) {
-          setIsAdmin(true);
-          try {
-            signInWithEmailAndPassword(auth, 'admin@trust-app.local', 'TrustAdmin@273016').catch(() => {});
-          } catch (e) {}
-        } else if (!hasCachedUser) {
-          setIsAdmin(false);
-        }
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -429,9 +415,10 @@ export const AuthProvider = ({ children }) => {
       value={{
         currentUser,
         userProfile,
-        isAdmin: userProfile?.role === 'admin',
+        isAdmin: adminPinVerified,
         adminPinVerified,
         verifyPinForSession,
+        clearAdminSession,
         TRUST_ADMIN_PIN,
         loading,
         registerWithUsername,

@@ -201,11 +201,6 @@ export const Navbar = ({
                       <p className="text-xs font-mono text-secondary">
                         @{userProfile?.username || 'user'}
                       </p>
-                      {userProfile?.role === 'admin' && (
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase bg-primary text-white shadow-2xs">
-                          Admin
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -219,17 +214,6 @@ export const Navbar = ({
                       <LayoutDashboard className="w-4 h-4 text-primary" />
                       <span>{lang === 'hi' ? 'मेरा डैशबोर्ड' : 'My Dashboard'}</span>
                     </Link>
-
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-primary hover:bg-[#FFF8EF] transition-colors"
-                      >
-                        <Shield className="w-4 h-4 text-primary" />
-                        <span>{lang === 'hi' ? 'व्यवस्थापक पैनल (Admin Panel)' : 'Admin Panel'}</span>
-                      </Link>
-                    )}
                   </div>
 
                   {/* Logout Button */}
@@ -381,18 +365,6 @@ export const Navbar = ({
                 </Link>
               )}
 
-              {/* Admin Panel Link in Mobile */}
-              <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-3 text-sm rounded-xl transition-colors flex items-center justify-between min-h-[44px] bg-[#382719] text-[#E9B44C] font-bold border border-[#E9B44C]/30 shadow-xs"
-              >
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#E9B44C]" />
-                  <span>{lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin Portal)' : 'Admin Portal'}</span>
-                </div>
-                <span className="text-[#E9B44C] text-xs">→</span>
-              </Link>
 
               {/* Dedicated Receipt Download Action in Mobile */}
               <button

@@ -213,7 +213,7 @@ export const LoginPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate(isAdmin ? '/admin' : '/dashboard')}
+                onClick={() => navigate('/dashboard')}
                 className="px-2.5 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold text-[11px] transition-colors cursor-pointer"
               >
                 {lang === 'hi' ? 'डैशबोर्ड →' : 'Dashboard →'}
