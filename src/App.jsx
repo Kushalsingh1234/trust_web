@@ -89,6 +89,7 @@ function AppContent() {
     );
   }
 
+
   // Full-screen dashboards with their own dedicated layouts
   if (location.pathname.startsWith('/admin')) {
     return (

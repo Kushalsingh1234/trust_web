@@ -209,7 +209,7 @@ export const MemberDashboard = ({ onNavigateHome }) => {
               }`}
             >
               <Award className="w-4 h-4" />
-              <span>{lang === 'hi' ? 'डिजिटल पहचान पत्र (ID Card)' : 'Digital ID Card'}</span>
+              <span>{lang === 'hi' ? 'पहचान पत्र (ID Card)' : 'Member ID Card'}</span>
             </button>
           )}
 

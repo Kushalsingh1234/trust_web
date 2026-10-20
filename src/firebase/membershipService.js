@@ -108,6 +108,21 @@ export const submitMembershipWithPaymentId = async ({
 
   const isCrossExempted = cleanPaymentId === 'CROSS_APPROVED_FREE' || cleanPaymentId === 'EXEMPTED_CROSS_APPROVED' || claimedAmount === 0;
 
+  let assignedOrderId = null;
+  try {
+    const sysCounterRef = doc(db, 'systemConfig', 'counters');
+    const cSnap = await getDoc(sysCounterRef);
+    const counterField = isVolunteerRole ? 'volunteerSeq' : 'membershipSeq';
+    let currentSeq = cSnap.exists() && typeof cSnap.data()[counterField] === 'number'
+      ? cSnap.data()[counterField]
+      : (isVolunteerRole ? 0 : 6);
+    const nextSeq = currentSeq + 1;
+    await setDoc(sysCounterRef, { [counterField]: nextSeq }, { merge: true });
+    assignedOrderId = String(nextSeq).padStart(3, '0');
+  } catch (err) {
+    console.warn("Counter increment error:", err);
+  }
+
   // 1. CATEGORY A or CROSS-EXEMPTED: 100% Free, Exempted from Fee
   if (isCatA || isCrossExempted || !cleanPaymentId) {
     const membershipData = {
@@ -116,6 +131,9 @@ export const submitMembershipWithPaymentId = async ({
       fullName: fullName.trim(),
       phone: phone.trim(),
       mobile: phone.trim(),
+      memberId: isVolunteerRole ? null : assignedOrderId,
+      volunteerId: isVolunteerRole ? assignedOrderId : null,
+      orderNumber: assignedOrderId,
       fatherHusbandName: fatherHusbandName.trim(),
       address: address.trim(),
       villageOrLocality: address.trim(),
@@ -260,6 +278,9 @@ export const submitMembershipWithPaymentId = async ({
     fullName: fullName.trim(),
     phone: phone.trim(),
     mobile: phone.trim(),
+    memberId: isVolunteerRole ? null : assignedOrderId,
+    volunteerId: isVolunteerRole ? assignedOrderId : null,
+    orderNumber: assignedOrderId,
     fatherHusbandName: fatherHusbandName.trim(),
     address: address.trim(),
     villageOrLocality: address.trim(),
@@ -521,29 +542,38 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
     throw new Error("Please enter a valid numeric verified amount.");
   }
 
-  // 2. Generate sequential Member ID (using systemConfig counters or timestamp)
-  let nextMemberSeq = Date.now() % 9000 + 1000;
-  try {
-    const sysCounterRef = doc(db, 'systemConfig', 'counters');
-    const cSnap = await getDoc(sysCounterRef);
-    if (cSnap.exists() && cSnap.data().membershipSeq) {
-      nextMemberSeq = cSnap.data().membershipSeq + 1;
-    }
-    await setDoc(sysCounterRef, { membershipSeq: nextMemberSeq }, { merge: true });
-  } catch (e) {
-    try {
-      const memberCounterRef = doc(db, 'counters', 'members');
-      const cSnap = await getDoc(memberCounterRef);
-      if (cSnap.exists() && cSnap.data().seq) {
-        nextMemberSeq = cSnap.data().seq + 1;
-      }
-      await setDoc(memberCounterRef, { seq: nextMemberSeq }, { merge: true });
-    } catch (e2) {}
+  // 2. Generate or lock sequential Member / Volunteer ID based on order (e.g. 001, 002, 007)
+  let orderId = isVolunteerRecord
+    ? (memData.volunteerId || memData.memberId || memData.orderNumber)
+    : (memData.memberId || memData.membershipNumber || memData.orderNumber);
+
+  // If orderId is already a clean order number or formatted order, extract and normalize
+  if (orderId && /^\d{1,4}$/.test(String(orderId).trim())) {
+    orderId = String(parseInt(orderId, 10)).padStart(3, '0');
+  } else if (orderId && /(?:TRUST-[MV]-)?(\d+)/i.test(String(orderId).trim())) {
+    const match = String(orderId).match(/\d+/);
+    orderId = match ? String(parseInt(match[0], 10)).padStart(3, '0') : null;
+  } else {
+    orderId = null;
   }
 
-  const memberId = isVolunteerRecord
-    ? `TRUST-V-${String(nextMemberSeq).padStart(4, '0')}`
-    : `TRUST-M-${String(nextMemberSeq).padStart(4, '0')}`;
+  if (!orderId) {
+    try {
+      const sysCounterRef = doc(db, 'systemConfig', 'counters');
+      const cSnap = await getDoc(sysCounterRef);
+      const counterField = isVolunteerRecord ? 'volunteerSeq' : 'membershipSeq';
+      let currentSeq = cSnap.exists() && typeof cSnap.data()[counterField] === 'number'
+        ? cSnap.data()[counterField]
+        : (isVolunteerRecord ? 0 : 6);
+      const nextSeq = currentSeq + 1;
+      await setDoc(sysCounterRef, { [counterField]: nextSeq }, { merge: true });
+      orderId = String(nextSeq).padStart(3, '0');
+    } catch (e) {
+      orderId = isVolunteerRecord ? '001' : '007';
+    }
+  }
+
+  const memberId = orderId;
 
   // 3. Generate sequential Receipt Number for paid members / volunteers
   let receiptNumber = null;

@@ -643,7 +643,7 @@ export const UserDashboardPage = () => {
                       title="View Digital Member Card"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'डिजिटल सदस्य पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
+                      <span>{lang === 'hi' ? 'सदस्य पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
                     </button>
                   )}
 
@@ -1014,7 +1014,7 @@ export const UserDashboardPage = () => {
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 text-[#382719] font-bold text-xs shadow-xs transition-all"
                         >
                           <CreditCard className="w-3.5 h-3.5 text-primary" />
-                          <span>{lang === 'hi' ? 'डिजिटल सदस्य कार्ड देखें (Member Card)' : 'View Member ID Card'}</span>
+                          <span>{lang === 'hi' ? 'सदस्य पहचान पत्र देखें (Member Card)' : 'View Member ID Card'}</span>
                         </button>
                       </div>
                     )}
@@ -1160,7 +1160,7 @@ export const UserDashboardPage = () => {
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
-                          <span>{lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'View Volunteer ID Card'}</span>
+                          <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र देखें (Volunteer Card)' : 'View Volunteer ID Card'}</span>
                         </button>
 
                         {/* Volunteer Fee Receipt or Exemption */}
@@ -1695,8 +1695,8 @@ export const UserDashboardPage = () => {
             <div className="px-5 py-3.5 bg-primary text-white flex items-center justify-between">
               <span className="font-black text-sm">
                 {viewingCard.cardType === 'volunteer'
-                  ? (lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र' : 'Digital Volunteer ID Card')
-                  : (lang === 'hi' ? 'डिजिटल सदस्यता पहचान पत्र' : 'Digital Member ID Card')}
+                  ? (lang === 'hi' ? 'स्वयंसेवक पहचान पत्र (Volunteer ID Card)' : 'Volunteer ID Card')
+                  : (lang === 'hi' ? 'सदस्यता पहचान पत्र (Member ID Card)' : 'Member ID Card')}
               </span>
               <button
                 type="button"
