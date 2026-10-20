@@ -107,21 +107,25 @@ export const submitDonationWithPaymentId = async ({
   purpose,
   paymentId,
   paymentDate,
-  uid
+  uid,
+  paymentProofType = 'utr',
+  paymentScreenshotUrl = null
 }) => {
-  const cleanPaymentId = paymentId.trim().toUpperCase();
+  const cleanPaymentId = paymentId ? paymentId.trim().toUpperCase() : (paymentScreenshotUrl ? `PROOF-${Date.now()}` : 'UPI-DONATION');
 
-  // Duplicate check across payments
-  try {
-    const qPayments = query(collection(db, 'payments'), where('paymentId', '==', cleanPaymentId));
-    const snap = await getDocs(qPayments);
-    if (!snap.empty) {
-      const err = new Error("This Payment ID was already used");
-      err.code = "payment-id-duplicate";
-      throw err;
+  // Duplicate check across payments if paymentId is given
+  if (paymentId) {
+    try {
+      const qPayments = query(collection(db, 'payments'), where('paymentId', '==', cleanPaymentId));
+      const snap = await getDocs(qPayments);
+      if (!snap.empty) {
+        const err = new Error("This Payment ID was already used");
+        err.code = "payment-id-duplicate";
+        throw err;
+      }
+    } catch (err) {
+      if (err.code === 'payment-id-duplicate') throw err;
     }
-  } catch (err) {
-    if (err.code === 'payment-id-duplicate') throw err;
   }
 
   const donationData = {
@@ -134,6 +138,8 @@ export const submitDonationWithPaymentId = async ({
     purpose: purpose || 'samarpan',
     paymentId: cleanPaymentId,
     utrNumber: cleanPaymentId,
+    paymentProofType: paymentProofType || 'utr',
+    paymentScreenshotUrl: paymentScreenshotUrl || null,
     paymentMethod: 'UPI',
     paymentDate: paymentDate || null,
     status: 'pending',

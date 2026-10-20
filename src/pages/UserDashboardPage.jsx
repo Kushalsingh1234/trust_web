@@ -7,12 +7,14 @@ import TrustLogo from '../components/TrustLogo';
 import HelpRequestModal from '../components/HelpRequestModal';
 import JoinTrustModal from '../components/JoinTrustModal';
 import VolunteerModal from '../components/VolunteerModal';
-import PaymentModal from '../components/PaymentModal';
 import MemberBadge from '../components/MemberBadge';
+import DigitalIdCard from '../components/DigitalIdCard';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
-import { generateReceiptPDF, generateMemberCardPDF } from '../firebase/receiptService';
-import { getPaymentSettings } from '../firebase/paymentService';
-import { subscribeUserCollection } from '../firebase/services';
+import { getPaymentSettings, submitDonationWithPaymentId } from '../firebase/paymentService';
+import { subscribeUserCollection, getPublishedAnnouncements } from '../firebase/services';
+import { uploadImageToCloudinary } from '../utils/cloudinaryService';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import {
   User,
   Phone,
@@ -39,23 +41,33 @@ import {
   Download,
   CreditCard,
   FileText,
-  BadgeCheck
+  BadgeCheck,
+  Camera,
+  Upload,
+  Bell,
+  QrCode,
+  X,
+  Send,
+  Building,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export const UserDashboardPage = () => {
   const { lang, toggleLanguage } = useLanguage();
-  const { currentUser, userProfile, logout, isAdmin } = useAuth();
+  const { currentUser, userProfile, logout, isAdmin, refreshUserData } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
   // Active Tab: 'helpRequests' | 'memberships' | 'volunteers' | 'donations'
-  const [activeTab, setActiveTab] = useState('helpRequests');
+  const [activeTab, setActiveTab] = useState('memberships');
 
   // Realtime Data from onSnapshot
   const [helpRequests, setHelpRequests] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [donations, setDonations] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -63,8 +75,36 @@ export const UserDashboardPage = () => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [volunteerModalOpen, setVolunteerModalOpen] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [donateModalOpen, setDonateModalOpen] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(null);
+  const [viewingCard, setViewingCard] = useState(null); // DigitalIdCard data
+
+  // Photo upload state
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Donate More state
+  const [donateAmount, setDonateAmount] = useState('500');
+  const [customDonateAmount, setCustomDonateAmount] = useState('');
+  const [donateProofType, setDonateProofType] = useState('utr'); // 'utr' | 'screenshot'
+  const [donateUtr, setDonateUtr] = useState('');
+  const [donateScreenshotFile, setDonateScreenshotFile] = useState(null);
+  const [donateScreenshotPreview, setDonateScreenshotPreview] = useState(null);
+  const [isSubmittingDonation, setIsSubmittingDonation] = useState(false);
+  const [copiedUpi, setCopiedUpi] = useState(false);
+
+  // Payment settings state
+  const [paymentSettings, setPaymentSettings] = useState(null);
+
+  // Load payment settings and announcements
+  useEffect(() => {
+    getPaymentSettings().then((settings) => {
+      setPaymentSettings(settings);
+    }).catch(console.error);
+
+    getPublishedAnnouncements().then((data) => {
+      setAnnouncements(data || []);
+    }).catch(console.error);
+  }, []);
 
   // Subscribe to all 4 collections for the current user in realtime
   useEffect(() => {
@@ -84,6 +124,8 @@ export const UserDashboardPage = () => {
 
     const unsubMem = subscribeUserCollection('memberships', currentUser.uid, (data) => {
       setMemberships(data);
+      // Auto-switch to memberships if user has an application
+      if (data.length > 0) setActiveTab('memberships');
       markLoaded();
     });
 
@@ -129,31 +171,113 @@ export const UserDashboardPage = () => {
     }
   };
 
-  const [paymentSettings, setPaymentSettings] = useState(null);
+  // Profile Picture Upload Handler
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  useEffect(() => {
-    getPaymentSettings().then((settings) => {
-      setPaymentSettings(settings);
-    }).catch(console.error);
-  }, []);
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(lang === 'hi' ? 'फ़ाइल 5MB से छोटी होनी चाहिए।' : 'Image size must be less than 5MB.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const res = await uploadImageToCloudinary(file, 'trust_profiles');
+      const photoURL = res.url;
+
+      // Update Firestore users/{uid}
+      if (currentUser?.uid) {
+        const userRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userRef, { photoURL });
+
+        // If approved membership exists, mirror photoURL there
+        if (approvedMembership?.id) {
+          try {
+            await updateDoc(doc(db, 'membershipApplications', approvedMembership.id), { photoURL });
+            await updateDoc(doc(db, 'memberships', approvedMembership.id), { photoURL });
+          } catch (e) {}
+        }
+      }
+
+      toast.success(lang === 'hi' ? 'प्रोफ़ाइल फ़ोटो सफलतापूर्वक अपडेट हुई!' : 'Profile photo updated successfully!');
+      if (refreshUserData) await refreshUserData();
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      toast.error('Failed to upload photo: ' + err.message);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  // Submit Donate More from Dashboard
+  const handleSubmitDonation = async (e) => {
+    e.preventDefault();
+    const finalAmount = customDonateAmount ? Number(customDonateAmount) : Number(donateAmount);
+    if (!finalAmount || finalAmount <= 0) {
+      toast.error(lang === 'hi' ? 'कृपया मान्य दान राशि चुनें' : 'Please select a valid donation amount');
+      return;
+    }
+
+    if (donateProofType === 'utr' && !donateUtr.trim()) {
+      toast.error(lang === 'hi' ? 'कृपया बैंक UTR / ट्रांजैक्शन संख्या दर्ज करें' : 'Please enter Bank UTR / Transaction number');
+      return;
+    }
+
+    if (donateProofType === 'screenshot' && !donateScreenshotFile) {
+      toast.error(lang === 'hi' ? 'कृपया भुगतान का स्क्रीनशॉट अपलोड करें' : 'Please upload payment screenshot');
+      return;
+    }
+
+    setIsSubmittingDonation(true);
+    try {
+      let uploadedScreenshotUrl = null;
+      if (donateProofType === 'screenshot' && donateScreenshotFile) {
+        const uploadRes = await uploadImageToCloudinary(donateScreenshotFile, 'trust_donations');
+        uploadedScreenshotUrl = uploadRes.url;
+      }
+
+      await submitDonationWithPaymentId({
+        donorName: userProfile?.fullName || currentUser?.displayName || 'Trust Contributor',
+        donorPhone: userProfile?.phone || '',
+        claimedAmount: finalAmount,
+        purpose: 'samarpan',
+        paymentId: donateProofType === 'utr' ? donateUtr.trim() : null,
+        uid: currentUser?.uid,
+        paymentProofType: donateProofType,
+        paymentScreenshotUrl: uploadedScreenshotUrl
+      });
+
+      toast.success(
+        lang === 'hi'
+          ? 'समर्पण सफलतापूर्वक दर्ज हुआ! व्यवस्थापक द्वारा सत्यापन व रसीद प्रेषण के उपरांत रसीद डाउनलोड कर सकेंगे।'
+          : 'Donation submitted! Receipt will be available once verified and sent by admin.'
+      );
+
+      setDonateModalOpen(false);
+      setDonateUtr('');
+      setDonateScreenshotFile(null);
+      setDonateScreenshotPreview(null);
+      setCustomDonateAmount('');
+      setActiveTab('donations');
+    } catch (err) {
+      console.error("Donation submit failed:", err);
+      toast.error('Donation submission failed: ' + err.message);
+    } finally {
+      setIsSubmittingDonation(false);
+    }
+  };
 
   // Compute membership status
   const approvedMembership = memberships.find((m) => m.status?.toLowerCase() === 'approved');
   const removedMembership = memberships.find((m) => m.status?.toLowerCase() === 'removed');
-  const isMember = Boolean(userProfile?.isMember === true);
+  const isMember = Boolean(userProfile?.isMember === true || approvedMembership);
   const memberId = isMember ? (userProfile?.memberId || approvedMembership?.memberId || '') : '';
   const memberSince = isMember ? (userProfile?.memberSince || approvedMembership?.memberSince || approvedMembership?.approvedAt) : null;
 
-  const handleDownloadMemberCard = () => {
-    generateMemberCardPDF({
-      fullName: userProfile?.fullName || approvedMembership?.fullName || 'Verified Member',
-      username: userProfile?.username || approvedMembership?.username || 'member',
-      phone: userProfile?.phone || approvedMembership?.phone || '',
-      memberId: memberId,
-      memberSince: memberSince
-    }, paymentSettings);
-    toast.success(lang === 'hi' ? 'सदस्यता कार्ड डाउनलोड हो गया।' : 'Member Card downloaded successfully!');
-  };
+  // Compute volunteer status
+  const approvedVolunteer = volunteers.find((v) => v.status?.toLowerCase() === 'approved');
+  const isVolunteer = Boolean(userProfile?.role === 'volunteer' || approvedVolunteer || volunteers.length > 0);
 
   // Status Badge Component
   const renderStatusBadge = (status) => {
@@ -162,7 +286,7 @@ export const UserDashboardPage = () => {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-          <span>{lang === 'hi' ? 'आपका आवेदन स्वीकृत है ✅' : 'Your application is approved ✅'}</span>
+          <span>{lang === 'hi' ? 'आवेदन स्वीकृत है ✅' : 'Application Approved ✅'}</span>
         </span>
       );
     }
@@ -202,7 +326,9 @@ export const UserDashboardPage = () => {
                 {lang === 'hi' ? 'सनातन संस्कार ट्रस्ट' : 'Sanatan Sanskar Trust'}
               </span>
               <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
-                {lang === 'hi' ? 'उपयोगकर्ता डैशबोर्ड' : 'User Dashboard'}
+                {isVolunteer && !isMember
+                  ? (lang === 'hi' ? 'स्वयंसेवक डैशबोर्ड (Volunteer Dashboard)' : 'Volunteer Dashboard')
+                  : (lang === 'hi' ? 'सदस्य डैशबोर्ड (Member Dashboard)' : 'Member Dashboard')}
               </span>
             </div>
           </Link>
@@ -249,11 +375,11 @@ export const UserDashboardPage = () => {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
         
         {/* Removed Membership Notification Banner */}
         {removedMembership && !userProfile?.isMember && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-300 text-rose-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs animate-in fade-in">
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-300 text-rose-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs animate-in fade-in">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -277,16 +403,47 @@ export const UserDashboardPage = () => {
           </div>
         )}
 
-        {/* Profile Summary Card */}
-        <div className="mb-6 sm:mb-8 rounded-3xl bg-gradient-to-br from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/40 p-5 sm:p-7 shadow-card relative overflow-hidden">
+        {/* Profile Summary Card with Photo Upload */}
+        <div className="rounded-3xl bg-gradient-to-br from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/40 p-5 sm:p-7 shadow-card relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full filter blur-3xl -z-10 pointer-events-none" />
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             
-            {/* User Identity Details */}
+            {/* User Identity Details & Avatar with Cloudinary Photo Upload */}
             <div className="flex items-start sm:items-center gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center font-black text-2xl shadow-saffron flex-shrink-0 border-2 border-white">
-                {(userProfile?.fullName || userProfile?.username || 'U').charAt(0).toUpperCase()}
+              <div className="relative group w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary to-accent text-white flex items-center justify-center font-black text-2xl shadow-saffron border-2 border-white overflow-hidden">
+                  {userProfile?.photoURL ? (
+                    <img
+                      src={userProfile.photoURL}
+                      alt={userProfile.fullName || 'User'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{(userProfile?.fullName || userProfile?.username || 'U').charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+
+                {/* Profile Pic Upload Icon */}
+                <label
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-primary hover:bg-secondary text-white cursor-pointer shadow-md transition-all hover:scale-110"
+                  title={lang === 'hi' ? 'प्रोफ़ाइल फ़ोटो बदलें' : 'Upload Profile Picture'}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    disabled={isUploadingPhoto}
+                    className="hidden"
+                  />
+                </label>
+
+                {isUploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center text-white text-[10px] font-bold">
+                    <span>अपलोड...</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -303,7 +460,13 @@ export const UserDashboardPage = () => {
                     {userProfile?.fullName || 'सदस्य (Member)'}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                    {userProfile?.role === 'admin' ? 'व्यवस्थापक (Admin)' : isMember ? 'सत्यापित सदस्य (Verified Member)' : 'पंजीकृत उपयोगकर्ता (User)'}
+                    {userProfile?.role === 'admin'
+                      ? 'व्यवस्थापक (Admin)'
+                      : isMember
+                      ? 'सत्यापित सदस्य (Verified Member)'
+                      : isVolunteer
+                      ? 'सनातन स्वयंसेवक (Volunteer)'
+                      : 'पंजीकृत सदस्य (Member)'}
                   </span>
                 </div>
 
@@ -320,30 +483,55 @@ export const UserDashboardPage = () => {
                     </div>
                   )}
 
-                  {userProfile?.email && (
+                  {memberSince && (
                     <div className="flex items-center gap-1 text-[#454545]">
-                      <Mail className="w-3.5 h-3.5 text-primary" />
-                      <span>{userProfile.email}</span>
+                      <Calendar className="w-3.5 h-3.5 text-secondary" />
+                      <span>{lang === 'hi' ? 'सदस्यता तिथि: ' : 'Member Since: '}{formatDate(memberSince)}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Verified Member Badge and ID Card Button */}
-                {isMember && (
-                  <div className="pt-1.5 flex flex-wrap items-center gap-2.5">
-                    <MemberBadge memberId={memberId} variant="default" />
+                {/* Member / Volunteer Card Action Buttons */}
+                <div className="pt-1.5 flex flex-wrap items-center gap-2">
+                  {isMember && approvedMembership && (
                     <button
                       type="button"
-                      onClick={handleDownloadMemberCard}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 text-[#382719] text-xs font-bold shadow-xs transition-all hover:scale-102"
-                      title="Download Printable Member Card"
+                      onClick={() => setViewingCard({
+                        ...approvedMembership,
+                        fullName: userProfile?.fullName || approvedMembership.fullName,
+                        photoURL: userProfile?.photoURL,
+                        memberId: memberId || approvedMembership.memberId,
+                        membershipNumber: memberId || approvedMembership.memberId,
+                        status: 'approved',
+                        cardType: 'member'
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs transition-all hover:scale-102"
+                      title="View Digital Member Card"
                     >
-                      <CreditCard className="w-3.5 h-3.5 text-primary" />
-                      <span>{lang === 'hi' ? 'सदस्यता कार्ड (ID Card)' : 'Member Card'}</span>
-                      <Download className="w-3 h-3 text-[#777777]" />
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>{lang === 'hi' ? 'डिजिटल सदस्यता पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
                     </button>
-                  </div>
-                )}
+                  )}
+
+                  {approvedVolunteer && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingCard({
+                        ...approvedVolunteer,
+                        fullName: userProfile?.fullName || approvedVolunteer.fullName,
+                        photoURL: userProfile?.photoURL,
+                        phone: userProfile?.phone || approvedVolunteer.phone,
+                        status: 'approved',
+                        cardType: 'volunteer'
+                      })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-bold shadow-xs transition-all hover:scale-102"
+                      title="View Digital Volunteer Card"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'Volunteer ID Card'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -351,51 +539,79 @@ export const UserDashboardPage = () => {
             <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
               <button
                 type="button"
-                onClick={() => setHelpModalOpen(true)}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all"
+                onClick={() => setDonateModalOpen(true)}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold text-xs shadow-saffron transition-all"
               >
-                <HandHeart className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'सहायता मांगें' : 'Request Help'}</span>
+                <Heart className="w-4 h-4 fill-white" />
+                <span>{lang === 'hi' ? 'दान / समर्पण करें (Donate)' : 'Donate More'}</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setJoinModalOpen(true)}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
+                onClick={() => setHelpModalOpen(true)}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all"
               >
-                <UserPlus className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
+                <HandHeart className="w-4 h-4" />
+                <span>{lang === 'hi' ? 'सहायता प्रार्थना' : 'Request Help'}</span>
               </button>
 
-              <Link
-                to="/donate"
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-secondary to-primary hover:from-primary hover:to-secondary text-white font-bold text-xs shadow-xs transition-all"
-              >
-                <Heart className="w-4 h-4 fill-white" />
-                <span>{lang === 'hi' ? 'दान करें' : 'Donate'}</span>
-              </Link>
+              {!isMember && (
+                <button
+                  type="button"
+                  onClick={() => setJoinModalOpen(true)}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C] text-[#382719] font-bold text-xs shadow-xs transition-all"
+                >
+                  <UserPlus className="w-4 h-4 text-primary" />
+                  <span>{lang === 'hi' ? 'सदस्यता लें' : 'Join Trust'}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* 4 Core Tabs Navigation */}
-        <div className="flex border-b border-[#E9B44C]/30 mb-6 overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 pb-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab('helpRequests')}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'helpRequests'
-                ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
-                : 'border-transparent text-[#666666] hover:text-primary'
-            }`}
-          >
-            <HandHeart className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी सहायता प्रार्थनाएं' : 'My Help Requests'}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary">
-              {helpRequests.length}
-            </span>
-          </button>
+        {/* Notices & Announcements Feed from Trust Admin */}
+        {announcements.length > 0 && (
+          <div className="rounded-2xl bg-white border border-[#E9B44C]/35 p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E9B44C]/30 pb-2">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary animate-bounce-subtle" />
+                <h3 className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading">
+                  {lang === 'hi' ? 'ट्रस्ट की आधिकारिक सूचनाएं एवं महत्वपूर्ण संदेश' : 'Official Trust Notices & Updates'}
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                {announcements.length} {lang === 'hi' ? 'सूचनाएं' : 'Notices'}
+              </span>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {announcements.slice(0, 4).map((notice) => (
+                <div
+                  key={notice.id}
+                  className="p-3.5 rounded-xl bg-[#FFF8EF]/50 border border-[#E9B44C]/30 space-y-1.5 hover:bg-[#FFF8EF] transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-primary text-white">
+                      {notice.category === 'urgent' ? 'अति महत्वपूर्ण' : notice.category === 'event' ? 'कार्यक्रम' : 'सामान्य सूचना'}
+                    </span>
+                    <span className="text-[10px] text-[#777777]">
+                      {formatDate(notice.publishedAt || notice.createdAt)}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs sm:text-sm text-[#382719] leading-tight">
+                    {notice.title}
+                  </h4>
+                  <p className="text-xs text-[#555555] line-clamp-2 leading-relaxed">
+                    {notice.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4 Core Tabs Navigation */}
+        <div className="flex border-b border-[#E9B44C]/30 overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 pb-1">
           <button
             type="button"
             onClick={() => setActiveTab('memberships')}
@@ -406,8 +622,8 @@ export const UserDashboardPage = () => {
             }`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी सदस्यता' : 'My Membership'}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary">
+            <span>{lang === 'hi' ? 'मेरी सदस्यता (My Membership)' : 'My Membership'}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {memberships.length}
             </span>
           </button>
@@ -422,8 +638,8 @@ export const UserDashboardPage = () => {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी स्वयंसेवक सेवा' : 'My Volunteer Application'}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary">
+            <span>{lang === 'hi' ? 'मेरी स्वयंसेवक सेवा (Volunteer)' : 'Volunteer Dashboard'}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {volunteers.length}
             </span>
           </button>
@@ -438,157 +654,30 @@ export const UserDashboardPage = () => {
             }`}
           >
             <Heart className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरे दान एवं समर्पण' : 'My Donations'}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary">
+            <span>{lang === 'hi' ? 'मेरे दान एवं समर्पण (Donations)' : 'My Donations'}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {donations.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('helpRequests')}
+            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'helpRequests'
+                ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
+                : 'border-transparent text-[#666666] hover:text-primary'
+            }`}
+          >
+            <HandHeart className="w-4 h-4" />
+            <span>{lang === 'hi' ? 'मेरी सहायता प्रार्थनाएं (Help Requests)' : 'Help Requests'}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
+              {helpRequests.length}
             </span>
           </button>
         </div>
 
-        {/* Tab 1: My Help Requests */}
-        {activeTab === 'helpRequests' && (
-          <div className="space-y-4">
-            {helpRequests.length === 0 ? (
-              <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
-                <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
-                  <HandHeart className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold text-[#382719] font-hindi-heading">
-                  {lang === 'hi' ? 'आपने अभी तक कोई सहायता प्रार्थना नहीं भेजी है' : "You haven't requested help yet"}
-                </h3>
-                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
-                  {lang === 'hi'
-                    ? 'यदि आपको चिकित्सा, शिक्षा, पुत्री विवाह या पारिवारिक आपदा में सहयोग चाहिए, तो तत्काल आवेदन करें।'
-                    : 'If you need medical, educational, marriage, or humanitarian assistance, submit a request.'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setHelpModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{lang === 'hi' ? 'सहायता प्रार्थना पत्र भरें' : 'Request Help Now'}</span>
-                </button>
-              </div>
-            ) : (
-              helpRequests.map((item) => {
-                const isApproved = item.status?.toLowerCase() === 'approved';
-                const isRejected = item.status?.toLowerCase() === 'rejected';
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`rounded-2xl p-5 sm:p-6 bg-white border transition-all shadow-xs ${
-                      isApproved
-                        ? 'border-emerald-300 ring-1 ring-emerald-200'
-                        : isRejected
-                        ? 'border-rose-200'
-                        : 'border-[#E9B44C]/40'
-                    }`}
-                  >
-                    {/* Approved Banner for Help Requests */}
-                    {isApproved && (
-                      <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300 flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <div className="space-y-1 text-left">
-                          <h4 className="font-black text-emerald-900 text-sm">
-                            {lang === 'hi' ? 'आपकी सहायता प्रार्थना स्वीकृत कर ली गई है ✅' : 'Your assistance request has been APPROVED ✅'}
-                          </h4>
-                          <p className="text-xs text-emerald-800 leading-relaxed font-medium">
-                            {item.adminNote
-                              ? item.adminNote
-                              : (lang === 'hi'
-                                  ? 'ट्रस्ट कार्यकारिणी द्वारा आपका आवेदन स्वीकृत हो गया है। ट्रस्ट प्रतिनिधि शीघ्र ही आपसे संपर्क कर आगे की कार्यवाही करेंगे।'
-                                  : 'Our trust committee has approved your request. An official coordinator will contact you shortly regarding next steps.')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Rejected Banner */}
-                    {isRejected && (
-                      <div className="mb-4 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
-                        <XCircle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
-                        <div className="space-y-1 text-left">
-                          <h4 className="font-bold text-rose-900 text-sm">
-                            {lang === 'hi' ? 'आवेदन अस्वीकृत (Application Rejected)' : 'Application Rejected'}
-                          </h4>
-                          <p className="text-xs text-rose-800 leading-relaxed">
-                            <span className="font-bold">{lang === 'hi' ? 'कारण: ' : 'Reason: '}</span>
-                            {item.rejectionReason || item.adminNote || (lang === 'hi' ? 'नियमावली के अनुसार आवश्यक दस्तावेज अपूर्ण हैं।' : 'Required criteria not met.')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E9B44C]/20 pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#382719] text-sm sm:text-base">
-                            {item.helpType || item.category || 'सहायता प्रार्थना'}
-                          </span>
-                          {item.urgency === 'urgent' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700">
-                              {lang === 'hi' ? 'अति आवश्यक' : 'Urgent'}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs text-[#777777] flex items-center gap-1.5 mt-0.5">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {formatDate(item.createdAt)}
-                        </span>
-                      </div>
-                      <div>{renderStatusBadge(item.status)}</div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 py-3 text-xs">
-                      <div>
-                        <span className="text-[#888888] block">{lang === 'hi' ? 'आवेदक का नाम:' : 'Applicant Name:'}</span>
-                        <span className="font-bold text-[#382719]">{item.fullName}</span>
-                      </div>
-                      <div>
-                        <span className="text-[#888888] block">{lang === 'hi' ? 'फ़ोन नंबर:' : 'Phone Number:'}</span>
-                        <span className="font-bold text-[#382719]">{item.phone}</span>
-                      </div>
-                      {item.amountNeeded && (
-                        <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'अपेक्षित सहायता राशि:' : 'Amount Needed:'}</span>
-                          <span className="font-mono font-bold text-primary">₹{Number(item.amountNeeded).toLocaleString('en-IN')}</span>
-                        </div>
-                      )}
-                      {item.address && (
-                        <div className="sm:col-span-2">
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'पता / निवास:' : 'Address:'}</span>
-                          <span className="font-medium text-[#454545]">{item.address}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {item.description && (
-                      <div className="mt-2 p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25 text-xs text-[#454545]">
-                        <span className="font-bold text-[#382719] block mb-1">{lang === 'hi' ? 'समस्या का विवरण:' : 'Description:'}</span>
-                        <p className="leading-relaxed">{item.description}</p>
-                      </div>
-                    )}
-
-                    {/* Admin Note Callout (for non-rejected / non-approved special notes) */}
-                    {!isApproved && !isRejected && item.adminNote && (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                        <Info className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold">{lang === 'hi' ? 'व्यवस्थापक संदेश: ' : 'Admin Note: '}</span>
-                          <span>{item.adminNote}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* Tab 2: My Membership */}
+        {/* Tab 1: My Membership */}
         {activeTab === 'memberships' && (
           <div className="space-y-4">
             {memberships.length === 0 ? (
@@ -618,6 +707,7 @@ export const UserDashboardPage = () => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
                 const isRemoved = item.status?.toLowerCase() === 'removed';
+                const canDownloadReceipt = Boolean(item.receiptSent || userProfile?.feeReceiptSent);
 
                 return (
                   <div
@@ -666,52 +756,41 @@ export const UserDashboardPage = () => {
                           {item.category === 'catA' ? (lang === 'hi' ? '₹0 (छूट / निःशुल्क)' : '₹0 (Exempted)') : `₹${item.annualFee ?? 200}/वर्ष`}
                         </span>
                       </div>
+
+                      {/* Payment Proof details */}
                       {(item.paymentId || item.utrNumber) && (
                         <div>
                           <span className="text-[#888888] block">{lang === 'hi' ? 'भुगतान आईडी / UTR:' : 'Payment ID / UTR:'}</span>
                           <span className="font-mono font-bold text-secondary">{item.paymentId || item.utrNumber}</span>
                         </div>
                       )}
-                      {item.category === 'catA' && item.helpType && (
+
+                      {item.paymentScreenshotUrl && (
                         <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'सहायता का प्रकार:' : 'Assistance Type:'}</span>
-                          <span className="font-bold text-emerald-800">{item.helpType}</span>
+                          <span className="text-[#888888] block">{lang === 'hi' ? 'भुगतान स्क्रीनशॉट:' : 'Payment Screenshot:'}</span>
+                          <a
+                            href={item.paymentScreenshotUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-bold text-xs mt-0.5"
+                          >
+                            <span>स्क्रीनशॉट देखें</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       )}
-                      {item.profession && (
-                        <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'व्यवसाय / पेशा:' : 'Profession:'}</span>
-                          <span className="font-bold text-[#382719] capitalize">{item.profession}</span>
-                        </div>
-                      )}
-                      {item.availability && (
-                        <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'समय समर्पण:' : 'Time Dedication:'}</span>
-                          <span className="font-bold text-secondary capitalize">{item.availability}</span>
-                        </div>
-                      )}
+
                       {isApproved && item.receiptNumber && (
                         <div>
                           <span className="text-[#888888] block">{lang === 'hi' ? 'रसीद संख्या:' : 'Receipt Number:'}</span>
                           <span className="font-mono font-bold text-emerald-700">{item.receiptNumber}</span>
                         </div>
                       )}
-                      {isApproved && item.category !== 'catA' && (
-                        <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'सत्यापित शुल्क राशि:' : 'Verified Fee:'}</span>
-                          <span className="font-mono font-bold text-emerald-700">₹{item.verifiedAmount || item.claimedAmount || 200}</span>
-                        </div>
-                      )}
+
                       {item.address && (
                         <div className="sm:col-span-2">
                           <span className="text-[#888888] block">{lang === 'hi' ? 'स्थानीय पता:' : 'Address:'}</span>
                           <span className="font-medium text-[#454545]">{item.address} {item.district ? `, ${item.district}` : ''}</span>
-                        </div>
-                      )}
-                      {item.category === 'catA' && item.assistanceDescription && (
-                        <div className="sm:col-span-3 mt-1 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
-                          <span className="font-bold block mb-0.5">{lang === 'hi' ? 'समस्या एवं अपेक्षित सहयोग:' : 'Hardship & Requested Support:'}</span>
-                          <p>{item.assistanceDescription}</p>
                         </div>
                       )}
                     </div>
@@ -721,61 +800,71 @@ export const UserDashboardPage = () => {
                       <div className="mt-2 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                          <span>{lang === 'hi' ? 'प्रशासनिक सत्यापन के उपरांत डिजिटल रसीद एवं सदस्य कार्ड उपलब्ध होगा।' : 'Receipt and Member Card available after admin verification.'}</span>
+                          <span>
+                            {lang === 'hi'
+                              ? 'आपका आवेदन व्यवस्थापक की समीक्षाधीन है। स्वीकृति उपरांत आपका सदस्य कार्ड एवं शुल्क रसीद उपलब्ध होगी।'
+                              : 'Your application is under review. Member card and receipt will be available after admin approval.'}
+                          </span>
                         </div>
                       </div>
                     )}
 
-                    {/* Approved Actions: Download Receipt & Member Card */}
+                    {/* Approved Actions: Download Receipt (ONLY AFTER ADMIN SENDS) & Member Card */}
                     {isApproved && (
                       <div className="mt-3 pt-3 border-t border-emerald-100 flex flex-wrap items-center gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setViewingReceipt({
-                              receiptNumber: item.receiptNumber || 'RSSSST-2026-MEMBER',
-                              donorName: item.fullName || userProfile?.fullName,
-                              username: item.username || userProfile?.username,
-                              memberId: item.memberId || userProfile?.memberId,
-                              fatherHusbandName: item.fatherHusbandName || '',
-                              address: item.address || item.district || '',
-                              block: item.block || 'सदर',
-                              district: item.district || 'गोरखपुर',
-                              state: item.state || 'उत्तर प्रदेश',
-                              purpose: 'membership_fee',
-                              verifiedAmount: item.verifiedAmount || item.claimedAmount || 200,
-                              claimedAmount: item.claimedAmount || 200,
-                              paymentId: item.paymentId || item.utrNumber,
-                              approvedAt: item.approvedAt || item.memberSince
-                            });
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>{lang === 'hi' ? 'शुल्क रसीद देखें / डाउनलोड करें (PDF)' : 'View & Download Fee Receipt (PDF)'}</span>
-                        </button>
+                        {canDownloadReceipt ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setViewingReceipt({
+                                receiptNumber: item.receiptNumber || 'RSSSST-2026-MEMBER',
+                                donorName: item.fullName || userProfile?.fullName,
+                                username: item.username || userProfile?.username,
+                                memberId: item.memberId || userProfile?.memberId,
+                                fatherHusbandName: item.fatherHusbandName || '',
+                                address: item.address || item.district || '',
+                                block: item.block || 'सदर',
+                                district: item.district || 'गोरखपुर',
+                                state: item.state || 'उत्तर प्रदेश',
+                                purpose: 'membership_fee',
+                                verifiedAmount: item.verifiedAmount || item.claimedAmount || 200,
+                                claimedAmount: item.claimedAmount || 200,
+                                paymentId: item.paymentId || item.utrNumber,
+                                approvedAt: item.approvedAt || item.memberSince
+                              });
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें (PDF)' : 'Download Fee Receipt (PDF)'}</span>
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>{lang === 'hi' ? 'शुल्क रसीद व्यवस्थापक द्वारा समीक्षा उपरांत भेजी जाएगी।' : 'Fee receipt will be available once sent by admin.'}</span>
+                          </div>
+                        )}
 
                         <button
                           type="button"
-                          onClick={() => {
-                            generateMemberCardPDF({
-                              fullName: item.fullName || userProfile?.fullName,
-                              username: item.username || userProfile?.username,
-                              phone: item.phone || userProfile?.phone,
-                              memberId: item.memberId || userProfile?.memberId || memberId,
-                              memberSince: item.memberSince || item.approvedAt
-                            }, paymentSettings);
-                            toast.success(lang === 'hi' ? 'सदस्यता कार्ड डाउनलोड हो गया।' : 'Member Card downloaded!');
-                          }}
+                          onClick={() => setViewingCard({
+                            ...item,
+                            fullName: item.fullName || userProfile?.fullName,
+                            photoURL: userProfile?.photoURL,
+                            memberId: item.memberId || userProfile?.memberId || memberId,
+                            membershipNumber: item.memberId || userProfile?.memberId || memberId,
+                            status: 'approved',
+                            cardType: 'member'
+                          })}
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 text-[#382719] font-bold text-xs shadow-xs transition-all"
                         >
                           <CreditCard className="w-3.5 h-3.5 text-primary" />
-                          <span>{lang === 'hi' ? 'सदस्य कार्ड (ID Card)' : 'Member Card'}</span>
+                          <span>{lang === 'hi' ? 'डिजिटल सदस्य कार्ड देखें (Member Card)' : 'View Member ID Card'}</span>
                         </button>
                       </div>
                     )}
 
-                    {/* Rejected Notice with Reason and Re-apply CTA */}
+                    {/* Rejected Notice */}
                     {isRejected && (
                       <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-start gap-2">
@@ -790,39 +879,8 @@ export const UserDashboardPage = () => {
                           onClick={() => setJoinModalOpen(true)}
                           className="px-3 py-1.5 rounded-lg bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all whitespace-nowrap"
                         >
-                          {lang === 'hi' ? 'नई भुगतान आईडी से पुनः आवेदन करें' : 'Re-apply with new Payment ID'}
+                          {lang === 'hi' ? 'पुनः आवेदन करें' : 'Re-apply'}
                         </button>
-                      </div>
-                    )}
-
-                    {/* Removed Notice with Reason and Re-apply CTA */}
-                    {isRemoved && (
-                      <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">{lang === 'hi' ? 'सदस्यता समाप्ति का कारण: ' : 'Removal Reason: '}</span>
-                            <span>{item.removalReason || item.adminNote || (lang === 'hi' ? 'प्रशासनिक निर्णय' : 'Administrative decision')}</span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setJoinModalOpen(true)}
-                          className="px-3 py-1.5 rounded-lg bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all whitespace-nowrap"
-                        >
-                          {lang === 'hi' ? 'पुनः सदस्यता आवेदन करें' : 'Apply for Membership Again'}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Admin Note Callout */}
-                    {!isRejected && !isRemoved && item.adminNote && (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold">{lang === 'hi' ? 'व्यवस्थापक संदेश: ' : 'Admin Note: '}</span>
-                          <span>{item.adminNote}</span>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -832,7 +890,7 @@ export const UserDashboardPage = () => {
           </div>
         )}
 
-        {/* Tab 3: My Volunteer Application */}
+        {/* Tab 2: Volunteer Dashboard */}
         {activeTab === 'volunteers' && (
           <div className="space-y-4">
             {volunteers.length === 0 ? (
@@ -845,8 +903,8 @@ export const UserDashboardPage = () => {
                 </h3>
                 <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
                   {lang === 'hi'
-                    ? 'संस्कार जागरण, श्रमिक कल्याण एवं सामाजिक सेवा कार्यों में निष्काम भाव से योगदान देने हेतु जुड़ें।'
-                    : 'Join our volunteer taskforce to organize Vedic awareness camps and humanitarian welfare drives.'}
+                    ? 'संस्कार जागरण, वैदिक शिविर एवं सेवा कार्यों में निष्काम भाव से योगदान देने हेतु जुड़ें (कोई शुल्क नहीं)।'
+                    : 'Join our volunteer taskforce to organize Vedic awareness camps and humanitarian welfare drives (No fee required).'}
                 </p>
                 <button
                   type="button"
@@ -854,7 +912,7 @@ export const UserDashboardPage = () => {
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-xs transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>{lang === 'hi' ? 'स्वयंसेवक आवेदन करें' : 'Become a Volunteer'}</span>
+                  <span>{lang === 'hi' ? 'स्वयंसेवक आवेदन पत्र भरें (निःशुल्क)' : 'Become a Volunteer'}</span>
                 </button>
               </div>
             ) : (
@@ -873,7 +931,7 @@ export const UserDashboardPage = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-[#382719] text-sm sm:text-base">
-                            {lang === 'hi' ? 'सनातन स्वयंसेवक / कार्यकर्ता' : 'Volunteer Application'}
+                            {lang === 'hi' ? 'सनातन स्वयंसेवक सेवा आवेदन' : 'Volunteer Application'}
                           </span>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF8EF] text-secondary border border-[#E9B44C]">
                             {item.availability === 'full_time' ? 'पूर्णकालिक' : item.availability === 'few_hours_daily' ? 'प्रतिदिन कुछ घंटे' : 'सप्ताहांत (Weekends)'}
@@ -909,6 +967,27 @@ export const UserDashboardPage = () => {
                       </div>
                     )}
 
+                    {/* Approved Volunteer Action */}
+                    {isApproved && (
+                      <div className="mt-3 pt-3 border-t border-emerald-100 flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setViewingCard({
+                            ...item,
+                            fullName: item.fullName || userProfile?.fullName,
+                            photoURL: userProfile?.photoURL,
+                            phone: userProfile?.phone || item.phone,
+                            status: 'approved',
+                            cardType: 'volunteer'
+                          })}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white font-bold text-xs shadow-xs transition-all"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>{lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'View Volunteer ID Card'}</span>
+                        </button>
+                      </div>
+                    )}
+
                     {/* Admin Note Callout */}
                     {item.adminNote && (
                       <div className={`mt-3 p-3 rounded-xl text-xs flex items-start gap-2 ${
@@ -928,9 +1007,29 @@ export const UserDashboardPage = () => {
           </div>
         )}
 
-        {/* Tab 4: My Donations */}
+        {/* Tab 3: My Donations & Samarpan */}
         {activeTab === 'donations' && (
           <div className="space-y-4">
+            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-[#E9B44C]/30 shadow-xs">
+              <div>
+                <h3 className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading">
+                  {lang === 'hi' ? 'ट्रस्ट सेवा प्रकल्पों हेतु समर्पण' : 'Charitable Contributions & Donations'}
+                </h3>
+                <p className="text-xs text-[#666666]">
+                  {lang === 'hi' ? 'अपने डैशबोर्ड से सीधे समर्पण करें एवं व्यवस्थापक द्वारा अनुमोदित आधिकारिक रसीद प्राप्त करें।' : 'Contribute directly from your dashboard and download official receipts.'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDonateModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold text-xs shadow-saffron transition-all inline-flex items-center gap-1.5 shrink-0"
+              >
+                <Heart className="w-3.5 h-3.5 fill-white" />
+                <span>{lang === 'hi' ? 'और दान करें' : 'Donate More'}</span>
+              </button>
+            </div>
+
             {donations.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
                 <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
@@ -944,18 +1043,20 @@ export const UserDashboardPage = () => {
                     ? 'ट्रस्ट के सेवा प्रकल्पों में स्वेच्छा से समर्पण निधि अर्पित करें एवं डिजिटल रसीद प्राप्त करें।'
                     : 'Contribute to our charitable causes directly via Bank transfer or UPI and receive your receipt.'}
                 </p>
-                <Link
-                  to="/donate"
+                <button
+                  type="button"
+                  onClick={() => setDonateModalOpen(true)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-xs shadow-saffron transition-all"
                 >
                   <Heart className="w-4 h-4 fill-white" />
                   <span>{lang === 'hi' ? 'दान / समर्पण करें' : 'Donate Now'}</span>
-                </Link>
+                </button>
               </div>
             ) : (
               donations.map((item) => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
+                const canDownloadReceipt = Boolean(item.receiptSent);
 
                 return (
                   <div
@@ -968,7 +1069,7 @@ export const UserDashboardPage = () => {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-[#382719] text-sm sm:text-base">
-                            {item.purposeLabel || (item.purpose === 'membership_fee' ? 'सदस्यता शुल्क' : item.purpose === 'labor_welfare' ? 'श्रमिक कल्याण समर्पण' : 'समर्पण निधि (Donation)')}
+                            {item.purposeLabel || (item.purpose === 'membership_fee' ? 'सदस्यता शुल्क' : 'समर्पण निधि (Donation)')}
                           </span>
                           <span className="font-mono font-black text-primary text-base">
                             ₹{Number(item.verifiedAmount || item.claimedAmount || item.amount || 0).toLocaleString('en-IN')}
@@ -989,10 +1090,6 @@ export const UserDashboardPage = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 py-3 text-xs">
                       <div>
-                        <span className="text-[#888888] block">{lang === 'hi' ? 'दानदाता:' : 'Donor Name:'}</span>
-                        <span className="font-bold text-[#382719]">{item.donorName || item.payerName}</span>
-                      </div>
-                      <div>
                         <span className="text-[#888888] block">{lang === 'hi' ? 'घोषित राशि (Claimed):' : 'Claimed Amount:'}</span>
                         <span className="font-mono font-bold text-[#382719]">₹{Number(item.claimedAmount || item.amount || 0).toLocaleString('en-IN')}</span>
                       </div>
@@ -1008,63 +1105,145 @@ export const UserDashboardPage = () => {
                           <span className="font-mono font-bold text-secondary">{item.paymentId || item.utrNumber}</span>
                         </div>
                       )}
-                      <div>
-                        <span className="text-[#888888] block">{lang === 'hi' ? 'माध्यम:' : 'Method:'}</span>
-                        <span className="uppercase font-semibold text-[#454545]">{item.paymentMethod || 'UPI'}</span>
-                      </div>
+                      {item.paymentScreenshotUrl && (
+                        <div>
+                          <span className="text-[#888888] block">{lang === 'hi' ? 'भुगतान स्क्रीनशॉट:' : 'Payment Screenshot:'}</span>
+                          <a
+                            href={item.paymentScreenshotUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-bold text-xs mt-0.5"
+                          >
+                            <span>स्क्रीनशॉट देखें</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     {/* Pending Notice */}
                     {item.status === 'pending' && (
                       <div className="mt-2 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                        <span>{lang === 'hi' ? 'व्यवस्थापक द्वारा सत्यापन के उपरांत आधिकारिक रसीद (PDF) उपलब्ध होगी।' : 'Receipt available after admin approval.'}</span>
+                        <span>{lang === 'hi' ? 'व्यवस्थापक द्वारा सत्यापन एवं रसीद प्रेषण के उपरांत आधिकारिक रसीद (PDF) उपलब्ध होगी।' : 'Receipt available after admin approval and receipt dispatch.'}</span>
                       </div>
                     )}
 
-                    {/* Approved Actions: Download Receipt */}
+                    {/* Approved Actions: Download Receipt (GATED BY receiptSent) */}
                     {isApproved && (
                       <div className="mt-3 pt-3 border-t border-emerald-100 flex flex-wrap items-center gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setViewingReceipt({
-                              receiptNumber: item.receiptNumber || 'RSSSST-2026-DONATION',
-                              donorName: item.donorName || item.fullName || userProfile?.fullName,
-                              phone: item.donorPhone || item.phone || userProfile?.phone,
-                              purpose: item.purpose || 'samarpan',
-                              verifiedAmount: item.verifiedAmount || item.amount || 200,
-                              paymentId: item.paymentId || item.utrNumber,
-                              approvedAt: item.approvedAt || item.createdAt
-                            });
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>{lang === 'hi' ? 'आधिकारिक रसीद देखें / डाउनलोड करें (PDF)' : 'View & Download Receipt (PDF)'}</span>
-                        </button>
+                        {canDownloadReceipt ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setViewingReceipt({
+                                receiptNumber: item.receiptNumber || 'RSSSST-2026-DONATION',
+                                donorName: item.donorName || item.fullName || userProfile?.fullName,
+                                phone: item.donorPhone || item.phone || userProfile?.phone,
+                                purpose: item.purpose || 'samarpan',
+                                verifiedAmount: item.verifiedAmount || item.amount || 200,
+                                paymentId: item.paymentId || item.utrNumber,
+                                approvedAt: item.approvedAt || item.createdAt
+                              });
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{lang === 'hi' ? 'आधिकारिक रसीद डाउनलोड करें (PDF)' : 'Download Receipt (PDF)'}</span>
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>{lang === 'hi' ? 'दान रसीद व्यवस्थापक द्वारा समीक्षा उपरांत भेजी जाएगी।' : 'Donation receipt will be available once sent by admin.'}</span>
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
 
-                    {/* Rejected Notice */}
-                    {isRejected && (
-                      <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 flex items-start gap-2">
-                        <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold">{lang === 'hi' ? 'अस्वीकृति कारण: ' : 'Rejection Reason: '}</span>
-                          <span>{item.rejectionReason || item.adminNote || (lang === 'hi' ? 'भुगतान विवरण असत्यापित रहा।' : 'Payment details could not be verified.')}</span>
+        {/* Tab 4: My Help Requests */}
+        {activeTab === 'helpRequests' && (
+          <div className="space-y-4">
+            {helpRequests.length === 0 ? (
+              <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
+                <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
+                  <HandHeart className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-[#382719] font-hindi-heading">
+                  {lang === 'hi' ? 'आपने अभी तक कोई सहायता प्रार्थना नहीं भेजी है' : "You haven't requested help yet"}
+                </h3>
+                <p className="text-sm text-[#666666] max-w-md mx-auto mt-1 mb-5">
+                  {lang === 'hi'
+                    ? 'यदि आपको चिकित्सा, शिक्षा, पुत्री विवाह या पारिवारिक आपदा में सहयोग चाहिए, तो तत्काल आवेदन करें।'
+                    : 'If you need medical, educational, marriage, or humanitarian assistance, submit a request.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setHelpModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-saffron transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{lang === 'hi' ? 'सहायता प्रार्थना पत्र भरें' : 'Request Help Now'}</span>
+                </button>
+              </div>
+            ) : (
+              helpRequests.map((item) => {
+                const isApproved = item.status?.toLowerCase() === 'approved';
+                const isRejected = item.status?.toLowerCase() === 'rejected';
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-2xl p-5 sm:p-6 bg-white border transition-all shadow-xs ${
+                      isApproved ? 'border-emerald-300 ring-1 ring-emerald-200' : isRejected ? 'border-rose-200' : 'border-[#E9B44C]/40'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E9B44C]/20 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[#382719] text-sm sm:text-base">
+                            {item.helpType || item.category || 'सहायता प्रार्थना'}
+                          </span>
+                          {item.urgency === 'urgent' && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700">
+                              {lang === 'hi' ? 'अति आवश्यक' : 'Urgent'}
+                            </span>
+                          )}
                         </div>
+                        <span className="text-xs text-[#777777] flex items-center gap-1.5 mt-0.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {formatDate(item.createdAt)}
+                        </span>
                       </div>
-                    )}
+                      <div>{renderStatusBadge(item.status)}</div>
+                    </div>
 
-                    {/* Admin Note Callout */}
-                    {!isRejected && item.adminNote && (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 py-3 text-xs">
+                      <div>
+                        <span className="text-[#888888] block">{lang === 'hi' ? 'आवेदक का नाम:' : 'Applicant Name:'}</span>
+                        <span className="font-bold text-[#382719]">{item.fullName}</span>
+                      </div>
+                      <div>
+                        <span className="text-[#888888] block">{lang === 'hi' ? 'फ़ोन नंबर:' : 'Phone Number:'}</span>
+                        <span className="font-bold text-[#382719]">{item.phone || item.mobile}</span>
+                      </div>
+                      {item.amountNeeded && (
                         <div>
-                          <span className="font-bold">{lang === 'hi' ? 'व्यवस्थापक संदेश: ' : 'Admin Note: '}</span>
-                          <span>{item.adminNote}</span>
+                          <span className="text-[#888888] block">{lang === 'hi' ? 'अपेक्षित सहायता राशि:' : 'Amount Needed:'}</span>
+                          <span className="font-mono font-bold text-primary">₹{Number(item.amountNeeded).toLocaleString('en-IN')}</span>
                         </div>
+                      )}
+                    </div>
+
+                    {item.description && (
+                      <div className="mt-2 p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25 text-xs text-[#454545]">
+                        <span className="font-bold text-[#382719] block mb-1">{lang === 'hi' ? 'समस्या का विवरण:' : 'Description:'}</span>
+                        <p className="leading-relaxed">{item.description}</p>
                       </div>
                     )}
                   </div>
@@ -1075,6 +1254,229 @@ export const UserDashboardPage = () => {
         )}
 
       </main>
+
+      {/* DONATE MORE MODAL (Directly on Dashboard) */}
+      {donateModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#E9B44C]/40 overflow-hidden my-auto max-h-[94vh] flex flex-col text-left">
+            <div className="px-5 py-4 bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Heart className="w-5 h-5 fill-white" />
+                <h3 className="font-black text-sm sm:text-base font-hindi-heading">
+                  {lang === 'hi' ? 'ट्रस्ट सेवा प्रकल्पों हेतु समर्पण / दान' : 'Contribute Donation to Trust'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDonateModalOpen(false)}
+                className="p-1 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitDonation} className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
+              {/* Payment Details Strip */}
+              <div className="p-4 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/40 text-center space-y-3">
+                <span className="text-xs font-bold text-[#382719] block">
+                  {lang === 'hi' ? 'आधिकारिक QR कोड या बैंक विवरण पर भुगतान करें' : 'Scan QR or Pay via Bank Transfer'}
+                </span>
+
+                <div className="w-36 h-36 mx-auto p-2 rounded-xl bg-white border border-[#E9B44C] flex items-center justify-center shadow-xs">
+                  <img
+                    src={paymentSettings?.qrImageUrl || '/payment-qr.png'}
+                    alt="Payment QR"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.target.onerror = null; e.target.src = '/payment-qr.png'; }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-mono text-xs font-bold text-primary bg-white px-3 py-1 rounded-lg border border-[#E9B44C]/40">
+                    {paymentSettings?.upiId || 'boim-135883270012@boi'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(paymentSettings?.upiId || 'boim-135883270012@boi');
+                      setCopiedUpi(true);
+                      setTimeout(() => setCopiedUpi(false), 2000);
+                    }}
+                    className="p-1.5 rounded-lg bg-white border border-[#E9B44C]/40 hover:bg-primary hover:text-white transition-all text-xs"
+                    title="Copy UPI ID"
+                  >
+                    {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                <div className="text-[11px] text-[#555555] bg-white p-2 rounded-xl border border-[#E9B44C]/30 text-left space-y-0.5 font-mono">
+                  <div><strong>Bank:</strong> Bank of India (बैंक ऑफ इंडिया)</div>
+                  <div><strong>A/C No:</strong> 135820110000012</div>
+                  <div><strong>IFSC:</strong> BKID0001358</div>
+                  <div><strong>A/C Holder:</strong> Rashtriya Sanatan Sanskar Seva Sansthan (Trust)</div>
+                </div>
+              </div>
+
+              {/* Amount Selection */}
+              <div>
+                <label className="block text-xs font-bold text-[#382719] mb-1.5">
+                  {lang === 'hi' ? 'समर्पण राशि (INR ₹) *' : 'Donation Amount (INR ₹) *'}
+                </label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {['100', '250', '500', '1100'].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => { setDonateAmount(amt); setCustomDonateAmount(''); }}
+                      className={`py-2 rounded-xl font-mono font-bold text-xs transition-all ${
+                        donateAmount === amt && !customDonateAmount
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'bg-[#FFF8EF] text-[#382719] border border-[#E9B44C]/40 hover:bg-[#FFF8EF]/80'
+                      }`}
+                    >
+                      ₹{amt}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  value={customDonateAmount}
+                  onChange={(e) => setCustomDonateAmount(e.target.value)}
+                  placeholder={lang === 'hi' ? 'अथवा अन्य राशि दर्ज करें (उदा. 2100)' : 'Or enter custom amount (e.g. 2100)'}
+                  className="w-full px-3 py-2 rounded-xl border border-[#E9B44C]/50 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </div>
+
+              {/* Payment Proof Selection: UTR OR Screenshot */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-[#382719]">
+                  {lang === 'hi' ? 'भुगतान प्रमाण का विकल्प चुनें *' : 'Select Payment Proof Option *'}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDonateProofType('utr')}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all border text-center ${
+                      donateProofType === 'utr'
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-white text-[#382719] border-[#E9B44C]/50 hover:bg-[#FFF8EF]'
+                    }`}
+                  >
+                    1. UTR / Ref Number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDonateProofType('screenshot')}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all border text-center ${
+                      donateProofType === 'screenshot'
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-white text-[#382719] border-[#E9B44C]/50 hover:bg-[#FFF8EF]'
+                    }`}
+                  >
+                    2. Upload Screenshot
+                  </button>
+                </div>
+
+                {donateProofType === 'utr' ? (
+                  <div className="pt-1">
+                    <input
+                      type="text"
+                      value={donateUtr}
+                      onChange={(e) => setDonateUtr(e.target.value)}
+                      placeholder={lang === 'hi' ? '12 अंकों का UTR / Transaction Ref दर्ज करें' : 'Enter 12-digit UTR / Ref Number'}
+                      className="w-full p-2.5 rounded-xl border border-[#E9B44C]/60 text-xs font-mono font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                ) : (
+                  <div className="pt-1">
+                    <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-[#E9B44C] rounded-xl bg-[#FFF8EF]/40 hover:bg-[#FFF8EF] cursor-pointer transition-all">
+                      <Upload className="w-5 h-5 text-primary mb-1" />
+                      <span className="text-xs font-bold text-[#382719]">
+                        {donateScreenshotFile ? donateScreenshotFile.name : (lang === 'hi' ? 'भुगतान का स्क्रीनशॉट चुनें' : 'Choose Payment Screenshot')}
+                      </span>
+                      <span className="text-[10px] text-[#777777]">PNG, JPG (Max 5MB)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setDonateScreenshotFile(file);
+                            setDonateScreenshotPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {donateScreenshotPreview && (
+                      <div className="mt-2 text-center">
+                        <img
+                          src={donateScreenshotPreview}
+                          alt="Screenshot Preview"
+                          className="max-h-32 mx-auto rounded-lg border border-[#E9B44C]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDonateModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-300 text-xs font-bold text-[#666666] hover:bg-gray-100 transition-all"
+                >
+                  {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingDonation}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold text-xs shadow-saffron transition-all disabled:opacity-50"
+                >
+                  {isSubmittingDonation
+                    ? (lang === 'hi' ? 'समर्पण दर्ज हो रहा है...' : 'Submitting Donation...')
+                    : (lang === 'hi' ? 'समर्पण जमा करें (Submit Donation)' : 'Submit Donation')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DIGITAL MEMBER / VOLUNTEER ID CARD MODAL */}
+      {viewingCard && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#E9B44C]/50 overflow-hidden my-auto max-h-[96vh] flex flex-col">
+            <div className="px-5 py-3.5 bg-primary text-white flex items-center justify-between">
+              <span className="font-black text-sm">
+                {viewingCard.cardType === 'volunteer'
+                  ? (lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र' : 'Digital Volunteer ID Card')
+                  : (lang === 'hi' ? 'डिजिटल सदस्यता पहचान पत्र' : 'Digital Member ID Card')}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewingCard(null)}
+                className="p-1 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 overflow-y-auto">
+              <DigitalIdCard
+                member={{
+                  ...viewingCard,
+                  status: 'approved',
+                  photoURL: userProfile?.photoURL || viewingCard.photoURL
+                }}
+                onClose={() => setViewingCard(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals Accessible Direct from Dashboard */}
       <HelpRequestModal
@@ -1092,12 +1494,7 @@ export const UserDashboardPage = () => {
         onClose={() => setVolunteerModalOpen(false)}
       />
 
-      <PaymentModal
-        isOpen={paymentModalOpen}
-        onClose={() => setPaymentModalOpen(false)}
-      />
-
-      {/* Authentic Traditional Receipt Modal */}
+      {/* Authentic Traditional Receipt Modal (Only available once sent by admin) */}
       <OfficialReceiptModal
         isOpen={Boolean(viewingReceipt)}
         onClose={() => setViewingReceipt(null)}

@@ -40,6 +40,8 @@ export const submitMembershipWithPaymentId = async ({
   paymentId,
   paymentDate,
   uid,
+  paymentProofType = 'utr', // 'utr' | 'screenshot'
+  paymentScreenshotUrl = null,
   // Category A specific:
   helpType = '',
   monthlyIncome = '',
@@ -203,6 +205,8 @@ export const submitMembershipWithPaymentId = async ({
     amount: Number(claimedAmount) || 200,
     paymentId: cleanPaymentId,
     utrNumber: cleanPaymentId,
+    paymentProofType: paymentProofType || 'utr',
+    paymentScreenshotUrl: paymentScreenshotUrl || null,
     paymentDate: paymentDate || null,
     paymentStatus: 'pending_verification',
     // Category B
@@ -234,6 +238,8 @@ export const submitMembershipWithPaymentId = async ({
       purpose: 'membership_fee',
       paymentId: cleanPaymentId,
       utrNumber: cleanPaymentId,
+      paymentProofType: paymentProofType || 'utr',
+      paymentScreenshotUrl: paymentScreenshotUrl || null,
       verificationStatus: 'pending_verification',
       status: 'pending',
       payerName: fullName.trim(),
@@ -695,3 +701,65 @@ export const subscribeMembersList = (callback) => {
     unsubLegacy();
   };
 };
+
+/**
+ * Admin Action: Issue and dispatch receipt to applicant / donor
+ * Allows user to download their official receipt on their dashboard
+ */
+export const markReceiptSent = async (collectionName, docId, adminUid) => {
+  const currentYear = new Date().getFullYear();
+  let nextSeq = Date.now() % 8000 + 1001;
+  const sysCounterRef = doc(db, 'systemConfig', 'counters');
+  try {
+    const rSnap = await getDoc(sysCounterRef);
+    if (rSnap.exists() && rSnap.data().receiptSeq) {
+      nextSeq = rSnap.data().receiptSeq + 1;
+    }
+    await setDoc(sysCounterRef, { receiptSeq: nextSeq, year: currentYear }, { merge: true });
+  } catch (e) {}
+
+  const defaultReceiptNo = `RCPT-${currentYear}-${String(nextSeq).padStart(4, '0')}`;
+
+  const payload = {
+    receiptSent: true,
+    receiptSentAt: serverTimestamp(),
+    receiptSentBy: adminUid || 'admin',
+    updatedAt: serverTimestamp()
+  };
+
+  // Check target doc
+  const targetRef = doc(db, collectionName, docId);
+  const snap = await getDoc(targetRef);
+  if (snap.exists()) {
+    const data = snap.data();
+    if (!data.receiptNumber) {
+      payload.receiptNumber = defaultReceiptNo;
+    }
+    await updateDoc(targetRef, payload);
+
+    // If user UID present, reflect in users/{uid}
+    const targetUid = data.uid || data.applicantUid || data.payerUid;
+    if (targetUid) {
+      try {
+        const uRef = doc(db, 'users', targetUid);
+        if (collectionName === 'memberships' || collectionName === 'membershipApplications') {
+          await setDoc(uRef, { feeReceiptSent: true, receiptNumber: payload.receiptNumber || data.receiptNumber }, { merge: true });
+        }
+      } catch (e) {}
+    }
+
+    // Mirror to parallel collection if applicable
+    if (collectionName === 'membershipApplications') {
+      try { await updateDoc(doc(db, 'memberships', docId), payload); } catch (e) {}
+    } else if (collectionName === 'memberships') {
+      try { await updateDoc(doc(db, 'membershipApplications', docId), payload); } catch (e) {}
+    } else if (collectionName === 'donations') {
+      try { await updateDoc(doc(db, 'payments', docId), payload); } catch (e) {}
+    } else if (collectionName === 'payments') {
+      try { await updateDoc(doc(db, 'donations', docId), payload); } catch (e) {}
+    }
+  }
+
+  return { success: true, receiptNumber: payload.receiptNumber || defaultReceiptNo };
+};
+

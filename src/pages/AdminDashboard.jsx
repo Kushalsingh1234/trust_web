@@ -7,13 +7,17 @@ import TrustLogo from '../components/TrustLogo';
 import MemberBadge from '../components/MemberBadge';
 import {
   subscribeAllCollection,
-  reviewDocument
+  reviewDocument,
+  getAllAnnouncementsForAdmin,
+  createAnnouncement,
+  deleteAnnouncement
 } from '../firebase/services';
 import {
   approveMembership,
   rejectMembership,
   removeMember,
-  subscribeMembersList
+  subscribeMembersList,
+  markReceiptSent
 } from '../firebase/membershipService';
 import {
   approveDonationPayment,
@@ -52,9 +56,13 @@ import {
   IndianRupee,
   Building,
   Upload,
-  ArrowRight,
   ShieldAlert,
-  Award
+  Award,
+  Bell,
+  Send,
+  Copy,
+  ExternalLink,
+  Mail
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
@@ -90,9 +98,80 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(null);
 
+  // Announcements & Notices State
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: '',
+    content: '',
+    category: 'general'
+  });
+  const [isPublishingNotice, setIsPublishingNotice] = useState(false);
+
   // Payment Settings Form State
   const [settingsForm, setSettingsForm] = useState(DEFAULT_PAYMENT_SETTINGS);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const loadAnnouncements = async () => {
+    try {
+      const data = await getAllAnnouncementsForAdmin();
+      setAnnouncements(data);
+    } catch (e) {
+      console.warn("Could not load announcements:", e);
+    }
+  };
+
+  const handleSendReceipt = async (item, colName = activeTab) => {
+    try {
+      setIsProcessing(true);
+      const res = await markReceiptSent(colName, item.id, currentUser?.uid || 'admin');
+      toast.success(
+        lang === 'hi'
+          ? `रसीद जारी कर दी गई है! (रसीद संख्या: ${res.receiptNumber})। अब सदस्य इसे डाउनलोड कर सकते हैं।`
+          : `Receipt dispatched (No: ${res.receiptNumber})! Member can now download it.`
+      );
+    } catch (err) {
+      toast.error('Failed to send receipt: ' + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCreateNotice = async (e) => {
+    e.preventDefault();
+    if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
+      toast.error(lang === 'hi' ? 'कृपया शीर्षक व विवरण दर्ज करें' : 'Title and content required');
+      return;
+    }
+
+    setIsPublishingNotice(true);
+    try {
+      await createAnnouncement({
+        title: announcementForm.title.trim(),
+        content: announcementForm.content.trim(),
+        category: announcementForm.category,
+        isPublished: true
+      }, currentUser?.uid || 'admin', 'ट्रस्ट प्रबंधकारिणी');
+
+      toast.success(lang === 'hi' ? 'सूचना सफलतापूर्वक प्रकाशित हुई!' : 'Notice published successfully!');
+      setAnnouncementForm({ title: '', content: '', category: 'general' });
+      await loadAnnouncements();
+    } catch (err) {
+      toast.error('Failed to publish notice: ' + err.message);
+    } finally {
+      setIsPublishingNotice(false);
+    }
+  };
+
+  const handleDeleteNotice = async (id) => {
+    if (!window.confirm(lang === 'hi' ? 'क्या आप इस सूचना को हटाना चाहते हैं?' : 'Delete this notice?')) return;
+    try {
+      await deleteAnnouncement(id);
+      toast.info(lang === 'hi' ? 'सूचना हटा दी गई।' : 'Notice deleted.');
+      await loadAnnouncements();
+    } catch (err) {
+      toast.error('Failed to delete: ' + err.message);
+    }
+  };
 
   // Realtime subscriptions
   useEffect(() => {
@@ -105,6 +184,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       setPaymentSettings(settings);
       setSettingsForm(settings);
     });
+    loadAnnouncements();
 
     return () => {
       unsubHelp();
@@ -544,6 +624,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             </span>
           </button>
 
+          {/* Tab: Announcements & Notices */}
+          <button
+            type="button"
+            onClick={() => { setActiveTab('announcements'); setSearchQuery(''); }}
+            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+              activeTab === 'announcements'
+                ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
+                : 'border-transparent text-[#666666] hover:text-primary'
+            }`}
+          >
+            <Bell className="w-4 h-4 text-primary" />
+            <span>{lang === 'hi' ? 'सूचनाएं व संदेश' : 'Notices & Updates'}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
+              {announcements.length}
+            </span>
+          </button>
+
           {/* New Tab: Payment Settings */}
           <button
             type="button"
@@ -707,6 +804,119 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
               </div>
             </form>
+          </div>
+        ) : activeTab === 'announcements' ? (
+          /* Tab: Announcements & Notices Panel */
+          <div className="space-y-6">
+            {/* Create Announcement Box */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E9B44C]/35 shadow-card max-w-4xl text-left space-y-4">
+              <div className="flex items-center gap-2.5 border-b border-[#E9B44C]/30 pb-3">
+                <Bell className="w-5 h-5 text-primary" />
+                <h3 className="font-black text-base sm:text-lg text-[#382719] font-hindi-heading">
+                  {lang === 'hi' ? 'नई सार्वजनिक सूचना / संदेश प्रकाशित करें' : 'Publish New Notice / Update'}
+                </h3>
+              </div>
+
+              <form onSubmit={handleCreateNotice} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-[#382719] mb-1">
+                      {lang === 'hi' ? 'सूचना का शीर्षक *' : 'Notice Title *'}
+                    </label>
+                    <input
+                      type="text"
+                      value={announcementForm.title}
+                      onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+                      placeholder={lang === 'hi' ? 'उदा. आगामी वैदिक संस्कार शिविर 25 अक्टूबर' : 'e.g. Upcoming Vedic Sanskar Camp 25th Oct'}
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#382719] mb-1">
+                      {lang === 'hi' ? 'श्रेणी (Category)' : 'Category'}
+                    </label>
+                    <select
+                      value={announcementForm.category}
+                      onChange={(e) => setAnnouncementForm({ ...announcementForm, category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    >
+                      <option value="general">सामान्य सूचना (General)</option>
+                      <option value="urgent">अति महत्वपूर्ण (Urgent)</option>
+                      <option value="event">धार्मिक/सेवा कार्यक्रम (Event)</option>
+                      <option value="sanskar">संस्कार शिविर (Sanskar)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#382719] mb-1">
+                    {lang === 'hi' ? 'सूचना का विस्तृत विवरण *' : 'Notice Detailed Content *'}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={announcementForm.content}
+                    onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
+                    placeholder={lang === 'hi' ? 'सूचना का पूरा विवरण लिखें जो सदस्य व स्वयंसेवक डैशबोर्ड पर दिखेगा...' : 'Write the complete announcement content visible on Member & Volunteer Dashboards...'}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isPublishingNotice}
+                    className="px-6 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-saffron transition-all disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isPublishingNotice ? (lang === 'hi' ? 'प्रकाशित हो रहा है...' : 'Publishing...') : (lang === 'hi' ? 'डैशबोर्ड पर प्रकाशित करें' : 'Publish to Dashboards')}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Existing Announcements List */}
+            <div className="max-w-4xl space-y-3 text-left">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-[#666666]">
+                {lang === 'hi' ? `प्रकाशित सूचनाएं (${announcements.length})` : `Published Notices (${announcements.length})`}
+              </h4>
+
+              {announcements.length === 0 ? (
+                <div className="p-8 bg-white rounded-2xl border border-gray-200 text-center text-xs text-gray-500">
+                  {lang === 'hi' ? 'अभी कोई सूचना प्रकाशित नहीं है।' : 'No notices published yet.'}
+                </div>
+              ) : (
+                announcements.map((ann) => (
+                  <div key={ann.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E9B44C]/35 shadow-xs flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-primary/10 text-primary">
+                          {ann.category || 'General'}
+                        </span>
+                        <span className="text-[11px] text-gray-500 font-mono">
+                          {formatDate(ann.publishedAt || ann.createdAt)}
+                        </span>
+                      </div>
+                      <h5 className="font-extrabold text-sm sm:text-base text-[#382719]">
+                        {ann.title}
+                      </h5>
+                      <p className="text-xs text-[#555555] whitespace-pre-wrap leading-relaxed">
+                        {ann.content}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteNotice(ann.id)}
+                      className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex-shrink-0"
+                      title="Delete Notice"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         ) : (
           /* Table Views (Help Requests, Memberships, Members, Volunteers, Donations) */
@@ -1085,7 +1295,27 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               </td>
 
                               <td className="py-3.5 px-4 text-right">
-                                <div className="inline-flex items-center gap-1.5">
+                                <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
+                                  {item.receiptSent ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                      <span>रसीद भेजी गई</span>
+                                    </span>
+                                  ) : (
+                                    item.status === 'approved' && item.category !== 'catA' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSendReceipt(item, 'membershipApplications')}
+                                        disabled={isProcessing}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all"
+                                        title="Send Receipt to Member"
+                                      >
+                                        <Send className="w-3 h-3" />
+                                        <span>रसीद भेजें</span>
+                                      </button>
+                                    )
+                                  )}
+
                                   {item.receiptNumber && (
                                     <button
                                       type="button"
@@ -1254,7 +1484,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                             </td>
 
                             <td className="py-3.5 px-4 text-right">
-                              <div className="inline-flex items-center gap-1.5">
+                              <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
                                 <button
                                   type="button"
                                   onClick={() => handleOpenView(item)}
@@ -1263,6 +1493,26 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
+
+                                {status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations') && (
+                                  item.receiptSent ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                      <span>रसीद भेजी गई</span>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendReceipt(item, activeTab)}
+                                      disabled={isProcessing}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all"
+                                      title="Send Receipt to User"
+                                    >
+                                      <Send className="w-3 h-3" />
+                                      <span>रसीद भेजें</span>
+                                    </button>
+                                  )
+                                )}
 
                                 {status === 'approved' && item.receiptNumber && (
                                   <button
@@ -1355,9 +1605,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-left">
               
               {/* Record Summary Box */}
-              <div className="p-4 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/30 space-y-2">
+              <div className="p-4 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/30 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#888888] font-bold">Applicant / Donor:</span>
+                  <span className="text-[#888888] font-bold">Applicant / Contributor:</span>
                   <div className="flex items-center gap-1.5">
                     {selectedItem.category && (
                       <MemberBadge
@@ -1373,23 +1623,172 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-[#888888] font-bold">Phone Number:</span>
-                  <span className="font-mono font-bold text-primary">
-                    {selectedItem.phone || selectedItem.donorPhone || selectedItem.payerMobile}
-                  </span>
-                </div>
-
-                {(selectedItem.paymentId || selectedItem.utrNumber) && (
-                  <div className="flex items-center justify-between bg-white p-2 rounded-xl border border-[#E9B44C]/30">
-                    <span className="text-secondary font-bold">Payment ID / UTR:</span>
-                    <span className="font-mono font-black text-primary tracking-wider">
-                      {selectedItem.paymentId || selectedItem.utrNumber}
-                    </span>
+                {selectedItem.username && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#888888] font-bold">Username:</span>
+                    <span className="font-mono font-bold text-secondary">@{selectedItem.username}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
+                  <span className="text-[#888888] font-bold">Phone Number:</span>
+                  <span className="font-mono font-bold text-primary">
+                    {selectedItem.phone || selectedItem.donorPhone || selectedItem.payerMobile || selectedItem.mobile}
+                  </span>
+                </div>
+
+                {selectedItem.email && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#888888] font-bold">Email:</span>
+                    <span className="font-mono text-xs text-[#555555]">{selectedItem.email}</span>
+                  </div>
+                )}
+
+                {selectedItem.address && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#888888] font-bold">Address / City:</span>
+                    <span className="text-xs text-[#454545] text-right max-w-[60%]">
+                      {[selectedItem.address, selectedItem.block, selectedItem.district, selectedItem.state].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Payment Proof Section: Screenshot OR UTR */}
+                {(selectedItem.paymentScreenshotUrl || selectedItem.paymentId || selectedItem.utrNumber) && (
+                  <div className="p-3 bg-white rounded-xl border border-[#E9B44C]/40 space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#382719] flex items-center gap-1.5">
+                        <Award className="w-3.5 h-3.5 text-primary" />
+                        <span>भुगतान प्रमाण (Payment Proof)</span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary">
+                        {selectedItem.paymentProofType === 'screenshot' || selectedItem.paymentScreenshotUrl ? 'Screenshot' : 'UTR Number'}
+                      </span>
+                    </div>
+
+                    {(selectedItem.paymentId || selectedItem.utrNumber) && (
+                      <div className="flex items-center justify-between bg-[#FFF8EF] p-2 rounded-lg font-mono">
+                        <span className="text-xs text-[#666666] font-bold">UTR / Ref No:</span>
+                        <span className="text-xs font-black text-primary tracking-wider">
+                          {selectedItem.paymentId || selectedItem.utrNumber}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedItem.paymentScreenshotUrl && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 max-h-56 flex items-center justify-center p-1">
+                          <img
+                            src={selectedItem.paymentScreenshotUrl}
+                            alt="Payment Screenshot Proof"
+                            className="max-h-52 w-auto object-contain rounded-lg"
+                          />
+                        </div>
+                        <div className="text-right">
+                          <a
+                            href={selectedItem.paymentScreenshotUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-bold"
+                          >
+                            <span>पूर्ण आकार में स्क्रीनशॉट देखें (View Full Image)</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Help Seeker Specific Details & Bank Info */}
+                {(selectedItem.helpType || selectedItem.bankAccount || selectedItem.amountNeeded || activeTab === 'helpRequests') && (
+                  <div className="p-3.5 bg-white rounded-xl border border-primary/20 space-y-2.5 mt-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                      <span className="font-black text-xs text-[#382719]">सहायता प्रार्थी विवरण (Help Details)</span>
+                      {selectedItem.urgency && (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                          selectedItem.urgency === 'urgent' || selectedItem.urgency === 'emergency' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {selectedItem.urgency}
+                        </span>
+                      )}
+                    </div>
+
+                    {selectedItem.description && (
+                      <div className="text-xs text-[#555555] bg-gray-50 p-2 rounded-lg">
+                        <span className="font-bold text-[#382719] block mb-0.5">समस्या / आवश्यकता:</span>
+                        <p className="whitespace-pre-line">{selectedItem.description}</p>
+                      </div>
+                    )}
+
+                    {selectedItem.amountNeeded && (
+                      <div className="flex items-center justify-between font-mono text-xs">
+                        <span className="font-bold text-[#666666]">आवश्यक राशि:</span>
+                        <span className="font-black text-primary text-sm">₹{Number(selectedItem.amountNeeded).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+
+                    {/* Bank Details */}
+                    <div className="bg-[#FFF8EF] p-2.5 rounded-lg border border-[#E9B44C]/30 space-y-1 text-xs">
+                      <span className="font-bold text-secondary block text-[11px] uppercase tracking-wider">बैंक खाता विवरण (Bank Details)</span>
+                      <div className="flex justify-between">
+                        <span className="text-[#666666]">खाता संख्या (A/C):</span>
+                        <span className="font-mono font-bold text-[#382719]">{selectedItem.bankAccount || selectedItem.accountNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#666666]">IFSC कोड:</span>
+                        <span className="font-mono font-bold text-[#382719]">{selectedItem.ifsc || 'N/A'}</span>
+                      </div>
+                      {selectedItem.accountHolderName && (
+                        <div className="flex justify-between">
+                          <span className="text-[#666666]">खाताधारक का नाम:</span>
+                          <span className="font-bold text-[#382719]">{selectedItem.accountHolderName}</span>
+                        </div>
+                      )}
+                      {(selectedItem.bankName || selectedItem.upiId) && (
+                        <div className="flex justify-between">
+                          <span className="text-[#666666]">बैंक / UPI ID:</span>
+                          <span className="font-mono text-[#382719]">{selectedItem.bankName || selectedItem.upiId}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Direct Contact Links */}
+                    <div className="pt-1.5 flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-bold text-[#666666]">संपर्क करें:</span>
+                      {(selectedItem.mobile || selectedItem.phone) && (
+                        <a
+                          href={`tel:${selectedItem.mobile || selectedItem.phone}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span>Call</span>
+                        </a>
+                      )}
+                      {(selectedItem.whatsapp || selectedItem.mobile || selectedItem.phone) && (
+                        <a
+                          href={`https://wa.me/91${(selectedItem.whatsapp || selectedItem.mobile || selectedItem.phone).replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-xs transition-all"
+                        >
+                          <span>WhatsApp</span>
+                        </a>
+                      )}
+                      {selectedItem.email && (
+                        <a
+                          href={`mailto:${selectedItem.email}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all"
+                        >
+                          <Mail className="w-3 h-3" />
+                          <span>Email</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-1">
                   <span className="text-[#888888] font-bold">User Claimed Amount:</span>
                   <span className="font-mono font-bold text-[#382719]">
                     ₹{selectedItem.claimedAmount || selectedItem.amount || 200}/-
@@ -1402,7 +1801,51 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <span className="font-mono font-black text-emerald-700">{selectedItem.memberId}</span>
                   </div>
                 )}
+
+                {selectedItem.receiptNumber && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#888888] font-bold">Receipt Number:</span>
+                    <span className="font-mono font-bold text-primary">{selectedItem.receiptNumber}</span>
+                  </div>
+                )}
               </div>
+
+              {/* View Mode: Send Receipt Action if Approved */}
+              {modalMode === 'view' && selectedItem.status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations' || activeTab === 'members') && (
+                <div className="p-3.5 rounded-2xl bg-white border border-[#E9B44C]/40 flex items-center justify-between gap-3 shadow-xs">
+                  <div>
+                    <span className="font-bold text-xs text-[#382719] block">
+                      {selectedItem.receiptSent ? 'रसीद प्रेषित है (Receipt Sent ✓)' : 'रसीद अभी सदस्य को नहीं भेजी गई है'}
+                    </span>
+                    <span className="text-[11px] text-[#777777]">
+                      {selectedItem.receiptSent
+                        ? 'सदस्य अपने डैशबोर्ड से रसीद डाउनलोड कर सकते हैं।'
+                        : 'रसीद भेजने के बाद ही सदस्य इसे अपने डैशबोर्ड से डाउनलोड कर सकेंगे।'}
+                    </span>
+                  </div>
+
+                  {selectedItem.receiptSent ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceipt(selectedItem)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>रसीद देखें</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSendReceipt(selectedItem, activeTab === 'members' ? 'membershipApplications' : activeTab)}
+                      disabled={isProcessing}
+                      className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>रसीद भेजें (Send Receipt)</span>
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Approve Form Inputs */}
               {modalMode === 'approve' && (

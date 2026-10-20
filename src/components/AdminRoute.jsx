@@ -25,11 +25,68 @@ export const AdminRoute = ({ children }) => {
     return children;
   }
 
+  const LOCKOUT_KEY = 'rsssst_admin_pin_locked_until';
+  const ATTEMPTS_KEY = 'rsssst_admin_pin_attempts';
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+  const [attempts, setAttempts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10);
+    }
+    return 0;
+  });
+
+  const [lockedUntil, setLockedUntil] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const val = parseInt(localStorage.getItem(LOCKOUT_KEY) || '0', 10);
+      if (val && val > Date.now()) return val;
+      if (val) {
+        localStorage.removeItem(LOCKOUT_KEY);
+        localStorage.removeItem(ATTEMPTS_KEY);
+      }
+    }
+    return null;
+  });
+
+  const [remainingTimeText, setRemainingTimeText] = useState('');
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (!lockedUntil) return;
+
+    const updateTimer = () => {
+      const diff = lockedUntil - Date.now();
+      if (diff <= 0) {
+        setLockedUntil(null);
+        setAttempts(0);
+        localStorage.removeItem(LOCKOUT_KEY);
+        localStorage.removeItem(ATTEMPTS_KEY);
+        setRemainingTimeText('');
+      } else {
+        const hours = Math.floor(diff / (60 * 60 * 1000));
+        const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+        const seconds = Math.floor((diff % (60 * 1000)) / 1000);
+        setRemainingTimeText(`${hours}h ${minutes}m ${seconds}s`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
+
   // Passkey verification gate
   const handlePinSubmit = async (e) => {
     e.preventDefault();
+
+    if (lockedUntil && lockedUntil > Date.now()) {
+      setPinError(`एडमिन पैनल 4 घंटे के लिए लॉक है। शेष समय: ${remainingTimeText}`);
+      return;
+    }
+
     if (!pinInput.trim()) {
-      setPinError('कृपया व्यवस्थापक पासकी (Admin Passkey) दर्ज करें।');
+      setPinError('कृपया व्यवस्थापक पासकी (Admin PIN) दर्ज करें।');
       return;
     }
 
@@ -39,10 +96,27 @@ export const AdminRoute = ({ children }) => {
 
     if (success) {
       setPinError('');
+      setAttempts(0);
+      localStorage.removeItem(ATTEMPTS_KEY);
+      localStorage.removeItem(LOCKOUT_KEY);
     } else {
-      setPinError('अमान्य सुरक्षा पासकी (Invalid Admin Passkey).');
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
+      localStorage.setItem(ATTEMPTS_KEY, String(nextAttempts));
+
+      if (nextAttempts >= MAX_ATTEMPTS) {
+        const lockTime = Date.now() + LOCKOUT_MS;
+        setLockedUntil(lockTime);
+        localStorage.setItem(LOCKOUT_KEY, String(lockTime));
+        setPinError('5 बार गलत पिन दर्ज किया गया। सुरक्षा कारणों से एडमिन पैनल 4 घंटे के लिए ब्लॉक कर दिया गया है।');
+      } else {
+        const left = MAX_ATTEMPTS - nextAttempts;
+        setPinError(`अमान्य एडमिन पिन। आपके पास ${left} प्रयास शेष हैं (प्रयास: ${nextAttempts}/${MAX_ATTEMPTS})।`);
+      }
     }
   };
+
+  const isLocked = Boolean(lockedUntil && lockedUntil > Date.now());
 
   return (
     <div className="min-h-screen bg-[#FFF8EF] flex flex-col justify-center items-center p-4 sm:p-6">
@@ -61,35 +135,56 @@ export const AdminRoute = ({ children }) => {
 
         {/* Verification Form */}
         <div className="p-6 sm:p-8 space-y-5">
-          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
-            <KeyRound className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
-            <div className="leading-relaxed">
-              <span className="font-bold">व्यवस्थापक सुरक्षा पासकी (Admin Passkey): </span>
-              एडमिन पैनल खोलने हेतु संस्था अधिकृत पासकी दर्ज करें।
+          {isLocked ? (
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-900 text-xs space-y-2">
+              <div className="font-bold flex items-center gap-2 text-rose-700 text-sm">
+                <KeyRound className="w-4 h-4" />
+                <span>पैनल ब्लॉक है (Panel Blocked)</span>
+              </div>
+              <p>
+                5 बार गलत पिन दर्ज करने के कारण यह एडमिन पैनल 4 घंटे के लिए सुरक्षित रूप से लॉक कर दिया गया है।
+              </p>
+              <div className="p-2.5 bg-white/80 rounded-xl font-mono text-center font-black text-rose-600 text-sm">
+                अनलॉक होने में शेष समय: {remainingTimeText || '4h 0m'}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+              <KeyRound className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+              <div className="leading-relaxed">
+                <span className="font-bold">व्यवस्थापक सुरक्षा पिन (Admin PIN): </span>
+                एडमिन पैनल खोलने हेतु अधिकृत पिन दर्ज करें। (अधिकतम 5 प्रयास)
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-[#382719] mb-1.5">
-                एडमिन पासकी / सिक्योरिटी पिन (Admin Passkey / PIN)
+                एडमिन पिन / सिक्योरिटी पासकी (Admin PIN)
               </label>
               <div className="relative">
                 <input
                   type={showPin ? 'text' : 'password'}
                   value={pinInput}
+                  disabled={isLocked}
                   onChange={(e) => {
                     setPinInput(e.target.value);
                     if (pinError) setPinError('');
                   }}
-                  placeholder="सुरक्षा पासकी दर्ज करें"
-                  autoFocus
-                  className="w-full pl-4 pr-11 py-3 rounded-xl border border-[#E9B44C]/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono tracking-widest bg-[#FFF8EF]/20"
+                  placeholder={isLocked ? 'पैनल 4 घंटे के लिए लॉक है' : 'सिक्योरिटी पिन दर्ज करें'}
+                  autoFocus={!isLocked}
+                  className={`w-full pl-4 pr-11 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 font-mono tracking-widest ${
+                    isLocked
+                      ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                      : 'border-[#E9B44C]/50 bg-[#FFF8EF]/20 focus:ring-primary/40'
+                  }`}
                 />
                 <button
                   type="button"
+                  disabled={isLocked}
                   onClick={() => setShowPin(!showPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 disabled:opacity-30"
                 >
                   {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -101,18 +196,19 @@ export const AdminRoute = ({ children }) => {
 
             <button
               type="submit"
-              disabled={isVerifying}
+              disabled={isVerifying || isLocked}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold text-sm shadow-saffron transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <span>{isVerifying ? 'प्रमाणीकरण हो रहा है...' : 'व्यवस्थापक पोर्टल खोलें (Open Admin Portal)'}</span>
+              <span>
+                {isLocked
+                  ? 'पैनल लॉक है'
+                  : isVerifying
+                  ? 'प्रमाणीकरण हो रहा है...'
+                  : 'व्यवस्थापक पोर्टल खोलें (Open Admin Portal)'}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          {/* Quick passkey hint or info */}
-          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-center text-[11px] text-[#666666]">
-            पासकी: <span className="font-mono font-bold text-[#382719]">273016</span>
-          </div>
 
           <div className="pt-3 border-t border-[#E9B44C]/20 flex items-center justify-between text-xs">
             <Link
@@ -127,7 +223,7 @@ export const AdminRoute = ({ children }) => {
               to="/login"
               className="text-primary hover:underline font-bold"
             >
-              यूज़र लॉगिन (User Login) →
+              सदस्य लॉगिन (Member Login) →
             </Link>
           </div>
         </div>

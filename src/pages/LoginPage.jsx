@@ -465,16 +465,6 @@ export const LoginPage = () => {
           )}
         </div>
 
-        {/* Direct Link to Admin Portal */}
-        <div className="p-3.5 bg-[#FFF8EF] border-t border-[#E9B44C]/30 text-center">
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary hover:text-primary transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4 text-primary" />
-            <span>{lang === 'hi' ? 'ट्रस्ट व्यवस्थापक? पासकी से एडमिन पोर्टल खोलें →' : 'Trust Admin? Open Admin Portal with Passkey →'}</span>
-          </Link>
-        </div>
 
       </div>
     </div>

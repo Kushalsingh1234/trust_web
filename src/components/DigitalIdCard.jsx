@@ -7,21 +7,26 @@ export const DigitalIdCard = ({ member, onClose }) => {
   const { lang } = useLanguage();
   const cardRef = useRef(null);
 
-  if (!member || member.status !== 'active') return null;
+  if (!member || (member.status && member.status !== 'active' && member.status !== 'approved')) return null;
+
+  const isVolunteer = member.cardType === 'volunteer' || member.role === 'volunteer';
 
   const handlePrint = () => {
     window.print();
   };
 
   const getCategoryTitle = (cat) => {
+    if (isVolunteer) return lang === 'hi' ? 'समर्पित स्वयंसेवक / कार्यकर्ता' : 'Dedicated Volunteer / Worker';
     if (cat === 'catA') return lang === 'hi' ? 'श्रेणी-क (सहायता लाभार्थी)' : 'Category A (Beneficiary)';
     if (cat === 'catB') return lang === 'hi' ? 'श्रेणी-ख (सम्पन्न / दानदाता सदस्य)' : 'Category B (Donor / Supporter)';
     if (cat === 'catC') return lang === 'hi' ? 'श्रेणी-ग (कर्मठ स्वयंसेवक)' : 'Category C (Volunteer Member)';
-    return lang === 'hi' ? 'आजीवन सदस्य' : 'Trust Member';
+    return lang === 'hi' ? 'सत्यापित सदस्य' : 'Verified Member';
   };
 
   const formattedDate = member.approvedAt?.toDate
     ? member.approvedAt.toDate().toLocaleDateString('en-IN')
+    : member.memberSince?.toDate
+    ? member.memberSince.toDate().toLocaleDateString('en-IN')
     : new Date().toLocaleDateString('en-IN');
 
   return (
@@ -56,21 +61,35 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
         {/* Identity Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 sm:mb-4 bg-primary text-white px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-lg text-xs font-bold">
-          <span className="text-[11px] sm:text-xs">डिजिटल सदस्यता पहचान पत्र (DIGITAL MEMBER ID)</span>
+          <span className="text-[11px] sm:text-xs">
+            {isVolunteer
+              ? (lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र (VOLUNTEER ID)' : 'DIGITAL VOLUNTEER ID CARD')
+              : (lang === 'hi' ? 'डिजिटल सदस्यता पहचान पत्र (MEMBER ID)' : 'DIGITAL MEMBER ID CARD')}
+          </span>
           <span className="font-mono text-[10px] sm:text-[11px] bg-secondary px-2 py-0.5 rounded text-white font-extrabold w-fit">
-            {member.membershipNumber}
+            {member.membershipNumber || member.memberId || (isVolunteer ? `VOL-${(member.phone || '9999').slice(-4)}` : 'TRUST-MEM')}
           </span>
         </div>
 
         {/* Card Body */}
         <div className="grid grid-cols-12 gap-2 sm:gap-4 items-center">
-          {/* Member Avatar / Seal */}
+          {/* Member Avatar / Profile Photo */}
           <div className="col-span-4 text-center">
-            <div className="w-16 h-20 sm:w-20 sm:h-24 mx-auto rounded-xl border-2 border-primary/40 bg-white shadow-inner flex flex-col items-center justify-center p-1.5 sm:p-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#FFF8EF] text-primary flex items-center justify-center font-bold text-base sm:text-lg mb-1 border border-[#E9B44C]">
-                ॐ
-              </div>
-              <span className="text-[7px] sm:text-[8px] font-black text-trust-green uppercase">Verified</span>
+            <div className="w-16 h-20 sm:w-20 sm:h-24 mx-auto rounded-xl border-2 border-primary/40 bg-white shadow-inner flex flex-col items-center justify-center p-1 overflow-hidden relative">
+              {member.photoURL || member.profilePic ? (
+                <img
+                  src={member.photoURL || member.profilePic}
+                  alt={member.fullName || 'Member'}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#FFF8EF] text-primary flex items-center justify-center font-bold text-base sm:text-lg mb-1 border border-[#E9B44C]">
+                    ॐ
+                  </div>
+                  <span className="text-[7px] sm:text-[8px] font-black text-trust-green uppercase">Verified</span>
+                </div>
+              )}
             </div>
             <span className="text-[8px] sm:text-[9px] text-[#666666] font-semibold block mt-1">
               Gorakhpur, UP

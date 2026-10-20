@@ -49,6 +49,7 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
       fatherHusbandName: isMock ? 'श्री बैजनाथ मिश्र' : '',
       mobile: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
       whatsapp: isMock ? '9876543210' : (userProfile?.phone || userProfile?.mobile || ''),
+      email: userProfile?.email || '',
       location: isMock ? 'मकान नं. 24, निकट प्राचीन शिव मंदिर, रूस्तमपुर' : '',
       cityDistrict: 'गोरखपुर (Gorakhpur)',
       state: 'उत्तर प्रदेश (UP)',
@@ -57,20 +58,13 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
       category: 'medical',
       urgency: 'urgent',
       description: isMock ? 'पिताजी के आकस्मिक चिकित्सा व दवा उपचार हेतु तत्काल आर्थिक सहायता की आवश्यकता है।' : '',
+      bankAccountNumber: '',
+      bankIfsc: '',
+      bankAccountHolder: '',
       bankOrUpi: isMock ? '9876543210@upi' : '',
       isConsentGiven: true
     };
   });
-
-  // Protected action: require login
-  useEffect(() => {
-    if (isOpen && !currentUser) {
-      onClose();
-      navigate('/login', {
-        state: { from: location, message: 'Please sign in to continue' }
-      });
-    }
-  }, [isOpen, currentUser]);
 
   useEffect(() => {
     if (userProfile) {
@@ -370,7 +364,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
 
                   <div>
                     <label className="block text-xs font-bold text-[#382719] mb-1">
-                      {lang === 'hi' ? 'व्हाट्सएप नंबर (यदि अलग हो)' : 'WhatsApp Number (If different)'}
+                      {lang === 'hi' ? 'व्हाट्सएप नंबर (वैकल्पिक)' : 'WhatsApp Number (Optional)'}
                     </label>
                     <input
                       type="tel"
@@ -379,6 +373,20 @@ _निवेदन: कृपया इस आवेदन की समीक�
                       value={formData.whatsapp}
                       onChange={handleInputChange}
                       placeholder="9876543210"
+                      className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-[#382719] mb-1">
+                      {lang === 'hi' ? 'ईमेल पता (वैकल्पिक परंतु अनुशंसित)' : 'Email Address (Optional but recommended)'}
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder={lang === 'hi' ? 'उदा. applicant@gmail.com' : 'e.g. applicant@gmail.com'}
                       className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                   </div>
@@ -580,24 +588,70 @@ _निवेदन: कृपया इस आवेदन की समीक�
                   {errors.description && <p className="text-red-500 text-[11px] mt-1 font-semibold">{errors.description}</p>}
                 </div>
 
-                {/* Optional Bank/UPI */}
-                <div>
-                  <label className="block text-xs font-bold text-[#382719] mb-1">
-                    {lang === 'hi' ? 'बैंक खाता संख्या / IFSC कोड या UPI आईडी (वैकल्पिक)' : 'Bank Account No / IFSC or UPI ID (Optional)'}
-                  </label>
-                  <input
-                    type="text"
-                    name="bankOrUpi"
-                    value={formData.bankOrUpi}
-                    onChange={handleInputChange}
-                    placeholder={lang === 'hi' ? 'उदा. A/C No., IFSC, या UPI (9876543210@upi)' : 'e.g. Account Number, IFSC, or UPI ID'}
-                    className="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  />
-                  <p className="text-[11px] text-gray-500 mt-0.5">
-                    {lang === 'hi'
-                      ? 'यदि सहायता राशि स्वीकृत होती है तो सीधे अंतरण हेतु यह विवरण उपयोगी होगा।'
-                      : 'Useful for direct bank or UPI transfer upon committee approval.'}
-                  </p>
+                {/* 4. Bank Account Details */}
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-xs font-black text-secondary uppercase tracking-wider flex items-center gap-1.5 border-b border-[#E9B44C]/30 pb-1">
+                    <Building className="w-4 h-4" />
+                    <span>{lang === 'hi' ? '4. बैंक खाता विवरण (Direct Aid Bank Details)' : '4. Bank Account Information'}</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-[#382719] mb-1">
+                        {lang === 'hi' ? 'बैंक खाता संख्या (Bank Account No.)' : 'Bank Account Number'}
+                      </label>
+                      <input
+                        type="text"
+                        name="bankAccountNumber"
+                        value={formData.bankAccountNumber}
+                        onChange={handleInputChange}
+                        placeholder={lang === 'hi' ? 'उदा. 123456789012' : 'e.g. 123456789012'}
+                        className="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#382719] mb-1">
+                        {lang === 'hi' ? 'IFSC कोड' : 'IFSC Code'}
+                      </label>
+                      <input
+                        type="text"
+                        name="bankIfsc"
+                        value={formData.bankIfsc}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankIfsc: e.target.value.toUpperCase() }))}
+                        placeholder="SBIN0001234"
+                        className="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#382719] mb-1">
+                        {lang === 'hi' ? 'खाताधारक का नाम' : 'Account Holder Name'}
+                      </label>
+                      <input
+                        type="text"
+                        name="bankAccountHolder"
+                        value={formData.bankAccountHolder}
+                        onChange={handleInputChange}
+                        placeholder={lang === 'hi' ? 'उदा. राजेश कुमार' : 'e.g. Rajesh Kumar'}
+                        className="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#382719] mb-1">
+                        {lang === 'hi' ? 'UPI आईडी / बैंक नाम (वैकल्पिक)' : 'UPI ID / Bank Name (Optional)'}
+                      </label>
+                      <input
+                        type="text"
+                        name="bankOrUpi"
+                        value={formData.bankOrUpi}
+                        onChange={handleInputChange}
+                        placeholder="9876543210@upi"
+                        className="w-full text-sm px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -613,10 +667,11 @@ _निवेदन: कृपया इस आवेदन की समीक�
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-primary hover:bg-secondary text-white font-black text-sm sm:text-base shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
                 >
                   <HandHeart className="w-5 h-5" />
-                  <span>{lang === 'hi' ? 'सहायता अनुरोध प्रेषित करें' : 'Submit Assistance Request'}</span>
+                  <span>{isSubmitting ? (lang === 'hi' ? 'प्रेषित हो रहा है...' : 'Submitting...') : (lang === 'hi' ? 'सहायता अनुरोध प्रेषित करें' : 'Submit Assistance Request')}</span>
                 </button>
               </div>
             </form>
@@ -625,17 +680,19 @@ _निवेदन: कृपया इस आवेदन की समीक�
             <div className="space-y-5 animate-fadeIn">
               
               {/* Success Banner */}
-              <div className="text-center py-3 px-4 rounded-2xl bg-gradient-to-b from-[#FFF8EF] to-white border-2 border-[#E9B44C]/40">
-                <div className="w-14 h-14 mx-auto rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center text-green-600 mb-2 shadow-sm">
-                  <CheckCircle2 className="w-8 h-8" />
+              <div className="text-center py-4 px-5 rounded-2xl bg-gradient-to-b from-[#FFF8EF] to-white border-2 border-[#E9B44C]/40 shadow-sm">
+                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center text-green-600 mb-3 shadow-md animate-bounce">
+                  <CheckCircle2 className="w-9 h-9" />
                 </div>
                 <h4 className="text-xl sm:text-2xl font-black text-[#382719] font-hindi-heading">
-                  {lang === 'hi' ? 'सहायता अनुरोध सफलतापूर्वक दर्ज हुआ' : 'Help Request Successfully Submitted'}
+                  {lang === 'hi' 
+                    ? 'अनुरोध प्राप्त हो गया है, शीघ्र ही इस संबंध में आपको जानकारी दी जाएगी।' 
+                    : "Request submitted, you'll hear back regarding your request soon."}
                 </h4>
-                <p className="text-xs sm:text-sm text-[#454545] max-w-md mx-auto mt-1">
+                <p className="text-xs sm:text-sm text-[#523e2b] max-w-md mx-auto mt-2 font-medium">
                   {lang === 'hi'
-                    ? 'आपका आवेदन राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट), गोरखपुर के राहत प्रकोष्ठ में प्राप्त हो गया है।'
-                    : 'Your assistance application has been received by Rashtriya Sanatan Sanskar Seva Sansthan (Trust).'}
+                    ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट), गोरखपुर समिति द्वारा आपके विवरण की जांच की जा रही है। प्रतिनिधि दिए गए मोबाइल नंबर पर संपर्क करेंगे।'
+                    : 'Our welfare committee is reviewing your details. A trust representative will connect with you on your provided contact number shortly.'}
                 </p>
 
                 {/* Application ID Card */}
