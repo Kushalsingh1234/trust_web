@@ -20,6 +20,7 @@ import {
   Phone,
   Mail,
   Shield,
+  ShieldCheck,
   Clock,
   CheckCircle2,
   XCircle,
