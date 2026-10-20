@@ -106,8 +106,10 @@ export const submitMembershipWithPaymentId = async ({
     } catch (err) {}
   }
 
-  // 1. CATEGORY A: Destitute / Beneficiary Member (100% Free, Exempted from Fee)
-  if (isCatA || !cleanPaymentId) {
+  const isCrossExempted = cleanPaymentId === 'CROSS_APPROVED_FREE' || cleanPaymentId === 'EXEMPTED_CROSS_APPROVED' || claimedAmount === 0;
+
+  // 1. CATEGORY A or CROSS-EXEMPTED: 100% Free, Exempted from Fee
+  if (isCatA || isCrossExempted || !cleanPaymentId) {
     const membershipData = {
       uid: uid || null,
       applicantUid: uid || null,
@@ -120,14 +122,23 @@ export const submitMembershipWithPaymentId = async ({
       district: district.trim(),
       state: state.trim(),
       pincode: pincode.trim(),
-      category: 'catA',
+      category: isCatA ? 'catA' : effectiveCategory,
+      memberType: isVolunteerRole ? 'volunteer' : 'member',
+      role: isVolunteerRole ? 'volunteer' : 'member',
       annualFee: 0,
       claimedAmount: 0,
       amount: 0,
-      paymentId: null,
+      paymentId: isCrossExempted ? 'CROSS_APPROVED_FREE' : (cleanPaymentId || 'EXEMPTED-₹0'),
       paymentDate: null,
       paymentStatus: 'exempted',
-      helpType: helpType ? helpType.trim() : 'आर्थिक / पारिवारिक सहायता',
+      paymentProofType: 'exempted',
+      profession: profession ? profession.trim() : null,
+      workplace: workplace ? workplace.trim() : null,
+      focusArea: focusArea ? focusArea.trim() : null,
+      availability: availability || 'weekends',
+      serviceAreas: Array.isArray(serviceAreas) ? serviceAreas : [],
+      experience: experience ? experience.trim() : null,
+      helpType: helpType ? helpType.trim() : (isCrossExempted ? 'पूर्व-स्वीकृत सदस्य/स्वयंसेवक निःशुल्क छूट' : 'आर्थिक / पारिवारिक सहायता'),
       monthlyIncome: monthlyIncome ? monthlyIncome.trim() : null,
       familyMembersCount: familyMembersCount ? familyMembersCount.trim() : null,
       assistanceDescription: assistanceDescription ? assistanceDescription.trim() : '',
@@ -141,28 +152,62 @@ export const submitMembershipWithPaymentId = async ({
     const legacyRef = doc(collection(db, 'membershipApplications'));
     await setDoc(legacyRef, membershipData);
 
-    // Secondary: Mirror to memberships collection (graceful fallback)
-    try {
-      const unifiedRef = doc(db, 'memberships', legacyRef.id);
-      await setDoc(unifiedRef, membershipData);
-    } catch (e) {
-      // Ignore if unified collection permissions are still propagating
+    // If Volunteer role, also mirror into volunteer collections
+    if (isVolunteerRole) {
+      try {
+        const volData = {
+          uid: uid || null,
+          applicantUid: uid || null,
+          membershipApplicationId: legacyRef.id,
+          fullName: fullName.trim(),
+          mobile: phone.trim(),
+          phone: phone.trim(),
+          cityOrDistrict: district.trim(),
+          availability: availability || 'weekends',
+          experience: experience ? experience.trim() : '',
+          category: 'catC',
+          memberType: 'volunteer',
+          role: 'volunteer',
+          amount: 0,
+          claimedAmount: 0,
+          paymentId: 'CROSS_APPROVED_FREE',
+          paymentStatus: 'exempted',
+          paymentProofType: 'exempted',
+          status: 'pending',
+          submittedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await setDoc(doc(db, 'volunteers', legacyRef.id), volData);
+        await setDoc(doc(db, 'volunteerApplications', legacyRef.id), volData);
+      } catch (vErr) {
+        console.warn("Could not mirror to volunteer collections:", vErr);
+      }
+    } else {
+      // Secondary: Mirror to memberships collection (graceful fallback)
+      try {
+        const unifiedRef = doc(db, 'memberships', legacyRef.id);
+        await setDoc(unifiedRef, membershipData);
+      } catch (e) {}
     }
 
     // Update users/{uid} document with active application status
     if (uid) {
       try {
-        await setDoc(doc(db, 'users', uid), {
-          hasAppliedMembership: true,
-          membershipApplicationId: legacyRef.id,
-          membershipStatus: 'pending',
-          category: 'catA',
-          claimedAmount: 0,
-          annualFee: 0,
-          paymentId: 'EXEMPTED-₹0',
-          appliedAt: serverTimestamp(),
+        const userUpdatePayload = {
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+        if (isVolunteerRole) {
+          userUpdatePayload.hasAppliedVolunteer = true;
+          userUpdatePayload.volunteerApplicationId = legacyRef.id;
+          userUpdatePayload.volunteerStatus = 'pending';
+        } else {
+          userUpdatePayload.hasAppliedMembership = true;
+          userUpdatePayload.membershipApplicationId = legacyRef.id;
+          userUpdatePayload.membershipStatus = 'pending';
+          userUpdatePayload.category = isCatA ? 'catA' : effectiveCategory;
+        }
+        await setDoc(doc(db, 'users', uid), userUpdatePayload, { merge: true });
       } catch (e) {
         console.warn("Could not update user profile with membership status:", e);
       }
@@ -439,14 +484,40 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
   }
 
   if (!snap || !snap.exists()) {
-    throw new Error("Membership record not found.");
+    try {
+      const volRef = doc(db, 'volunteers', membershipId);
+      const volSnap = await getDoc(volRef);
+      if (volSnap.exists()) {
+        targetRef = volRef;
+        snap = volSnap;
+        isLegacy = false;
+      }
+    } catch (e) {}
+  }
+
+  if (!snap || !snap.exists()) {
+    try {
+      const volAppRef = doc(db, 'volunteerApplications', membershipId);
+      const volAppSnap = await getDoc(volAppRef);
+      if (volAppSnap.exists()) {
+        targetRef = volAppRef;
+        snap = volAppSnap;
+        isLegacy = false;
+      }
+    } catch (e) {}
+  }
+
+  if (!snap || !snap.exists()) {
+    throw new Error("Membership or Volunteer record not found.");
   }
 
   const memData = snap.data();
+  const isVolunteerRecord = memData.memberType === 'volunteer' || memData.category === 'catC' || memData.role === 'volunteer';
   const isCatA = memData.category === 'catA';
-  const numVerified = isCatA ? 0 : Number(verifiedAmount);
+  const isExempted = isCatA || memData.claimedAmount === 0 || memData.paymentStatus === 'exempted' || memData.paymentId === 'CROSS_APPROVED_FREE';
+  const numVerified = isExempted ? 0 : Number(verifiedAmount);
 
-  if (!isCatA && (isNaN(numVerified) || numVerified < 0)) {
+  if (!isExempted && (isNaN(numVerified) || numVerified < 0)) {
     throw new Error("Please enter a valid numeric verified amount.");
   }
 
@@ -469,14 +540,14 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
       await setDoc(memberCounterRef, { seq: nextMemberSeq }, { merge: true });
     } catch (e2) {}
   }
-  const isVolunteerRecord = memData.memberType === 'volunteer' || memData.category === 'catC';
+
   const memberId = isVolunteerRecord
     ? `TRUST-V-${String(nextMemberSeq).padStart(4, '0')}`
     : `TRUST-M-${String(nextMemberSeq).padStart(4, '0')}`;
 
-  // 3. Generate sequential Receipt Number for paid members
+  // 3. Generate sequential Receipt Number for paid members / volunteers
   let receiptNumber = null;
-  if (!isCatA && numVerified > 0) {
+  if (!isExempted && numVerified > 0) {
     let nextReceiptSeq = Date.now() % 8000 + 1001;
     try {
       const sysCounterRef = doc(db, 'systemConfig', 'counters');
@@ -561,25 +632,42 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
   if (targetUid) {
     try {
       const userRef = doc(db, 'users', targetUid);
+      const uSnap = await getDoc(userRef);
+      const existingUserData = uSnap.exists() ? uSnap.data() : {};
+
       if (isVolunteerRecord) {
-        await setDoc(userRef, {
+        const updatePayload = {
           isVolunteer: true,
           volunteerId: memberId,
           volunteerStatus: 'approved',
           volunteerSince: serverTimestamp(),
-          role: 'volunteer',
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+        // Preserve member role if user is already a member
+        if (!existingUserData.isMember && existingUserData.role !== 'admin') {
+          updatePayload.role = 'volunteer';
+        }
+        if (numVerified > 0 && receiptNumber) {
+          updatePayload.receiptNumber = receiptNumber;
+        }
+        await setDoc(userRef, updatePayload, { merge: true });
       } else {
-        await setDoc(userRef, {
+        const updatePayload = {
           isMember: true,
           memberId,
           memberSince: serverTimestamp(),
           membershipStatus: 'approved',
           category: memData.category || 'catB',
-          role: 'member',
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+        // Preserve admin role or volunteer role
+        if (existingUserData.role !== 'admin') {
+          updatePayload.role = 'member';
+        }
+        if (numVerified > 0 && receiptNumber) {
+          updatePayload.receiptNumber = receiptNumber;
+        }
+        await setDoc(userRef, updatePayload, { merge: true });
       }
     } catch (e) {
       console.warn("Could not update user profile with membership status:", e);
@@ -916,7 +1004,9 @@ export const markReceiptSent = async (collectionName, docId, adminUid) => {
   // Determine all collections to try
   const targetCols = [collectionName];
   if (collectionName === 'memberships') targetCols.push('membershipApplications');
-  else if (collectionName === 'membershipApplications') targetCols.push('memberships');
+  else if (collectionName === 'membershipApplications') targetCols.push('memberships', 'volunteers', 'volunteerApplications');
+  else if (collectionName === 'volunteers') targetCols.push('volunteerApplications', 'membershipApplications', 'memberships');
+  else if (collectionName === 'volunteerApplications') targetCols.push('volunteers', 'membershipApplications', 'memberships');
   else if (collectionName === 'donations') targetCols.push('payments');
   else if (collectionName === 'payments') targetCols.push('donations');
 

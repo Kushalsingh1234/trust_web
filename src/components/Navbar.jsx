@@ -234,13 +234,10 @@ export const Navbar = ({
             <Link
               to="/login"
               className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 shadow-xs transition-all active:scale-95 whitespace-nowrap flex-shrink-0"
-              title="Sign in or Create Account"
+              title={lang === 'hi' ? 'खाते में लॉगिन करें' : 'Sign in to Account'}
             >
               <User className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
-              <span>
-                {lang === 'hi' ? 'लॉगिन' : 'Login'}
-                <span className="hidden sm:inline"> / {lang === 'hi' ? 'साइन अप' : 'Sign Up'}</span>
-              </span>
+              <span>{lang === 'hi' ? 'लॉगिन' : 'Login'}</span>
             </Link>
           )}
           <button
@@ -401,7 +398,7 @@ export const Navbar = ({
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E9B44C] bg-white text-[#382719] hover:bg-[#FFF8EF] font-bold text-sm shadow-sm transition-all min-h-[44px]"
                 >
                   <User className="w-4 h-4 text-primary" />
-                  <span>{lang === 'hi' ? 'लॉगिन / साइन अप' : 'Login / Sign Up'}</span>
+                  <span>{lang === 'hi' ? 'लॉगिन' : 'Login'}</span>
                 </Link>
               )}
             </div>

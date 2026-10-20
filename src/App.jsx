@@ -140,14 +140,14 @@ function AppContent() {
             }
           />
 
-          {/* 2. Authentication: Login / Sign Up */}
+          {/* 2. Authentication: Login */}
           <Route 
             path="/login" 
             element={<LoginPage />} 
           />
           <Route 
             path="/signup" 
-            element={<LoginPage />} 
+            element={<Navigate to="/login" replace />} 
           />
 
           {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}

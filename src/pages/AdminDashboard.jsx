@@ -260,9 +260,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   const handleOpenApprove = (item) => {
     setSelectedItem(item);
-    if (activeTab === 'memberships') {
-      const isCatA = item.category === 'catA';
-      setVerifiedAmountInput(isCatA ? '0' : String(item.claimedAmount || paymentSettings.membershipFee || 200));
+    const isExempted = item.category === 'catA' || item.claimedAmount === 0 || item.paymentStatus === 'exempted' || item.paymentId === 'CROSS_APPROVED_FREE';
+    if (activeTab === 'memberships' || activeTab === 'volunteers') {
+      setVerifiedAmountInput(isExempted ? '0' : String(item.claimedAmount || item.amount || paymentSettings.membershipFee || 200));
     } else if (activeTab === 'donations') {
       setVerifiedAmountInput(String(item.claimedAmount || item.amount || ''));
     }
@@ -298,20 +298,26 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     setIsProcessing(true);
     try {
       if (modalMode === 'approve') {
-        if (activeTab === 'memberships') {
+        if (activeTab === 'memberships' || activeTab === 'volunteers') {
           const isCatA = selectedItem.category === 'catA';
-          const num = isCatA ? 0 : Number(verifiedAmountInput);
-          if (!isCatA && (isNaN(num) || num <= 0)) {
+          const isExempted = isCatA || selectedItem.claimedAmount === 0 || selectedItem.paymentStatus === 'exempted' || selectedItem.paymentId === 'CROSS_APPROVED_FREE';
+          const num = isExempted ? 0 : Number(verifiedAmountInput);
+          if (!isExempted && (isNaN(num) || num <= 0)) {
             toast.error("Please enter a valid numeric verified amount.");
             setIsProcessing(false);
             return;
           }
 
           const res = await approveMembership(selectedItem.id, num, currentUser?.uid || 'admin');
+          const isVol = activeTab === 'volunteers' || selectedItem.memberType === 'volunteer' || selectedItem.category === 'catC';
           toast.success(
-            isCatA
-              ? `Beneficiary Member Approved! Member ID: ${res.memberId}`
-              : `Membership Approved! Generated Member ID: ${res.memberId} & Receipt: ${res.receiptNumber || 'N/A'}`
+            isExempted
+              ? (isVol
+                  ? `Volunteer Approved! ID: ${res.memberId} (Cross-Exempted ₹0)`
+                  : `Member Approved! ID: ${res.memberId} (Exempted ₹0)`)
+              : (isVol
+                  ? `Volunteer Approved! ID: ${res.memberId} & Receipt: ${res.receiptNumber || 'N/A'}`
+                  : `Membership Approved! ID: ${res.memberId} & Receipt: ${res.receiptNumber || 'N/A'}`)
           );
         } else if (activeTab === 'donations') {
           const num = Number(verifiedAmountInput);
@@ -324,7 +330,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           const res = await approveDonationPayment(selectedItem.id, num, adminNoteInput, currentUser?.uid || 'admin');
           toast.success(`Donation Approved! Verified Amount ₹${res.verifiedAmount} • Receipt: ${res.receiptNumber}`);
         } else {
-          // Standard Review (helpRequests / volunteers)
+          // Standard Review (helpRequests)
           await reviewDocument(
             activeTab,
             selectedItem.id,
@@ -1330,25 +1336,39 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                               <td className="py-3.5 px-4 text-right">
                                 <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
-                                  {item.receiptSent ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
-                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                      <span>रसीद भेजी गई</span>
-                                    </span>
-                                  ) : (
-                                    item.status === 'approved' && item.category !== 'catA' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleSendReceipt(item, 'membershipApplications')}
-                                        disabled={isProcessing}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all"
-                                        title="Send Receipt to Member"
-                                      >
-                                        <Send className="w-3 h-3" />
-                                        <span>रसीद भेजें</span>
-                                      </button>
-                                    )
-                                  )}
+                                  {(() => {
+                                    const isExempted = item.category === 'catA' || item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted';
+                                    if (item.status === 'approved' && isExempted) {
+                                      return (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Cross-exempted / Free - No Receipt Needed">
+                                          निःशुल्क (₹0)
+                                        </span>
+                                      );
+                                    }
+                                    if (item.receiptSent) {
+                                      return (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
+                                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                          <span>रसीद भेजी गई</span>
+                                        </span>
+                                      );
+                                    }
+                                    if (item.status === 'approved') {
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSendReceipt(item, 'membershipApplications')}
+                                          disabled={isProcessing}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all cursor-pointer"
+                                          title="Send Receipt to Member"
+                                        >
+                                          <Send className="w-3 h-3" />
+                                          <span>रसीद भेजें</span>
+                                        </button>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
 
                                   {item.receiptNumber && (
                                     <button
@@ -1528,8 +1548,16 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   <Eye className="w-4 h-4" />
                                 </button>
 
-                                {status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations') && (
-                                  item.receiptSent ? (
+                                {status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations' || activeTab === 'volunteers') && (() => {
+                                  const isExempted = item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted' || item.category === 'catA';
+                                  if (isExempted) {
+                                    return (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Cross-exempted (₹0) - No Receipt Required">
+                                        निःशुल्क (₹0)
+                                      </span>
+                                    );
+                                  }
+                                  return item.receiptSent ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
                                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                       <span>रसीद भेजी गई</span>
@@ -1539,14 +1567,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                       type="button"
                                       onClick={() => handleSendReceipt(item, activeTab)}
                                       disabled={isProcessing}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all"
-                                      title="Send Receipt to User"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[11px] font-bold shadow-xs transition-all cursor-pointer"
+                                      title={lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt to User'}
                                     >
                                       <Send className="w-3 h-3" />
                                       <span>रसीद भेजें</span>
                                     </button>
-                                  )
-                                )}
+                                  );
+                                })()}
 
                                 {status === 'approved' && item.receiptNumber && (
                                   <button
@@ -1866,70 +1894,100 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               </div>
 
               {/* View Mode: Send Receipt Action if Approved */}
-              {modalMode === 'view' && selectedItem.status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations' || activeTab === 'members') && (
-                <div className="p-3.5 rounded-2xl bg-white border border-[#E9B44C]/40 flex items-center justify-between gap-3 shadow-xs">
-                  <div>
-                    <span className="font-bold text-xs text-[#382719] block">
-                      {selectedItem.receiptSent ? 'रसीद प्रेषित है (Receipt Sent ✓)' : 'रसीद अभी सदस्य को नहीं भेजी गई है'}
-                    </span>
-                    <span className="text-[11px] text-[#777777]">
-                      {selectedItem.receiptSent
-                        ? 'सदस्य अपने डैशबोर्ड से रसीद डाउनलोड कर सकते हैं।'
-                        : 'रसीद भेजने के बाद ही सदस्य इसे अपने डैशबोर्ड से डाउनलोड कर सकेंगे।'}
-                    </span>
-                  </div>
+              {modalMode === 'view' && selectedItem.status === 'approved' && (activeTab === 'memberships' || activeTab === 'donations' || activeTab === 'members' || activeTab === 'volunteers') && (() => {
+                const isExempted = selectedItem.claimedAmount === 0 || selectedItem.paymentId === 'CROSS_APPROVED_FREE' || selectedItem.paymentStatus === 'exempted' || selectedItem.category === 'catA';
+                if (isExempted) {
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 shadow-xs">
+                      <div>
+                        <span className="font-bold text-xs text-emerald-900 block">
+                          निःशुल्क पंजीकरण छूट (₹0 Fee Exemption)
+                        </span>
+                        <span className="text-[11px] text-emerald-800">
+                          पूर्व-स्वीकृत सदस्य/स्वयंसेवक छूट के तहत यह पंजीकरण पूर्णतः निःशुल्क (₹0) है। रसीद आवश्यक नहीं है।
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="p-3.5 rounded-2xl bg-white border border-[#E9B44C]/40 flex items-center justify-between gap-3 shadow-xs">
+                    <div>
+                      <span className="font-bold text-xs text-[#382719] block">
+                        {selectedItem.receiptSent ? 'रसीद प्रेषित है (Receipt Sent ✓)' : 'रसीद अभी सदस्य/स्वयंसेवक को नहीं भेजी गई है'}
+                      </span>
+                      <span className="text-[11px] text-[#777777]">
+                        {selectedItem.receiptSent
+                          ? 'उपयोगकर्ता अपने डैशबोर्ड से रसीद डाउनलोड कर सकते हैं।'
+                          : 'रसीद भेजने के बाद ही उपयोगकर्ता इसे अपने डैशबोर्ड से डाउनलोड कर सकेंगे।'}
+                      </span>
+                    </div>
 
-                  {selectedItem.receiptSent ? (
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadReceipt(selectedItem)}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>रसीद देखें</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSendReceipt(selectedItem, activeTab === 'members' ? 'membershipApplications' : activeTab)}
-                      disabled={isProcessing}
-                      className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>रसीद भेजें (Send Receipt)</span>
-                    </button>
-                  )}
-                </div>
-              )}
+                    {selectedItem.receiptSent ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadReceipt(selectedItem)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>रसीद देखें</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSendReceipt(selectedItem, activeTab === 'members' ? 'membershipApplications' : activeTab)}
+                        disabled={isProcessing}
+                        className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>रसीद भेजें (Send Receipt)</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Approve Form Inputs */}
-              {modalMode === 'approve' && (
-                <div className="space-y-4">
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs leading-relaxed">
-                    <strong>Transaction Action: </strong>
-                    {activeTab === 'memberships'
-                      ? 'Approving generates a unique sequential Member ID (e.g. TRUST-M-0001), marks users/{uid}.isMember = true, and generates an official fee receipt.'
-                      : 'Approving saves the admin-entered verified amount and generates a unique receipt number from counters/receipts.'}
-                  </div>
+              {modalMode === 'approve' && (() => {
+                const isItemExempted = selectedItem.category === 'catA' || selectedItem.claimedAmount === 0 || selectedItem.paymentId === 'CROSS_APPROVED_FREE' || selectedItem.paymentStatus === 'exempted';
+                return (
+                  <div className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs leading-relaxed">
+                      <strong>Transaction Action: </strong>
+                      {isItemExempted
+                        ? `Approving as ${activeTab === 'volunteers' ? 'Volunteer' : 'Member'} under Free Exemption (₹0). Generates ${activeTab === 'volunteers' ? 'Volunteer ID (TRUST-V-XXXX)' : 'Member ID (TRUST-M-XXXX)'}.`
+                        : activeTab === 'volunteers'
+                        ? 'Approving generates a unique sequential Volunteer ID (TRUST-V-XXXX), marks users/{uid}.isVolunteer = true, and generates an official receipt.'
+                        : activeTab === 'memberships'
+                        ? 'Approving generates a unique sequential Member ID (TRUST-M-XXXX), marks users/{uid}.isMember = true, and generates an official receipt.'
+                        : 'Approving saves the admin-entered verified amount and generates a unique receipt number from counters/receipts.'}
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-black text-[#382719] mb-1">
-                      Verified Amount Received (INR ₹) *
-                    </label>
-                    <input
-                      type="number"
-                      value={verifiedAmountInput}
-                      onChange={(e) => setVerifiedAmountInput(e.target.value)}
-                      placeholder="e.g. 200 or 501"
-                      className="w-full p-3 rounded-xl border-2 border-emerald-500 font-mono font-black text-base focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                      required
-                    />
-                    <span className="text-[11px] text-[#666666] block mt-1">
-                      The official receipt will ALWAYS reflect this verified amount, not what the donor claimed.
-                    </span>
-                  </div>
+                    {isItemExempted ? (
+                      <div className="p-3 rounded-xl bg-emerald-100/70 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span>यह पंजीकरण पूर्व-स्वीकृत छूट के तहत पूर्णतः निःशुल्क (₹0) है। किसी शुल्क सत्यापन की आवश्यकता नहीं है।</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-black text-[#382719] mb-1">
+                          Verified Amount Received (INR ₹) *
+                        </label>
+                        <input
+                          type="number"
+                          value={verifiedAmountInput}
+                          onChange={(e) => setVerifiedAmountInput(e.target.value)}
+                          placeholder="e.g. 200 or 501"
+                          className="w-full p-3 rounded-xl border-2 border-emerald-500 font-mono font-black text-base focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                          required
+                        />
+                        <span className="text-[11px] text-[#666666] block mt-1">
+                          The official receipt will ALWAYS reflect this verified amount, not what the applicant claimed.
+                        </span>
+                      </div>
+                    )}
 
-                  <div>
+                    <div>
                     <label className="block text-xs font-bold text-[#382719] mb-1">
                       Admin Note (Optional):
                     </label>
@@ -1942,7 +2000,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     />
                   </div>
                 </div>
-              )}
+              );
+            })()}
 
               {/* Reject Form Inputs */}
               {modalMode === 'reject' && (

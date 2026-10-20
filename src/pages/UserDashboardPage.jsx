@@ -962,7 +962,12 @@ export const UserDashboardPage = () => {
                     {/* Approved Actions: Download Receipt (ONLY AFTER ADMIN SENDS) & Member Card */}
                     {isApproved && (
                       <div className="mt-3 pt-3 border-t border-emerald-100 flex flex-wrap items-center gap-2.5">
-                        {canDownloadReceipt ? (
+                        {item.category === 'catA' || item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted' ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{lang === 'hi' ? 'निःशुल्क पंजीकरण छूट (₹0) • रसीद आवश्यक नहीं' : 'Free Cross-Registration (₹0) • No Receipt Needed'}</span>
+                          </div>
+                        ) : canDownloadReceipt ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -983,7 +988,7 @@ export const UserDashboardPage = () => {
                                 approvedAt: item.approvedAt || item.memberSince
                               });
                             }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें (PDF)' : 'Download Fee Receipt (PDF)'}</span>
@@ -1141,7 +1146,7 @@ export const UserDashboardPage = () => {
 
                     {/* Approved Volunteer Action */}
                     {isApproved && (
-                      <div className="mt-3 pt-3 border-t border-emerald-100 flex items-center gap-2.5">
+                      <div className="mt-3 pt-3 border-t border-emerald-100 flex flex-wrap items-center gap-2.5">
                         <button
                           type="button"
                           onClick={() => setViewingCard({
@@ -1152,11 +1157,48 @@ export const UserDashboardPage = () => {
                             status: 'approved',
                             cardType: 'volunteer'
                           })}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
                           <span>{lang === 'hi' ? 'डिजिटल स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'View Volunteer ID Card'}</span>
                         </button>
+
+                        {/* Volunteer Fee Receipt or Exemption */}
+                        {item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted' ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{lang === 'hi' ? 'निःशुल्क पंजीकरण छूट (₹0) • रसीद आवश्यक नहीं' : 'Free Cross-Registration (₹0) • No Receipt Needed'}</span>
+                          </div>
+                        ) : Boolean(item.receiptSent || userProfile?.feeReceiptSent) ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setViewingReceipt({
+                                receiptNumber: item.receiptNumber || 'RSSSST-2026-VOLUNTEER',
+                                donorName: item.fullName || userProfile?.fullName,
+                                username: item.username || userProfile?.username,
+                                memberId: item.volunteerId || item.memberId || userProfile?.volunteerId,
+                                address: item.address || item.cityOrDistrict || 'गोरखपुर',
+                                district: item.cityOrDistrict || 'गोरखपुर',
+                                state: 'उत्तर प्रदेश',
+                                purpose: 'volunteer_registration',
+                                verifiedAmount: item.verifiedAmount || item.amount || 200,
+                                claimedAmount: item.claimedAmount || item.amount || 200,
+                                paymentId: item.paymentId || 'VERIFIED',
+                                approvedAt: item.approvedAt || item.createdAt
+                              });
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs shadow-xs transition-all cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें (PDF)' : 'Download Fee Receipt (PDF)'}</span>
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>{lang === 'hi' ? 'शुल्क रसीद व्यवस्थापक द्वारा समीक्षा उपरांत भेजी जाएगी।' : 'Fee receipt will be available once sent by admin.'}</span>
+                          </div>
+                        )}
                       </div>
                     )}
 
