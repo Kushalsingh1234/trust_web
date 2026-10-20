@@ -265,7 +265,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
       navigate('/dashboard');
     } catch (err) {
       console.error('Membership submission error:', err);
-      setErrors({ form: err.message || (lang === 'hi' ? 'आवेदन जमा करने में त्रुटि' : 'Failed to submit application') });
+      const errMsg = err.message || (lang === 'hi' ? 'आवेदन जमा करने में त्रुटि' : 'Failed to submit application');
+      toast.error(errMsg);
+      setErrors({ form: errMsg });
     } finally {
       setIsSubmitting(false);
     }
@@ -313,6 +315,13 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 text-left">
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {errors.form && (
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-300 text-red-800 text-xs font-bold flex items-center gap-2">
+                <X className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <span>{errors.form}</span>
+              </div>
+            )}
 
             {/* Section 1: Account Login Details (Direct creation if not logged in) */}
             {!currentUser && (

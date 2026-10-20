@@ -91,34 +91,6 @@ export const submitMembershipWithPaymentId = async ({
     } catch (err) {}
   }
 
-  // Guard 3: Prevent duplicate membership by phone number ONLY if an active approved member with that phone number exists
-  if (phone) {
-    try {
-      const qPhone = query(
-        collection(db, 'membershipApplications'),
-        where('mobile', '==', phone.trim()),
-        where('status', '==', 'approved')
-      );
-      const sPhone = await getDocs(qPhone);
-      if (!sPhone.empty) {
-        for (const appDoc of sPhone.docs) {
-          const approvedDoc = appDoc.data();
-          const targetUserUid = approvedDoc.applicantUid || approvedDoc.uid;
-          if (targetUserUid && targetUserUid !== uid) {
-            const uDoc = await getDoc(doc(db, 'users', targetUserUid));
-            if (uDoc.exists() && uDoc.data().isMember === true) {
-              throw new Error(
-                `इस मोबाइल नंबर से पहले ही सक्रिय सदस्यता मान्य है (सदस्यता क्रमांक: ${approvedDoc.memberId || 'सत्यापित'})।`
-              );
-            }
-          }
-        }
-      }
-    } catch (err) {
-      if (err.message && err.message.includes("सक्रिय सदस्यता")) throw err;
-    }
-  }
-
   // 1. CATEGORY A: Destitute / Beneficiary Member (100% Free, Exempted from Fee)
   if (isCatA || !cleanPaymentId) {
     const membershipData = {
@@ -206,26 +178,21 @@ export const submitMembershipWithPaymentId = async ({
   }
 
   // 2. CATEGORY B & C: Paid Members (Requires Payment ID verification)
-  // Check for duplicate payment ID in active payments & membership collections
+  // Check for duplicate payment ID to flag for admin review without crashing application creation
+  let isDuplicatePaymentId = false;
   try {
     const qPayments = query(collection(db, 'payments'), where('paymentId', '==', cleanPaymentId));
     const snapPayments = await getDocs(qPayments);
     if (!snapPayments.empty) {
-      const err = new Error("This Payment ID was already used");
-      err.code = "payment-id-duplicate";
-      throw err;
+      isDuplicatePaymentId = true;
     }
 
     const qLegacy = query(collection(db, 'membershipApplications'), where('paymentId', '==', cleanPaymentId));
     const snapLegacy = await getDocs(qLegacy);
     if (!snapLegacy.empty) {
-      const err = new Error("This Payment ID was already used");
-      err.code = "payment-id-duplicate";
-      throw err;
+      isDuplicatePaymentId = true;
     }
-  } catch (err) {
-    if (err.code === 'payment-id-duplicate') throw err;
-  }
+  } catch (err) {}
 
   const membershipDocData = {
     uid: uid || null,
