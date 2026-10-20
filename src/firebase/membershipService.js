@@ -181,18 +181,25 @@ export const submitMembershipWithPaymentId = async ({
       }
     }
 
-    // Cache in browser localStorage
+    // Cache in browser localStorage strictly scoped to user UID
     try {
-      const saved = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
-      if (!saved.includes(legacyRef.id)) saved.unshift(legacyRef.id);
-      localStorage.setItem('rsssst_my_app_ids', JSON.stringify(saved.slice(0, 20)));
-      localStorage.setItem('rsssst_last_app_mobile', phone.trim());
-      localStorage.setItem('rsssst_my_membership_app', JSON.stringify({
-        id: legacyRef.id,
-        ...membershipData,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      }));
+      if (uid) {
+        const userAppKey = `rsssst_my_membership_app_${uid}`;
+        const userIdsKey = `rsssst_my_app_ids_${uid}`;
+        const saved = JSON.parse(localStorage.getItem(userIdsKey) || '[]');
+        if (!saved.includes(legacyRef.id)) saved.unshift(legacyRef.id);
+        localStorage.setItem(userIdsKey, JSON.stringify(saved.slice(0, 20)));
+        localStorage.setItem(userAppKey, JSON.stringify({
+          id: legacyRef.id,
+          ...membershipData,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }));
+      }
+      // Purge unscoped cross-user leak keys
+      localStorage.removeItem('rsssst_my_membership_app');
+      localStorage.removeItem('rsssst_my_app_ids');
+      localStorage.removeItem('rsssst_last_app_mobile');
     } catch (e) {}
 
     return { id: legacyRef.id, paymentId: 'EXEMPTED-₹0' };
@@ -324,18 +331,25 @@ export const submitMembershipWithPaymentId = async ({
     }
   }
 
-  // Cache in browser localStorage for instant UI availability
+  // Cache in browser localStorage strictly scoped to user UID
   try {
-    const saved = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
-    if (!saved.includes(newAppRef.id)) saved.unshift(newAppRef.id);
-    localStorage.setItem('rsssst_my_app_ids', JSON.stringify(saved.slice(0, 20)));
-    localStorage.setItem('rsssst_last_app_mobile', phone.trim());
-    localStorage.setItem('rsssst_my_membership_app', JSON.stringify({
-      id: newAppRef.id,
-      ...membershipDocData,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    }));
+    if (uid) {
+      const userAppKey = `rsssst_my_membership_app_${uid}`;
+      const userIdsKey = `rsssst_my_app_ids_${uid}`;
+      const saved = JSON.parse(localStorage.getItem(userIdsKey) || '[]');
+      if (!saved.includes(newAppRef.id)) saved.unshift(newAppRef.id);
+      localStorage.setItem(userIdsKey, JSON.stringify(saved.slice(0, 20)));
+      localStorage.setItem(userAppKey, JSON.stringify({
+        id: newAppRef.id,
+        ...membershipDocData,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      }));
+    }
+    // Purge unscoped cross-user leak keys
+    localStorage.removeItem('rsssst_my_membership_app');
+    localStorage.removeItem('rsssst_my_app_ids');
+    localStorage.removeItem('rsssst_last_app_mobile');
   } catch (e) {}
 
   return { id: newAppRef.id, paymentId: cleanPaymentId };

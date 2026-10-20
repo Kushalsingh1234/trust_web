@@ -147,32 +147,42 @@ export const getApplicationsForUser = async (userUid, userMobile) => {
     }
   }
 
-  // 2. Search by mobile number (bridges applications submitted before creating an account!)
-  const searchMobile = userMobile || (typeof window !== 'undefined' ? localStorage.getItem('rsssst_last_app_mobile') : null);
-  if (searchMobile) {
+  // 2. Search by user's verified mobile number if provided
+  if (userMobile) {
     try {
-      const qMob = query(colRef, where('mobile', '==', searchMobile.trim()));
+      const qMob = query(colRef, where('mobile', '==', userMobile.trim()));
       const snapMob = await getDocs(qMob);
-      snapMob.docs.forEach(d => resultsMap.set(d.id, { id: d.id, ...d.data() }));
+      snapMob.docs.forEach(d => {
+        const data = d.data();
+        if (!userId || data.applicantUid === userId || data.uid === userId) {
+          resultsMap.set(d.id, { id: d.id, ...data });
+        }
+      });
     } catch (e) {
       console.warn("Mobile query failed:", e);
     }
   }
 
-  // 3. Fallback: Check local saved IDs from this device
-  try {
-    const localIds = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
-    for (const appId of localIds) {
-      if (!resultsMap.has(appId)) {
-        try {
-          const docSnap = await getDoc(doc(db, 'membershipApplications', appId));
-          if (docSnap.exists()) {
-            resultsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-          }
-        } catch {}
+  // 3. Fallback: Check local saved IDs from this device strictly matching this user
+  if (userId) {
+    try {
+      const userScopedIdsKey = `rsssst_my_app_ids_${userId}`;
+      const localIds = JSON.parse(localStorage.getItem(userScopedIdsKey) || '[]');
+      for (const appId of localIds) {
+        if (!resultsMap.has(appId)) {
+          try {
+            const docSnap = await getDoc(doc(db, 'membershipApplications', appId));
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data && (data.uid === userId || data.applicantUid === userId)) {
+                resultsMap.set(docSnap.id, { id: docSnap.id, ...data });
+              }
+            }
+          } catch {}
+        }
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
   const list = Array.from(resultsMap.values());
   return list.sort((a, b) => {
@@ -925,20 +935,26 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
       });
     }
 
-    // Fallback: If map is empty and localStorage has a recently submitted application, include it!
-    if (map.size === 0 && typeof window !== 'undefined') {
+    // Fallback: If map is empty and localStorage has a recently submitted application for THIS user, include it!
+    if (map.size === 0 && typeof window !== 'undefined' && effectiveUid) {
       try {
         if (collectionName === 'memberships') {
-          const cached = localStorage.getItem('rsssst_my_membership_app');
+          const userKey = `rsssst_my_membership_app_${effectiveUid}`;
+          const cached = localStorage.getItem(userKey);
           if (cached) {
             const parsed = JSON.parse(cached);
-            map.set(parsed.id || 'LOCAL-MEM', parsed);
+            if (parsed && (parsed.uid === effectiveUid || parsed.applicantUid === effectiveUid)) {
+              map.set(parsed.id || 'LOCAL-MEM', parsed);
+            }
           }
         } else if (collectionName === 'volunteers') {
-          const cached = localStorage.getItem('rsssst_my_volunteer_app');
+          const userKey = `rsssst_my_volunteer_app_${effectiveUid}`;
+          const cached = localStorage.getItem(userKey);
           if (cached) {
             const parsed = JSON.parse(cached);
-            map.set(parsed.id || 'LOCAL-VOL', parsed);
+            if (parsed && (parsed.uid === effectiveUid || parsed.applicantUid === effectiveUid)) {
+              map.set(parsed.id || 'LOCAL-VOL', parsed);
+            }
           }
         }
       } catch (e) {}
@@ -950,6 +966,7 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
       const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0));
       return tB - tA;
     });
+
     callback(combined);
   };
 
@@ -992,16 +1009,20 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
     } catch (e) {}
   });
 
-  // Direct fetch by local document IDs from localStorage
-  if (typeof window !== 'undefined') {
+  // Direct fetch by local document IDs from localStorage (STRICTLY scoped to effectiveUid)
+  if (typeof window !== 'undefined' && effectiveUid) {
     try {
-      const localIds = JSON.parse(localStorage.getItem('rsssst_my_app_ids') || '[]');
+      const userScopedIdsKey = `rsssst_my_app_ids_${effectiveUid}`;
+      const localIds = JSON.parse(localStorage.getItem(userScopedIdsKey) || '[]');
       if (collectionName === 'memberships' && localIds.length > 0) {
         localIds.slice(0, 5).forEach(docId => {
           getDoc(doc(db, 'membershipApplications', docId)).then(snap => {
             if (snap.exists()) {
-              resultsByTarget[`direct_${docId}`] = [{ id: snap.id, ...snap.data() }];
-              emitMerged();
+              const d = snap.data();
+              if (d && (d.uid === effectiveUid || d.applicantUid === effectiveUid)) {
+                resultsByTarget[`direct_${docId}`] = [{ id: snap.id, ...d }];
+                emitMerged();
+              }
             }
           }).catch(() => {});
         });

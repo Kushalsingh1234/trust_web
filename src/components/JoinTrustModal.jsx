@@ -40,7 +40,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
   const [copiedIfsc, setCopiedIfsc] = useState(false);
 
   const [formData, setFormData] = useState({
-    fullName: userProfile?.fullName || userProfile?.displayName || '',
+    fullName: currentUser ? (userProfile?.fullName || userProfile?.displayName || '') : '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -50,9 +50,9 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
     district: 'गोरखपुर (Gorakhpur)',
     state: 'उत्तर प्रदेश (UP)',
     pincode: '273016',
-    mobile: userProfile?.phone || userProfile?.mobile || '',
-    whatsapp: userProfile?.phone || userProfile?.mobile || '',
-    email: userProfile?.email || '',
+    mobile: currentUser ? (userProfile?.phone || userProfile?.mobile || '') : '',
+    whatsapp: currentUser ? (userProfile?.phone || userProfile?.mobile || '') : '',
+    email: currentUser ? (userProfile?.email || '') : '',
     category: defaultCategory || 'catB',
     profession: 'business',
     workplace: '',
@@ -76,15 +76,45 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB' }) =>
   }, []);
 
   useEffect(() => {
-    if (userProfile) {
-      setFormData((prev) => ({
-        ...prev,
-        fullName: prev.fullName || userProfile.fullName || userProfile.displayName || '',
-        mobile: prev.mobile || userProfile.phone || userProfile.mobile || '',
-        email: prev.email || userProfile.email || ''
-      }));
+    if (isOpen) {
+      if (!currentUser) {
+        setFormData({
+          fullName: '',
+          username: '',
+          password: '',
+          confirmPassword: '',
+          fatherHusbandName: '',
+          villageOrLocality: '',
+          postOffice: '',
+          district: 'गोरखपुर (Gorakhpur)',
+          state: 'उत्तर प्रदेश (UP)',
+          pincode: '273016',
+          mobile: '',
+          whatsapp: '',
+          email: '',
+          category: defaultCategory || 'catB',
+          profession: 'business',
+          workplace: '',
+          focusArea: 'sanskar',
+          proofOption: 'utr',
+          utrNumber: '',
+          isConsentGiven: true
+        });
+        setScreenshotFile(null);
+        setScreenshotPreview(null);
+        setErrors({});
+      } else if (userProfile) {
+        setFormData((prev) => ({
+          ...prev,
+          fullName: userProfile.fullName || userProfile.displayName || '',
+          mobile: userProfile.phone || userProfile.mobile || '',
+          whatsapp: userProfile.phone || userProfile.mobile || '',
+          email: userProfile.email || '',
+          category: defaultCategory || 'catB'
+        }));
+      }
     }
-  }, [userProfile]);
+  }, [isOpen, currentUser, userProfile, defaultCategory]);
 
   if (!isOpen) return null;
 

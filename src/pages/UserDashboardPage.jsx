@@ -267,8 +267,23 @@ export const UserDashboardPage = () => {
   };
 
   // Compute effective memberships (seamlessly combines Firestore realtime with user profile & local cache)
+  // Reset local lists when currentUser changes to avoid cross-user bleed
+  useEffect(() => {
+    setHelpRequests([]);
+    setMemberships([]);
+    setVolunteers([]);
+    setDonations([]);
+  }, [currentUser?.uid]);
+
+  // Compute effective memberships (seamlessly combines Firestore realtime with user profile & local cache)
   const effectiveMemberships = React.useMemo(() => {
-    if (memberships.length > 0) return memberships;
+    // Strictly isolate to current logged-in user
+    const userOwnedMemberships = memberships.filter((m) => {
+      if (!currentUser?.uid) return false;
+      return m.uid === currentUser.uid || m.applicantUid === currentUser.uid;
+    });
+
+    if (userOwnedMemberships.length > 0) return userOwnedMemberships;
 
     // Check if userProfile indicates an active or pending membership
     if (userProfile?.isMember || userProfile?.memberId || userProfile?.hasAppliedMembership || userProfile?.membershipApplicationId || userProfile?.membershipStatus) {
@@ -290,13 +305,14 @@ export const UserDashboardPage = () => {
       }];
     }
 
-    // Check localStorage cache from recent submission
-    if (typeof window !== 'undefined') {
+    // Check localStorage cache from recent submission strictly for THIS user
+    if (typeof window !== 'undefined' && currentUser?.uid) {
       try {
-        const cached = localStorage.getItem('rsssst_my_membership_app');
+        const userScopedKey = `rsssst_my_membership_app_${currentUser.uid}`;
+        const cached = localStorage.getItem(userScopedKey);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed && (parsed.id || parsed.fullName)) {
+          if (parsed && (parsed.uid === currentUser.uid || parsed.applicantUid === currentUser.uid)) {
             return [parsed];
           }
         }
@@ -304,11 +320,16 @@ export const UserDashboardPage = () => {
     }
 
     return [];
-  }, [memberships, userProfile]);
+  }, [memberships, userProfile, currentUser?.uid]);
 
   // Compute effective volunteers
   const effectiveVolunteers = React.useMemo(() => {
-    if (volunteers.length > 0) return volunteers;
+    const userOwnedVolunteers = volunteers.filter((v) => {
+      if (!currentUser?.uid) return false;
+      return v.uid === currentUser.uid || v.applicantUid === currentUser.uid;
+    });
+
+    if (userOwnedVolunteers.length > 0) return userOwnedVolunteers;
 
     if (userProfile?.hasAppliedVolunteer || userProfile?.volunteerApplicationId || userProfile?.role === 'volunteer') {
       return [{
@@ -322,18 +343,21 @@ export const UserDashboardPage = () => {
       }];
     }
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && currentUser?.uid) {
       try {
-        const cached = localStorage.getItem('rsssst_my_volunteer_app');
+        const userScopedKey = `rsssst_my_volunteer_app_${currentUser.uid}`;
+        const cached = localStorage.getItem(userScopedKey);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed) return [parsed];
+          if (parsed && (parsed.uid === currentUser.uid || parsed.applicantUid === currentUser.uid)) {
+            return [parsed];
+          }
         }
       } catch (e) {}
     }
 
     return [];
-  }, [volunteers, userProfile]);
+  }, [volunteers, userProfile, currentUser?.uid]);
 
   // Compute membership status
   const approvedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'approved');

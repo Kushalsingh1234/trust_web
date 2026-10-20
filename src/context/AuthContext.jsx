@@ -232,6 +232,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('rsssst_user_profile', JSON.stringify(profile));
       localStorage.removeItem('rsssst_admin_pin_verified');
       sessionStorage.removeItem('rsssst_admin_pin_verified');
+      localStorage.removeItem('rsssst_my_membership_app');
+      localStorage.removeItem('rsssst_my_volunteer_app');
+      localStorage.removeItem('rsssst_my_app_ids');
+      localStorage.removeItem('rsssst_last_app_mobile');
     }
 
     setCurrentUser(user);
@@ -270,6 +274,8 @@ export const AuthProvider = ({ children }) => {
 
     const userCredential = await signInWithEmailAndPassword(auth, authEmail, password);
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('rsssst_my_membership_app');
+      localStorage.removeItem('rsssst_my_volunteer_app');
       localStorage.setItem('rsssst_auth_user', JSON.stringify({
         uid: userCredential.user.uid,
         email: userCredential.user.email,
@@ -292,11 +298,23 @@ export const AuthProvider = ({ children }) => {
 
   // Logout
   const logout = async () => {
+    const prevUid = currentUser?.uid;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('rsssst_auth_user');
       localStorage.removeItem('rsssst_user_profile');
       localStorage.removeItem('rsssst_admin_pin_verified');
       sessionStorage.removeItem('rsssst_admin_pin_verified');
+      localStorage.removeItem('rsssst_my_membership_app');
+      localStorage.removeItem('rsssst_my_volunteer_app');
+      localStorage.removeItem('rsssst_my_app_ids');
+      localStorage.removeItem('rsssst_last_app_mobile');
+      localStorage.removeItem('rsssst_my_payment_ids');
+      localStorage.removeItem('rsssst_my_help_ids');
+      if (prevUid) {
+        localStorage.removeItem(`rsssst_my_membership_app_${prevUid}`);
+        localStorage.removeItem(`rsssst_my_volunteer_app_${prevUid}`);
+        localStorage.removeItem(`rsssst_my_app_ids_${prevUid}`);
+      }
     }
     setAdminPinVerified(false);
     await signOut(auth);
@@ -304,6 +322,18 @@ export const AuthProvider = ({ children }) => {
     setUserProfile(null);
     setIsAdmin(false);
   };
+
+  // One-time cleanup of legacy un-scoped keys
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('rsssst_my_membership_app');
+      localStorage.removeItem('rsssst_my_volunteer_app');
+      localStorage.removeItem('rsssst_my_app_ids');
+      localStorage.removeItem('rsssst_last_app_mobile');
+      localStorage.removeItem('rsssst_my_payment_ids');
+      localStorage.removeItem('rsssst_my_help_ids');
+    }
+  }, []);
 
   // Refresh user data helper
   const refreshUserData = async () => {
