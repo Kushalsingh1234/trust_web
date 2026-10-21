@@ -85,7 +85,8 @@ import {
   Sparkles,
   Radio,
   Loader2,
-  Smartphone
+  Smartphone,
+  MapPin
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
@@ -1632,9 +1633,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               )}
             </div>
 
-            {/* Data Table */}
+            {/* Data Table (Desktop) & Cards (Mobile) */}
             <div className="bg-white rounded-2xl border border-[#E9B44C]/30 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm border-collapse">
                   <thead>
                     <tr className="bg-[#FFF8EF] border-b border-[#E9B44C]/30 text-[#382719] font-black uppercase text-[11px] tracking-wider">
@@ -2133,6 +2134,471 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Vertical Cards View (under md) */}
+              <div className="block md:hidden p-3 space-y-3 bg-[#FAF6EE]/30">
+                {currentDisplayData.length === 0 ? (
+                  <div className="py-10 px-4 text-center text-[#888888] bg-white rounded-xl border border-dashed border-[#E9B44C]/40 text-xs sm:text-sm">
+                    {lang === 'hi' ? 'खोज या फ़िल्टर के अनुसार कोई रिकॉर्ड नहीं मिला।' : 'No records found matching filters.'}
+                  </div>
+                ) : (
+                  currentDisplayData.map((item) => {
+                    const status = (item.status || 'pending').toLowerCase();
+                    const name = item.fullName || item.donorName || item.payerName || 'Unknown';
+                    const phone = item.phone || item.donorPhone || item.payerMobile || '—';
+                    const isRemoved = item.status === 'removed';
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-xl border border-[#E9B44C]/35 shadow-xs p-3.5 space-y-2.5 transition-all text-left"
+                      >
+                        {/* 1. Header: Date/ID + Status Badge */}
+                        <div className="flex items-center justify-between gap-2 text-xs">
+                          {activeTab === 'members' ? (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono text-xs font-black text-[#382719] bg-[#FFF8EF] px-2 py-0.5 rounded border border-[#E9B44C]/40">
+                                {item.memberId || 'N/A'}
+                              </span>
+                              {isRemoved ? (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                                  {lang === 'hi' ? 'रद्द सदस्यता' : 'Revoked'}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                  {lang === 'hi' ? 'सक्रिय सदस्य' : 'Active'}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs text-[#777777]">
+                              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="font-medium">{formatDate(item.createdAt || item.submittedAt)}</span>
+                            </div>
+                          )}
+
+                          {/* Status Pill */}
+                          {status === 'approved' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>{lang === 'hi' ? 'स्वीकृत' : 'Approved'}</span>
+                            </span>
+                          )}
+                          {status === 'rejected' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                              <XCircle className="w-3 h-3 text-rose-600" />
+                              <span>{lang === 'hi' ? 'अस्वीकृत' : 'Rejected'}</span>
+                            </span>
+                          )}
+                          {status === 'pending' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shrink-0">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              <span>{lang === 'hi' ? 'लंबित' : 'Pending'}</span>
+                            </span>
+                          )}
+                          {status === 'removed' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                              {lang === 'hi' ? 'रद्द' : 'Revoked'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 2. Applicant / Member Block */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {(activeTab === 'memberships' || activeTab === 'members') && (
+                                <MemberBadge
+                                  category={item.category || 'catB'}
+                                  memberId={item.memberId}
+                                  variant="inline"
+                                  lang={lang}
+                                />
+                              )}
+                              <h4 className="font-black text-sm text-[#382719] break-words">{name}</h4>
+                              {item.memberType === 'volunteer' || item.category === 'catC' ? (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  {lang === 'hi' ? '🤝 स्वयंसेवक' : '🤝 Volunteer'}
+                                </span>
+                              ) : item.category === 'catA' ? (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">
+                                  {lang === 'hi' ? 'निराश्रित/सहायता' : 'Cat A'}
+                                </span>
+                              ) : (activeTab === 'memberships' || activeTab === 'members') ? (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                  {lang === 'hi' ? '🛡️ सदस्य' : '🛡️ Member'}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-[11px] text-[#777777] flex-wrap">
+                              {item.username && (
+                                <span className="font-mono text-secondary">@{item.username}</span>
+                              )}
+                              {item.uid && !item.username && (
+                                <span className="font-mono text-[10px] text-[#888888]">UID: {item.uid.slice(0, 8)}...</span>
+                              )}
+                              {(item.district || item.cityOrDistrict || item.state) && (
+                                <span className="inline-flex items-center gap-0.5 text-[#666666]">
+                                  <MapPin className="w-3 h-3 text-[#A88B72] shrink-0" />
+                                  {[item.district || item.cityOrDistrict, item.state].filter(Boolean).join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Direct Phone / Call link */}
+                          {phone && phone !== '—' && (
+                            <a
+                              href={`tel:${phone}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FFF8EF] border border-[#E9B44C]/40 text-[#382719] font-mono text-xs font-bold shrink-0 hover:bg-[#FFE8CC] transition-colors"
+                              title={lang === 'hi' ? 'कॉल करें' : 'Call'}
+                            >
+                              <Phone className="w-3 h-3 text-primary" />
+                              <span>{phone}</span>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* 3. Details / Financial Block */}
+                        {activeTab === 'memberships' && (
+                          <div className="bg-[#FFFDF9] rounded-lg p-2.5 border border-[#E9B44C]/25 text-xs space-y-1">
+                            {item.category === 'catA' ? (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'सहायता प्रकार:' : 'Help Type:'}</span>
+                                  <span className="font-bold text-primary">{item.helpType || 'पारिवारिक सहायता'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'शुल्क:' : 'Fee:'}</span>
+                                  <span className="font-bold text-emerald-700">{lang === 'hi' ? 'निःशुल्क (₹0)' : 'Exempted (₹0)'}</span>
+                                </div>
+                                {item.monthlyIncome && (
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'मासिक आय:' : 'Monthly Income:'}</span>
+                                    <span className="font-medium text-[#454545]">{item.monthlyIncome}</span>
+                                  </div>
+                                )}
+                                {item.assistanceDescription && (
+                                  <p className="text-[11px] text-[#666666] italic bg-white p-1.5 rounded border border-gray-100 mt-1">
+                                    "{item.assistanceDescription}"
+                                  </p>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-center justify-between flex-wrap gap-1">
+                                  <span className="text-[#777777] font-medium">{lang === 'hi' ? 'भुगतान ID:' : 'Payment ID:'}</span>
+                                  <span className="font-mono font-bold text-primary">{item.paymentId || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'राशि:' : 'Amount:'}</span>
+                                  <div className="font-bold text-[#382719]">
+                                    ₹{item.claimedAmount || 200}
+                                    {item.verifiedAmount && (
+                                      <span className="text-emerald-700 ml-1 font-semibold">({lang === 'hi' ? 'सत्यापित' : 'Verified'}: ₹{item.verifiedAmount})</span>
+                                    )}
+                                  </div>
+                                </div>
+                                {item.profession && (
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'व्यवसाय:' : 'Profession:'}</span>
+                                    <span className="font-medium text-[#454545] capitalize">{item.profession}</span>
+                                  </div>
+                                )}
+                                {item.availability && (
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'समय:' : 'Time:'}</span>
+                                    <span className="font-medium text-[#454545]">{item.availability}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {activeTab === 'donations' && (
+                          <div className="bg-[#FFFDF9] rounded-lg p-2.5 border border-[#E9B44C]/25 text-xs space-y-1">
+                            <div className="flex items-center justify-between flex-wrap gap-1">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'भुगतान / UTR:' : 'Payment / UTR:'}</span>
+                              <span className="font-mono font-bold text-primary">{item.paymentId || item.utrNumber || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'दान राशि:' : 'Donation Amt:'}</span>
+                              <div className="font-bold text-[#382719]">
+                                ₹{item.claimedAmount || item.amount || 0}
+                                {item.verifiedAmount && (
+                                  <span className="text-emerald-700 ml-1 font-semibold">({lang === 'hi' ? 'सत्यापित' : 'Verified'}: ₹{item.verifiedAmount})</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'प्रयोजन:' : 'Purpose:'}</span>
+                              <span className="font-semibold text-primary uppercase">{item.purpose || 'General Samarpan'}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {activeTab === 'helpRequests' && (
+                          <div className="bg-[#FFFDF9] rounded-lg p-2.5 border border-[#E9B44C]/25 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'सहायता श्रेणी:' : 'Help Category:'}</span>
+                              <span className="font-bold text-primary">{item.helpType || item.category}</span>
+                            </div>
+                            {item.amountNeeded && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[#777777]">{lang === 'hi' ? 'आवश्यक राशि:' : 'Amount Needed:'}</span>
+                                <span className="font-mono font-bold text-[#382719]">₹{Number(item.amountNeeded).toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+                            {item.urgency && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[#777777]">{lang === 'hi' ? 'प्राथमिकता:' : 'Urgency:'}</span>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  item.urgency === 'immediate' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {item.urgency}
+                                </span>
+                              </div>
+                            )}
+                            {(item.description || item.assistanceDescription) && (
+                              <p className="text-[11px] text-[#666666] italic bg-white p-1.5 rounded border border-gray-100 mt-1 line-clamp-2">
+                                "{item.description || item.assistanceDescription}"
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {activeTab === 'volunteers' && (
+                          <div className="bg-[#FFFDF9] rounded-lg p-2.5 border border-[#E9B44C]/25 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'स्थान:' : 'City/District:'}</span>
+                              <span className="font-bold text-[#382719]">{item.cityOrDistrict || 'Gorakhpur'}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[#777777]">{lang === 'hi' ? 'समय उपलब्धता:' : 'Availability:'}</span>
+                              <span className="font-medium text-[#454545]">{item.availability === 'full_time' ? (lang === 'hi' ? 'पूर्णकालिक' : 'Full Time') : (lang === 'hi' ? 'सप्ताहांत (Weekends)' : 'Weekends')}</span>
+                            </div>
+                            {item.serviceAreas && item.serviceAreas.length > 0 && (
+                              <div className="text-[11px] text-[#666666]">
+                                <span className="text-[#777777]">{lang === 'hi' ? 'सेवा क्षेत्र: ' : 'Wings: '}</span>
+                                <span className="font-medium">{item.serviceAreas.join(', ')}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {activeTab === 'members' && (
+                          <div className="bg-[#FFFDF9] rounded-lg p-2.5 border border-[#E9B44C]/25 text-xs space-y-1">
+                            {item.category === 'catA' ? (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'सहायता:' : 'Assistance:'}</span>
+                                  <span className="font-bold text-emerald-700">{item.helpType || 'पारिवारिक सहायता'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'स्वीकृति दिनांक:' : 'Approved Date:'}</span>
+                                  <span className="text-[#555555]">{formatDate(item.memberSince || item.approvedAt || item.createdAt)}</span>
+                                </div>
+                              </>
+                            ) : item.category === 'catC' ? (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'उपलब्धता:' : 'Availability:'}</span>
+                                  <span className="font-bold text-blue-800">{item.availability || 'Weekends'}</span>
+                                </div>
+                                {item.serviceAreas && item.serviceAreas.length > 0 && (
+                                  <div className="text-[11px] text-[#555555]">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'विंग्स: ' : 'Wings: '}</span>
+                                    <span>{item.serviceAreas.join(', ')}</span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {item.profession && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'व्यवसाय:' : 'Profession:'}</span>
+                                    <span className="font-bold text-[#B85A09]">{item.profession}</span>
+                                  </div>
+                                )}
+                                {item.workplace && (
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="text-[#777777]">{lang === 'hi' ? 'कार्यक्षेत्र:' : 'Workplace:'}</span>
+                                    <span className="text-[#555555] truncate max-w-[200px]">{item.workplace}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[#777777]">{lang === 'hi' ? 'भुगतान ID:' : 'Payment ID:'}</span>
+                                  <span className="font-mono font-bold text-primary">{item.paymentId || 'N/A'}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 4. Action Buttons Footer: 0 horizontal scrolling! */}
+                        {status === 'pending' && (
+                          <div className="pt-2 border-t border-[#E9B44C]/20 flex items-center gap-2">
+                            {/* Approve Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenApprove(item)}
+                              className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                            >
+                              <Check className="w-4 h-4 stroke-[3]" />
+                              <span>{lang === 'hi' ? 'स्वीकार करें' : 'Approve'}</span>
+                            </button>
+
+                            {/* Reject Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReject(item)}
+                              className="flex-1 py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                            >
+                              <X className="w-4 h-4 stroke-[3]" />
+                              <span>{lang === 'hi' ? 'अस्वीकार करें' : 'Reject'}</span>
+                            </button>
+
+                            {/* View Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenView(item)}
+                              className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#382719] border border-gray-200 transition-all flex items-center justify-center cursor-pointer shrink-0"
+                              title={lang === 'hi' ? 'विवरण देखें' : 'View Details'}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+
+                            {/* WhatsApp Button */}
+                            {(item.whatsapp || item.mobile || item.phone) && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPersonalWhatsApp(item)}
+                                className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+                                title={lang === 'hi' ? 'व्हाट्सएप संदेश भेजें' : 'Send WhatsApp Message'}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {status === 'approved' && (
+                          <div className="pt-2 border-t border-[#E9B44C]/20 flex items-center gap-2 flex-wrap">
+                            {/* Receipt button or receipt status */}
+                            {(activeTab === 'memberships' || activeTab === 'donations' || activeTab === 'volunteers' || activeTab === 'members') && (() => {
+                              const isExempted = item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted' || item.category === 'catA';
+                              if (isExempted) {
+                                return (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {lang === 'hi' ? 'निःशुल्क (₹0)' : 'Exempted (₹0)'}
+                                  </span>
+                                );
+                              }
+                              if (item.receiptSent) {
+                                return (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>{lang === 'hi' ? 'रसीद भेजी गई' : 'Receipt Sent'}</span>
+                                  </span>
+                                );
+                              }
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSendReceipt(item, activeTab === 'members' ? 'membershipApplications' : activeTab)}
+                                  disabled={isProcessing}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs transition-all cursor-pointer flex-1 justify-center"
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  <span>{lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt'}</span>
+                                </button>
+                              );
+                            })()}
+
+                            {/* Download receipt if available */}
+                            {item.receiptNumber && (
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadReceipt(item)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold transition-all cursor-pointer"
+                                title={lang === 'hi' ? 'रसीद डाउनलोड करें' : 'Download Receipt'}
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>{lang === 'hi' ? 'रसीद' : 'Receipt'}</span>
+                              </button>
+                            )}
+
+                            {/* WhatsApp */}
+                            {(item.whatsapp || item.mobile || item.phone) && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPersonalWhatsApp(item)}
+                                className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs transition-all flex items-center justify-center cursor-pointer shrink-0"
+                                title={lang === 'hi' ? 'व्हाट्सएप संदेश भेजें' : 'Send WhatsApp'}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* View */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenView(item)}
+                              className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#382719] border border-gray-200 transition-all flex items-center justify-center cursor-pointer shrink-0"
+                              title={lang === 'hi' ? 'विवरण देखें' : 'View Details'}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+
+                            {/* Cancel / Revoke Membership if applicable */}
+                            {(activeTab === 'memberships' || activeTab === 'members') && !isRemoved && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenRemoveMember(item)}
+                                className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-all flex items-center justify-center cursor-pointer ml-auto"
+                                title={lang === 'hi' ? 'सदस्यता रद्द करें' : 'Revoke Membership'}
+                              >
+                                <UserX className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {(status === 'rejected' || status === 'removed') && (
+                          <div className="pt-2 border-t border-[#E9B44C]/20 flex items-center justify-between gap-2">
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 border border-gray-300">
+                              {status === 'removed' ? (lang === 'hi' ? 'रद्द सदस्यता' : 'Cancelled') : (lang === 'hi' ? 'अस्वीकृत' : 'Rejected')}
+                            </span>
+
+                            <div className="flex items-center gap-1.5">
+                              {(item.whatsapp || item.mobile || item.phone) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenPersonalWhatsApp(item)}
+                                  className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-all flex items-center justify-center cursor-pointer"
+                                  title={lang === 'hi' ? 'व्हाट्सएप संदेश भेजें' : 'Send WhatsApp'}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenView(item)}
+                                className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#382719] border border-gray-200 transition-all flex items-center justify-center cursor-pointer"
+                                title={lang === 'hi' ? 'विवरण देखें' : 'View Details'}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </>
