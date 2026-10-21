@@ -34,11 +34,15 @@ import {
   connectAdminWhatsApp,
   disconnectAdminWhatsApp,
   getLocalWhatsAppSession,
-  formatNoticeForWhatsApp
+  formatNoticeForWhatsApp,
+  checkBaileysServerStatus,
+  broadcastNoticeViaBaileys,
+  sendPersonalMessageViaBaileys
 } from '../firebase/whatsappService';
 import { uploadImageToCloudinary } from '../utils/cloudinaryService';
 import WhatsAppBroadcastModal from '../components/WhatsAppBroadcastModal';
 import WhatsAppPersonalModal from '../components/WhatsAppPersonalModal';
+import WhatsAppDeviceModal from '../components/WhatsAppDeviceModal';
 import {
   ShieldCheck,
   Search,
@@ -172,6 +176,20 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   const [personalWhatsAppModalOpen, setPersonalWhatsAppModalOpen] = useState(false);
   const [personalRecipient, setPersonalRecipient] = useState(null);
 
+  // Baileys WhatsApp Engine Device Modal & Server Status
+  const [deviceModalOpen, setDeviceModalOpen] = useState(false);
+  const [baileysServerState, setBaileysServerState] = useState({ online: false, connected: false, phoneNumber: null });
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      const s = await checkBaileysServerStatus();
+      setBaileysServerState(s);
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Payment Settings Form State
   const [settingsForm, setSettingsForm] = useState(DEFAULT_PAYMENT_SETTINGS);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -284,13 +302,36 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       const recipients = getBroadcastRecipients(noticeTargetAudience);
 
       if (sendToWhatsAppOnPublish && recipients.length > 0) {
-        setCurrentBroadcastNotice({
+        const fullNotice = {
           ...created,
+          title: announcementForm.title.trim(),
+          content: announcementForm.content.trim(),
+          category: announcementForm.category,
           targetAudience: noticeTargetAudience,
           imageUrl: uploadedImageUrl
-        });
-        setBroadcastRecipients(recipients);
-        setBroadcastModalOpen(true);
+        };
+        const formattedMsg = formatNoticeForWhatsApp(fullNotice, whatsappSettings.adminName || 'ट्रस्ट प्रबंधकारिणी');
+
+        if (baileysServerState.connected) {
+          // AUTOMATED DIRECT BROADCAST - SwaadSevak Style
+          toast.info(lang === 'hi' ? `व्हाट्सएप सर्वर द्वारा ${recipients.length} सदस्यों को स्वचालित संदेश भेजा जा रहा है...` : `Automating WhatsApp broadcast to ${recipients.length} recipients...`);
+          try {
+            await broadcastNoticeViaBaileys(recipients, formattedMsg, uploadedImageUrl, fullNotice.title);
+            toast.success(lang === 'hi' ? `✅ सभी ${recipients.length} सदस्यों एवं स्वयंसेवकों के व्हाट्सएप पर संदेश तुरंत पहुंच गया!` : `✅ Notice successfully broadcast to all ${recipients.length} recipients on WhatsApp!`);
+          } catch (bErr) {
+            console.error('Automated broadcast error:', bErr);
+            toast.error('Automated send error: ' + bErr.message);
+            setCurrentBroadcastNotice(fullNotice);
+            setBroadcastRecipients(recipients);
+            setBroadcastModalOpen(true);
+          }
+        } else {
+          // Device not connected yet -> prompt admin to link device via QR Code!
+          toast.info(lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप अभी लिंक नहीं है। कृपया QR कोड स्कैन करें।' : 'WhatsApp is not linked. Please scan QR Code to link your device.');
+          setDeviceModalOpen(true);
+          setCurrentBroadcastNotice(fullNotice);
+          setBroadcastRecipients(recipients);
+        }
       }
 
       setAnnouncementForm({ title: '', content: '', category: 'general' });
@@ -306,8 +347,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     }
   };
 
-  const handleOpenNoticeBroadcast = (notice) => {
+  const handleOpenNoticeBroadcast = async (notice) => {
     const recipients = getBroadcastRecipients(notice.targetAudience || 'both');
+    const formattedMsg = formatNoticeForWhatsApp(notice, whatsappSettings.adminName || 'ट्रस्ट प्रबंधकारिणी');
+
+    if (baileysServerState.connected) {
+      if (window.confirm(lang === 'hi' ? `क्या आप इस सूचना को सभी ${recipients.length} सदस्यों एवं स्वयंसेवकों के व्हाट्सएप पर तुरंत स्वचालित रूप से भेजना चाहते हैं?` : `Broadcast this notice to all ${recipients.length} recipients on WhatsApp?`)) {
+        toast.info(lang === 'hi' ? `स्वचालित प्रसारण शुरू हो गया (${recipients.length} प्राप्तकर्ता)...` : `Broadcasting to ${recipients.length} recipients...`);
+        try {
+          await broadcastNoticeViaBaileys(recipients, formattedMsg, notice.imageUrl, notice.title);
+          toast.success(lang === 'hi' ? `✅ सभी ${recipients.length} सदस्यों के व्हाट्सएप पर संदेश सफलतापूर्वक भेजा गया!` : `Notice broadcast to ${recipients.length} recipients!`);
+          return;
+        } catch (err) {
+          toast.error(err.message);
+        }
+      }
+    }
+
     setCurrentBroadcastNotice(notice);
     setBroadcastRecipients(recipients);
     setBroadcastModalOpen(true);
@@ -873,37 +929,41 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-black text-base sm:text-lg text-[#382719] font-hindi-heading">
-                        {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप कनेक्शन (Admin WhatsApp)' : 'Admin WhatsApp Connection'}
+                        {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप कनेक्शन (SwaadSevak Engine)' : 'Admin WhatsApp Connection (Baileys Engine)'}
                       </h3>
-                      {whatsappSettings?.isConnected ? (
+                      {baileysServerState.connected ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>{lang === 'hi' ? 'सक्रिय रूप से कनेक्टेड' : 'Connected & Active'}</span>
+                          <span>{baileysServerState.phoneNumber ? `लिंक है: ${baileysServerState.phoneNumber}` : (lang === 'hi' ? 'सक्रिय रूप से कनेक्टेड' : 'Connected & Active')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                          <span>{lang === 'hi' ? 'कनेक्टेड नहीं है' : 'Not Connected'}</span>
+                          <span>{lang === 'hi' ? 'डिवाइस लिंक नहीं है' : 'Device Not Linked'}</span>
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-[#666666] mt-0.5">
                       {lang === 'hi'
-                        ? 'एक बार कनेक्ट करने के बाद यह हमेशा सक्रिय रहेगा जब तक आप स्वयं डिस्कनेक्ट नहीं करते।'
-                        : 'Session remains persistently active across all reloads until explicitly logged out.'}
+                        ? 'QR कोड से एक बार लिंक करने के बाद आपके व्हाट्सएप से सभी नोटिस व संदेश तुरंत पृष्ठभूमि में स्वचालित रूप से जाएंगे।'
+                        : 'Once linked via QR code, all notices are automatically dispatched directly from your WhatsApp in the background.'}
                     </p>
                   </div>
                 </div>
 
-                {whatsappSettings?.isConnected && (
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={handleDisconnectWhatsApp}
-                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-center"
+                    onClick={() => setDeviceModalOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md hover:scale-102 cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5" />
-                    <span>{lang === 'hi' ? 'व्हाट्सएप डिस्कनेक्ट करें' : 'Disconnect WhatsApp'}</span>
+                    <QrCode className="w-4 h-4" />
+                    <span>
+                      {baileysServerState.connected
+                        ? (lang === 'hi' ? 'डिवाइस प्रबंधित करें / परीक्षण संदेश' : 'Manage Device / Test Send')
+                        : (lang === 'hi' ? '📱 QR कोड स्कैन कर लिंक करें' : '📱 Scan QR Code to Link')}
+                    </span>
                   </button>
-                )}
+                </div>
               </div>
 
               <form onSubmit={handleConnectWhatsApp} className="space-y-4">
@@ -2675,6 +2735,19 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         }}
         recipient={personalRecipient}
         adminSettings={whatsappSettings}
+      />
+
+      {/* WhatsApp Device Connection Modal with Baileys QR Code (SwaadSevak Engine) */}
+      <WhatsAppDeviceModal
+        isOpen={deviceModalOpen}
+        onClose={() => setDeviceModalOpen(false)}
+        onStatusChange={(connected, phone) => {
+          setBaileysServerState({
+            online: true,
+            connected,
+            phoneNumber: phone
+          });
+        }}
       />
 
     </div>

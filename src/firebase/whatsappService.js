@@ -334,3 +334,66 @@ export const sendViaWhatsAppApi = async (toPhone, text, imageUrl, settings) => {
 
   throw new Error(`Provider ${settings.provider} is not an automated API. Use Direct dispatch.`);
 };
+
+/**
+ * Check if the automated Baileys WhatsApp server is active & connected
+ */
+export const checkBaileysServerStatus = async () => {
+  try {
+    const res = await fetch('/api/whatsapp/status');
+    if (!res.ok) return { online: false, connected: false };
+    const json = await res.json();
+    return {
+      online: true,
+      connected: json?.data?.status === 'CONNECTED',
+      status: json?.data?.status || 'DISCONNECTED',
+      phoneNumber: json?.data?.phoneNumber
+    };
+  } catch (err) {
+    return { online: false, connected: false, status: 'OFFLINE' };
+  }
+};
+
+/**
+ * Broadcast notice to all members and volunteers directly via Baileys automated engine
+ */
+export const broadcastNoticeViaBaileys = async (recipients, message, imageUrl = null, title = '') => {
+  const res = await fetch('/api/whatsapp/broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      recipients,
+      message,
+      imageUrl,
+      title
+    })
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to broadcast via Baileys engine.');
+  }
+  return json;
+};
+
+/**
+ * Send personal message via Baileys automated socket
+ */
+export const sendPersonalMessageViaBaileys = async (phone, message, imageUrl = null) => {
+  const res = await fetch('/api/whatsapp/send-personal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      phone,
+      message,
+      imageUrl
+    })
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to send personal message via Baileys.');
+  }
+  return json;
+};
+

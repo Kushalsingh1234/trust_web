@@ -207,26 +207,50 @@ export const WhatsAppPersonalModal = ({
           </button>
 
           <div className="flex items-center gap-2">
-            {adminSettings?.provider && adminSettings.provider !== 'direct' && (
-              <button
-                type="button"
-                onClick={handleSendViaApi}
-                disabled={isSendingApi || !phone}
-                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all disabled:opacity-50"
-              >
-                {isSendingApi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                <span>{lang === 'hi' ? 'ऑटो भेजें' : 'Send via API'}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={async () => {
+                if (!phone) {
+                  toast.error(lang === 'hi' ? 'व्हाट्सएप नंबर उपलब्ध नहीं है' : 'No phone number available');
+                  return;
+                }
+                setIsSendingApi(true);
+                try {
+                  const res = await fetch('/api/whatsapp/send-personal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, message: messageText })
+                  });
+                  const json = await res.json();
+                  if (json.success) {
+                    toast.success(lang === 'hi' ? 'व्हाट्सएप संदेश तुरंत भेजा गया!' : 'WhatsApp message sent instantly via linked device!');
+                    onClose();
+                  } else {
+                    toast.error(json.message || 'त्रुटि: सीधे चैट खोलें');
+                    handleSendDirect();
+                  }
+                } catch (err) {
+                  handleSendDirect();
+                } finally {
+                  setIsSendingApi(false);
+                }
+              }}
+              disabled={isSendingApi || !phone}
+              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all hover:scale-102 disabled:opacity-50 cursor-pointer"
+              title="Send instantly from linked admin WhatsApp without opening chat window"
+            >
+              {isSendingApi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              <span>{lang === 'hi' ? 'तुरंत स्वचालित भेजें (Instant Send)' : 'Instant Automated Send'}</span>
+            </button>
 
             <button
               type="button"
               onClick={handleSendDirect}
               disabled={!phone}
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-saffron transition-all disabled:opacity-50"
+              className="p-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all disabled:opacity-50"
+              title="Open in WhatsApp Web"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>{lang === 'hi' ? 'व्हाट्सएप चैट खोलें' : 'Open WhatsApp Chat'}</span>
+              <ExternalLink className="w-4 h-4" />
             </button>
           </div>
         </div>

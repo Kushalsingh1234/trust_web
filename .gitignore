@@ -8,3 +8,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# WhatsApp Baileys Local Sessions
+storage
+storage/
+storage/whatsapp_sessions/
