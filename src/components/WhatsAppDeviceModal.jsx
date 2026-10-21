@@ -174,10 +174,10 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
             </div>
             <div>
               <h3 className="font-black text-sm sm:text-base font-hindi-heading">
-                व्यवस्थापक व्हाट्सएप डिवाइस कनेक्शन (Baileys Engine)
+                व्यवस्थापक व्हाट्सएप डिवाइस कनेक्शन (WhatsApp Device Connection)
               </h3>
               <p className="text-[11px] text-emerald-100">
-                SwaadSevak स्टाइल स्वचालित पृष्ठभूमि संदेश प्रणाली
+                स्वचालित संदेश एवं सूचना प्रसारण प्रणाली (Automated WhatsApp Broadcast)
               </p>
             </div>
           </div>
@@ -311,17 +311,17 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-left text-xs space-y-2">
                   <div className="flex items-center gap-2 text-amber-900 font-bold">
                     <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span>व्हाट्सएप बैकग्राउंड सर्वर (Node.js Engine) कनेक्ट नहीं है</span>
+                    <span>व्हाट्सएप सर्वर कनेक्ट नहीं है (Server Offline)</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-normal">
-                    डेप्लॉयड वेबसाइट (Vercel) से ऑटोमेशन चलाने के लिए बैकग्राउंड Node.js सर्वर (Render / Railway / ngrok) का URL आवश्यक है। यदि आप लोकल कंप्यूटर पर हैं, तो <code>http://localhost:5002</code> दर्ज करें।
+                    सर्वर से कनेक्शन नहीं हो पा रहा है। कृपया बैकएंड सर्वर सक्रिय होने की जांच करें या नीचे नया सर्वर URL दर्ज करें।
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowServerConfig(!showServerConfig)}
                     className="text-[11px] font-bold text-emerald-800 underline hover:text-emerald-950 block"
                   >
-                    {showServerConfig ? '▲ सर्वर URL सेटिंग छुपाएं' : '⚙️ बैकएंड सर्वर URL दर्ज करें'}
+                    {showServerConfig ? '▲ सर्वर URL सेटिंग छुपाएं' : '⚙️ बैकएंड सर्ver URL दर्ज करें'}
                   </button>
                 </div>
               )}
@@ -329,14 +329,14 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
               {showServerConfig && (
                 <div className="p-3 bg-gray-50 border border-gray-300 rounded-2xl text-left space-y-2 text-xs animate-fadeIn">
                   <label className="block text-[11px] font-bold text-gray-700">
-                    व्हाट्सएप बैकएंड API URL (e.g. Render / Railway / Localhost)
+                    बैकएंड सर्वर URL (Backend Server URL)
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="url"
                       value={serverUrlInput}
                       onChange={(e) => setServerUrlInput(e.target.value)}
-                      placeholder="e.g. https://your-server.onrender.com या http://localhost:5002"
+                      placeholder="e.g. https://your-server-domain.com"
                       className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40 focus:outline-none bg-white"
                     />
                     <button
@@ -378,7 +378,7 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
         <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 text-gray-500">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>End-to-End Encrypted via Baileys Multi-File Auth</span>
+            <span>End-to-End Encrypted Secure Connection</span>
           </div>
           <button
             type="button"
