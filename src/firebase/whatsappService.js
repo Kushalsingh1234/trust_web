@@ -177,10 +177,6 @@ export const formatNoticeForWhatsApp = (notice, customNote = '') => {
   msg += `📅 दिनांक: ${new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' })}\n\n`;
   msg += `${notice.content}\n\n`;
 
-  if (notice.imageUrl) {
-    msg += `🖼️ *संलग्न छायाचित्र / पोस्टर:* \n${notice.imageUrl}\n\n`;
-  }
-
   if (customNote) {
     msg += `💬 *विशेष निर्देश:* ${customNote}\n\n`;
   }

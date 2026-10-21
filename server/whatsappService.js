@@ -26,6 +26,23 @@ class WhatsAppService {
   };
   static reconnectAttempts = 0;
   static logger = pino({ level: 'silent' });
+  static messageStore = new Map();
+
+  static saveMessage(id, message) {
+    if (!id || !message) return;
+    this.messageStore.set(id, message);
+    if (this.messageStore.size > 1000) {
+      const firstKey = this.messageStore.keys().next().value;
+      if (firstKey) this.messageStore.delete(firstKey);
+    }
+  }
+
+  static async getMessage(key) {
+    if (key?.id && this.messageStore.has(key.id)) {
+      return this.messageStore.get(key.id);
+    }
+    return undefined;
+  }
 
   static getSessionDir() {
     const dir = path.join(SESSIONS_DIR, SESSION_ID);
@@ -79,12 +96,28 @@ class WhatsAppService {
         auth: authState,
         printQRInTerminal: false,
         logger: this.logger,
-        browser: ['Rashtriya Sanatan Trust', 'Chrome', '1.0.0']
+        browser: ['Rashtriya Sanatan Trust', 'Chrome', '1.0.0'],
+        syncFullHistory: false,
+        markOnlineOnConnect: true,
+        generateHighQualityLinkPreview: false,
+        getMessage: async (key) => {
+          return await this.getMessage(key);
+        }
       });
 
       this.sock = sock;
 
       sock.ev.on('creds.update', saveCreds);
+
+      // Retain messages in cache for decryption retry requests
+      sock.ev.on('messages.upsert', async ({ messages }) => {
+        if (!Array.isArray(messages)) return;
+        for (const m of messages) {
+          if (m?.key?.id && m?.message) {
+            this.saveMessage(m.key.id, m.message);
+          }
+        }
+      });
 
       sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -200,6 +233,10 @@ class WhatsAppService {
         res = await this.sock.sendMessage(jid, {
           text: messageText
         });
+      }
+
+      if (res?.key?.id && res?.message) {
+        this.saveMessage(res.key.id, res.message);
       }
 
       return {
