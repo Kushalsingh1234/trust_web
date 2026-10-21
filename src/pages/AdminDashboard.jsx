@@ -434,8 +434,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     const unsubDon = subscribeAllCollection('donations', (data) => setDonations(data));
     const unsubMembers = subscribeMembersList((data) => setMembersList(data));
     const unsubSettings = subscribePaymentSettings((settings) => {
-      setPaymentSettings(settings);
-      setSettingsForm(settings);
+      const safe = settings ? { ...DEFAULT_PAYMENT_SETTINGS, ...settings } : DEFAULT_PAYMENT_SETTINGS;
+      setPaymentSettings(safe);
+      setSettingsForm(safe);
     });
     const unsubWhatsApp = subscribeAdminWhatsAppSettings((settings) => {
       setWhatsappSettings(settings);
@@ -940,10 +941,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       <h3 className="font-black text-base sm:text-lg text-[#382719] font-hindi-heading">
                         {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप कनेक्शन' : 'Admin WhatsApp Connection'}
                       </h3>
-                      {baileysServerState.connected ? (
+                      {baileysServerState?.connected ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>{baileysServerState.phoneNumber ? `लिंक है: ${baileysServerState.phoneNumber}` : (lang === 'hi' ? 'सक्रिय रूप से कनेक्टेड' : 'Connected & Active')}</span>
+                          <span>{baileysServerState?.phoneNumber ? `लिंक है: ${baileysServerState.phoneNumber}` : (lang === 'hi' ? 'सक्रिय रूप से कनेक्टेड' : 'Connected & Active')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
@@ -967,7 +968,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   >
                     <QrCode className="w-4 h-4" />
                     <span>
-                      {baileysServerState.connected
+                      {baileysServerState?.connected
                         ? (lang === 'hi' ? 'डिवाइस प्रबंधित करें / परीक्षण संदेश' : 'Manage Device / Test Send')
                         : (lang === 'hi' ? '📱 QR कोड स्कैन कर लिंक करें' : '📱 Scan QR Code to Link')}
                     </span>
@@ -979,12 +980,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               <div className="space-y-4 pt-1">
                 {/* Status Box */}
                 <div className={`p-4 rounded-2xl border text-xs ${
-                  baileysServerState.connected
+                  baileysServerState?.connected
                     ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                     : 'bg-amber-50/70 border-amber-200 text-amber-950'
                 }`}>
                   <div className="flex items-center gap-2 font-bold mb-1">
-                    {baileysServerState.connected ? (
+                    {baileysServerState?.connected ? (
                       <>
                         <ShieldCheck className="w-4 h-4 text-emerald-700" />
                         <span>स्वचालित व्हाट्सएप प्रसारण प्रणाली सक्रिय है</span>
@@ -997,8 +998,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     )}
                   </div>
                   <p className="text-[11px] leading-relaxed text-gray-700">
-                    {baileysServerState.connected
-                      ? `आपके नंबर (+91 ${baileysServerState.phoneNumber || ''}) से व्हाट्सएप जुड़ा हुआ है। जब भी आप नोटिस बोर्ड पर कोई सूचना या व्यक्तिगत संदेश पोस्ट करेंगे, वह सीधे बिना कोई विंडो खोले पृष्ठभूमि में स्वतः भेजा जाएगा।`
+                    {baileysServerState?.connected
+                      ? `आपके नंबर (+91 ${baileysServerState?.phoneNumber || ''}) से व्हाट्सएप जुड़ा हुआ है। जब भी आप नोटिस बोर्ड पर कोई सूचना या व्यक्तिगत संदेश पोस्ट करेंगे, वह सीधे बिना कोई विंडो खोले पृष्ठभूमि में स्वतः भेजा जाएगा।`
                       : 'उपरोक्त "QR कोड स्कैन कर लिंक करें" बटन पर क्लिक करके अपने व्हाट्सएप से QR कोड स्कैन करें। एक बार स्कैन करने के बाद आपको दोबारा लॉगिन नहीं करना पड़ेगा।'}
                   </p>
                 </div>
@@ -1007,9 +1008,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 <div className="pt-2">
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${baileysServerState.online ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <span className={`w-2.5 h-2.5 rounded-full ${baileysServerState?.online ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                       <span className="font-bold text-gray-700">
-                        {baileysServerState.online
+                        {baileysServerState?.online
                           ? (lang === 'hi' ? 'व्हाट्सएप सर्वर: सक्रिय (Online)' : 'WhatsApp Server: Online')
                           : (lang === 'hi' ? 'व्हाट्सएप सर्वर: ऑफ़लाइन (Offline)' : 'WhatsApp Server: Offline')}
                       </span>
@@ -1083,7 +1084,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   
                   <div className="w-40 h-40 mx-auto p-2 rounded-xl bg-white border border-[#E9B44C] flex items-center justify-center overflow-hidden shadow-xs">
                     <img
-                      src={settingsForm.qrImageUrl || '/payment-qr.png'}
+                      src={settingsForm?.qrImageUrl || '/payment-qr.png'}
                       alt="Payment QR"
                       className="w-full h-full object-contain"
                       onError={(e) => { e.target.onerror = null; e.target.src = '/payment-qr.png'; }}
@@ -1113,8 +1114,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     </label>
                     <input
                       type="text"
-                      value={settingsForm.payeeName}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, payeeName: e.target.value })}
+                      value={settingsForm?.payeeName || ''}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, payeeName: e.target.value }))}
                       placeholder="e.g. Rashtriya Sanatan Sanskar Seva Sansthan (Trust)"
                       className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:ring-2 focus:ring-primary/40 focus:outline-none"
                       required
@@ -1128,8 +1129,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       </label>
                       <input
                         type="text"
-                        value={settingsForm.upiId}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, upiId: e.target.value })}
+                        value={settingsForm?.upiId || ''}
+                        onChange={(e) => setSettingsForm(prev => ({ ...prev, upiId: e.target.value }))}
                         placeholder="e.g. boim-135883270012@boi"
                         className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs font-mono font-bold focus:ring-2 focus:ring-primary/40 focus:outline-none"
                         required
@@ -1142,8 +1143,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       </label>
                       <input
                         type="number"
-                        value={settingsForm.membershipFee}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, membershipFee: Number(e.target.value) })}
+                        value={settingsForm?.membershipFee ?? 200}
+                        onChange={(e) => setSettingsForm(prev => ({ ...prev, membershipFee: Number(e.target.value) }))}
                         placeholder="200"
                         className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs font-mono font-bold focus:ring-2 focus:ring-primary/40 focus:outline-none"
                         required
@@ -1158,8 +1159,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       </label>
                       <input
                         type="text"
-                        value={settingsForm.accountNumber}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, accountNumber: e.target.value })}
+                        value={settingsForm?.accountNumber || ''}
+                        onChange={(e) => setSettingsForm(prev => ({ ...prev, accountNumber: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs font-mono focus:outline-none"
                       />
                     </div>
@@ -1170,8 +1171,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       </label>
                       <input
                         type="text"
-                        value={settingsForm.ifsc}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, ifsc: e.target.value })}
+                        value={settingsForm?.ifsc || ''}
+                        onChange={(e) => setSettingsForm(prev => ({ ...prev, ifsc: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs font-mono focus:outline-none"
                       />
                     </div>
@@ -1183,8 +1184,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     </label>
                     <input
                       type="text"
-                      value={settingsForm.section80G || ''}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, section80G: e.target.value })}
+                      value={settingsForm?.section80G || ''}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, section80G: e.target.value }))}
                       placeholder="e.g. AAATR1234EF20261 (Printed on official receipts if present)"
                       className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none"
                     />

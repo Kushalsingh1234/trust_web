@@ -4,11 +4,6 @@ import { useAuth, TRUST_ADMIN_PIN } from '../context/AuthContext';
 import TrustLogo from './TrustLogo';
 import { KeyRound, Eye, EyeOff, ArrowRight, Home, ShieldCheck } from 'lucide-react';
 
-const LOCKOUT_KEY = 'rsssst_admin_pin_locked_until';
-const ATTEMPTS_KEY = 'rsssst_admin_pin_attempts';
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
-
 export const AdminRoute = ({ children }) => {
   const { currentUser, userProfile, isAdmin, adminPinVerified, verifyPinForSession, loading } = useAuth();
 
@@ -17,51 +12,13 @@ export const AdminRoute = ({ children }) => {
   const [showPin, setShowPin] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [attempts, setAttempts] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10);
-    }
-    return 0;
-  });
-
-  const [lockedUntil, setLockedUntil] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const val = parseInt(localStorage.getItem(LOCKOUT_KEY) || '0', 10);
-      if (val && val > Date.now()) return val;
-      if (val) {
-        localStorage.removeItem(LOCKOUT_KEY);
-        localStorage.removeItem(ATTEMPTS_KEY);
-      }
-    }
-    return null;
-  });
-
-  const [remainingTimeText, setRemainingTimeText] = useState('');
-
-  // Lockout countdown timer
+  // Clear any existing lockout from previous sessions on mount
   useEffect(() => {
-    if (!lockedUntil) return;
-
-    const updateTimer = () => {
-      const diff = lockedUntil - Date.now();
-      if (diff <= 0) {
-        setLockedUntil(null);
-        setAttempts(0);
-        localStorage.removeItem(LOCKOUT_KEY);
-        localStorage.removeItem(ATTEMPTS_KEY);
-        setRemainingTimeText('');
-      } else {
-        const hours = Math.floor(diff / (60 * 60 * 1000));
-        const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-        const seconds = Math.floor((diff % (60 * 1000)) / 1000);
-        setRemainingTimeText(`${hours}h ${minutes}m ${seconds}s`);
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [lockedUntil]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('rsssst_admin_pin_locked_until');
+      localStorage.removeItem('rsssst_admin_pin_attempts');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -80,11 +37,6 @@ export const AdminRoute = ({ children }) => {
   const handlePinSubmit = async (e) => {
     e.preventDefault();
 
-    if (lockedUntil && lockedUntil > Date.now()) {
-      setPinError(`एडमिन पैनल 4 घंटे के लिए लॉक है। शेष समय: ${remainingTimeText}`);
-      return;
-    }
-
     if (!pinInput.trim()) {
       setPinError('कृपया व्यवस्थापक पासकी (Admin PIN) दर्ज करें।');
       return;
@@ -96,27 +48,12 @@ export const AdminRoute = ({ children }) => {
 
     if (success) {
       setPinError('');
-      setAttempts(0);
-      localStorage.removeItem(ATTEMPTS_KEY);
-      localStorage.removeItem(LOCKOUT_KEY);
     } else {
-      const nextAttempts = attempts + 1;
-      setAttempts(nextAttempts);
-      localStorage.setItem(ATTEMPTS_KEY, String(nextAttempts));
-
-      if (nextAttempts >= MAX_ATTEMPTS) {
-        const lockTime = Date.now() + LOCKOUT_MS;
-        setLockedUntil(lockTime);
-        localStorage.setItem(LOCKOUT_KEY, String(lockTime));
-        setPinError('5 बार गलत पिन दर्ज किया गया। सुरक्षा कारणों से एडमिन पैनल 4 घंटे के लिए ब्लॉक कर दिया गया है।');
-      } else {
-        const left = MAX_ATTEMPTS - nextAttempts;
-        setPinError(`अमान्य एडमिन पिन। आपके पास ${left} प्रयास शेष हैं (प्रयास: ${nextAttempts}/${MAX_ATTEMPTS})।`);
-      }
+      setPinError('अमान्य एडमिन पिन (Invalid PIN)। कृपया सही व्यवस्थापक पासकी (273016) दर्ज करें।');
     }
   };
 
-  const isLocked = Boolean(lockedUntil && lockedUntil > Date.now());
+  const isLocked = false;
 
   return (
     <div className="min-h-screen bg-[#FFF8EF] flex flex-col justify-center items-center p-4 sm:p-6">
