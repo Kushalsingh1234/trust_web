@@ -85,7 +85,8 @@ import {
   Image as ImageIcon,
   Sparkles,
   Radio,
-  Loader2
+  Loader2,
+  Smartphone
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
