@@ -33,6 +33,7 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
+import DigitalIdCard from './components/DigitalIdCard';
 
 function AppContent() {
   const navigate = useNavigate();

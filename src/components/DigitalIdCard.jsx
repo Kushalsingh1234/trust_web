@@ -153,6 +153,11 @@ export const DigitalIdCard = ({ member, onClose }) => {
       ctx.drawImage(canvas, 0, 0);
 
       const image = finalCanvas.toDataURL('image/png');
+      const previewEl = document.getElementById('exported-img-preview');
+      if (previewEl) {
+        previewEl.src = image;
+        previewEl.style.display = 'block';
+      }
       const downloadLink = document.createElement('a');
       const safeName = (member.fullName || 'Card').replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `${isVolunteer ? 'Volunteer_ID_Card' : 'Member_ID_Card'}_${safeName}_${formattedCardId}.png`;
@@ -265,12 +270,13 @@ export const DigitalIdCard = ({ member, onClose }) => {
             justifyContent: 'space-between',
             gap: '8px',
             marginBottom: '12px',
-            padding: '4px 10px',
-            minHeight: '30px',
-            boxSizing: 'border-box',
+            padding: '0 10px',
+            height: '28px',
+            lineHeight: '28px',
             borderRadius: '8px',
             color: '#ffffff',
             boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            boxSizing: 'border-box',
           }}
           className={
             isVolunteer
@@ -278,7 +284,15 @@ export const DigitalIdCard = ({ member, onClose }) => {
               : 'bg-gradient-to-r from-primary via-[#EA6F0B] to-secondary'
           }
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexShrink: 1 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              height: '100%',
+              gap: '6px',
+              minWidth: 0,
+            }}
+          >
             {isVolunteer ? (
               <Users style={{ width: '15px', height: '15px', flexShrink: 0, color: '#ffffff', display: 'block' }} />
             ) : (
@@ -291,7 +305,7 @@ export const DigitalIdCard = ({ member, onClose }) => {
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
-                lineHeight: 1,
+                lineHeight: '28px',
                 color: '#ffffff',
                 display: 'inline-block',
               }}
@@ -302,35 +316,26 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
           <div
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: 'inline-block',
               backgroundColor: 'rgba(0, 0, 0, 0.45)',
               padding: '0 8px',
-              height: '22px',
-              borderRadius: '6px',
+              height: '20px',
+              lineHeight: '20px',
+              borderRadius: '5px',
               border: '1px solid rgba(255, 255, 255, 0.25)',
               flexShrink: 0,
               boxSizing: 'border-box',
-              overflow: 'hidden',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: '11px',
+              fontWeight: '900',
+              letterSpacing: '0.08em',
+              color: '#ffffff',
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
             }}
           >
-            <span
-              style={{
-                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontVariantNumeric: 'tabular-nums',
-                fontSize: '11px',
-                fontWeight: '900',
-                letterSpacing: '0.08em',
-                color: '#ffffff',
-                lineHeight: 1,
-                display: 'inline-flex',
-                alignItems: 'center',
-                transform: 'translateY(-0.5px)',
-              }}
-            >
-              ID: {formattedCardId}
-            </span>
+            ID: {formattedCardId}
           </div>
         </div>
 
