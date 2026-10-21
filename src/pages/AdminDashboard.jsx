@@ -29,6 +29,17 @@ import {
 import { generateReceiptPDF } from '../firebase/receiptService';
 import OfficialReceiptModal from '../components/OfficialReceiptModal';
 import {
+  subscribeAdminWhatsAppSettings,
+  saveAdminWhatsAppSettings,
+  connectAdminWhatsApp,
+  disconnectAdminWhatsApp,
+  getLocalWhatsAppSession,
+  formatNoticeForWhatsApp
+} from '../firebase/whatsappService';
+import { uploadImageToCloudinary } from '../utils/cloudinaryService';
+import WhatsAppBroadcastModal from '../components/WhatsAppBroadcastModal';
+import WhatsAppPersonalModal from '../components/WhatsAppPersonalModal';
+import {
   ShieldCheck,
   Search,
   Filter,
@@ -62,7 +73,13 @@ import {
   Send,
   Copy,
   ExternalLink,
-  Mail
+  Mail,
+  MessageSquare,
+  Share2,
+  Image as ImageIcon,
+  Sparkles,
+  Radio,
+  Loader2
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
@@ -130,7 +147,30 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     content: '',
     category: 'general'
   });
+  const [noticeTargetAudience, setNoticeTargetAudience] = useState('both'); // 'both' | 'members' | 'volunteers'
+  const [noticeImageFile, setNoticeImageFile] = useState(null);
+  const [noticeImagePreview, setNoticeImagePreview] = useState(null);
+  const [sendToWhatsAppOnPublish, setSendToWhatsAppOnPublish] = useState(true);
   const [isPublishingNotice, setIsPublishingNotice] = useState(false);
+
+  // WhatsApp Admin Connection & Dispatch State
+  const [whatsappSettings, setWhatsappSettings] = useState(() => getLocalWhatsAppSession());
+  const [whatsappAdminPhoneInput, setWhatsappAdminPhoneInput] = useState('9794590044');
+  const [whatsappAdminNameInput, setWhatsappAdminNameInput] = useState('Bajrangi Dubey (Trust Executive)');
+  const [whatsappProviderInput, setWhatsappProviderInput] = useState('direct');
+  const [whatsappInstanceIdInput, setWhatsappInstanceIdInput] = useState('');
+  const [whatsappApiTokenInput, setWhatsappApiTokenInput] = useState('');
+  const [whatsappApiEndpointInput, setWhatsappApiEndpointInput] = useState('');
+  const [isSavingWhatsAppSettings, setIsSavingWhatsAppSettings] = useState(false);
+  const [showAdvancedWhatsApp, setShowAdvancedWhatsApp] = useState(false);
+
+  // Modals for WhatsApp Broadcast & Personal Messages
+  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
+  const [currentBroadcastNotice, setCurrentBroadcastNotice] = useState(null);
+  const [broadcastRecipients, setBroadcastRecipients] = useState([]);
+
+  const [personalWhatsAppModalOpen, setPersonalWhatsAppModalOpen] = useState(false);
+  const [personalRecipient, setPersonalRecipient] = useState(null);
 
   // Payment Settings Form State
   const [settingsForm, setSettingsForm] = useState(DEFAULT_PAYMENT_SETTINGS);
@@ -161,6 +201,60 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     }
   };
 
+  // Collect target recipients for notice broadcast (deduplicated by phone number)
+  const getBroadcastRecipients = (audience = 'both') => {
+    const map = new Map();
+    // 1. Members
+    if (audience === 'both' || audience === 'members') {
+      membersList.forEach((m) => {
+        const phone = m.whatsapp || m.mobile || m.phone;
+        if (phone && (m.status === 'approved' || !m.status)) {
+          const clean = phone.replace(/\D/g, '');
+          map.set(clean, {
+            id: m.id || m.uid,
+            fullName: m.fullName || m.name,
+            role: 'member',
+            whatsapp: phone
+          });
+        }
+      });
+    }
+    // 2. Volunteers
+    if (audience === 'both' || audience === 'volunteers') {
+      volunteers.forEach((v) => {
+        const phone = v.whatsapp || v.mobile || v.phone;
+        if (phone && (v.status === 'approved' || !v.status)) {
+          const clean = phone.replace(/\D/g, '');
+          if (!map.has(clean)) {
+            map.set(clean, {
+              id: v.id || v.uid,
+              fullName: v.fullName || v.name,
+              role: 'volunteer',
+              whatsapp: phone
+            });
+          }
+        }
+      });
+    }
+    return Array.from(map.values());
+  };
+
+  const handleNoticeImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(lang === 'hi' ? 'छवि 5MB से छोटी होनी चाहिए' : 'Image must be under 5MB');
+      return;
+    }
+    setNoticeImageFile(file);
+    setNoticeImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleClearNoticeImage = () => {
+    setNoticeImageFile(null);
+    setNoticeImagePreview(null);
+  };
+
   const handleCreateNotice = async (e) => {
     e.preventDefault();
     if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
@@ -170,21 +264,58 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
     setIsPublishingNotice(true);
     try {
-      await createAnnouncement({
+      let uploadedImageUrl = '';
+      if (noticeImageFile) {
+        toast.info(lang === 'hi' ? 'सूचना पोस्टर अपलोड हो रहा है...' : 'Uploading notice image...');
+        uploadedImageUrl = await uploadImageToCloudinary(noticeImageFile, 'trust_notices');
+      }
+
+      const created = await createAnnouncement({
         title: announcementForm.title.trim(),
         content: announcementForm.content.trim(),
         category: announcementForm.category,
+        targetAudience: noticeTargetAudience,
+        imageUrl: uploadedImageUrl,
         isPublished: true
       }, currentUser?.uid || 'admin', 'ट्रस्ट प्रबंधकारिणी');
 
       toast.success(lang === 'hi' ? 'सूचना सफलतापूर्वक प्रकाशित हुई!' : 'Notice published successfully!');
+
+      const recipients = getBroadcastRecipients(noticeTargetAudience);
+
+      if (sendToWhatsAppOnPublish && recipients.length > 0) {
+        setCurrentBroadcastNotice({
+          ...created,
+          targetAudience: noticeTargetAudience,
+          imageUrl: uploadedImageUrl
+        });
+        setBroadcastRecipients(recipients);
+        setBroadcastModalOpen(true);
+      }
+
       setAnnouncementForm({ title: '', content: '', category: 'general' });
+      setNoticeImageFile(null);
+      setNoticeImagePreview(null);
+      setNoticeTargetAudience('both');
       await loadAnnouncements();
     } catch (err) {
+      console.error('Failed to publish notice:', err);
       toast.error('Failed to publish notice: ' + err.message);
     } finally {
       setIsPublishingNotice(false);
     }
+  };
+
+  const handleOpenNoticeBroadcast = (notice) => {
+    const recipients = getBroadcastRecipients(notice.targetAudience || 'both');
+    setCurrentBroadcastNotice(notice);
+    setBroadcastRecipients(recipients);
+    setBroadcastModalOpen(true);
+  };
+
+  const handleOpenPersonalWhatsApp = (recipient) => {
+    setPersonalRecipient(recipient);
+    setPersonalWhatsAppModalOpen(true);
   };
 
   const handleDeleteNotice = async (id) => {
@@ -195,6 +326,38 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       await loadAnnouncements();
     } catch (err) {
       toast.error('Failed to delete: ' + err.message);
+    }
+  };
+
+  const handleConnectWhatsApp = async (e) => {
+    e?.preventDefault();
+    setIsSavingWhatsAppSettings(true);
+    try {
+      await connectAdminWhatsApp(whatsappAdminPhoneInput, whatsappAdminNameInput, {
+        provider: whatsappProviderInput,
+        instanceId: whatsappInstanceIdInput,
+        apiToken: whatsappApiTokenInput,
+        apiEndpoint: whatsappApiEndpointInput
+      });
+      toast.success(
+        lang === 'hi'
+          ? 'व्यवस्थापक व्हाट्सएप सफलतापूर्वक कनेक्ट हुआ! यह सत्र हमेशा सक्रिय रहेगा।'
+          : 'Admin WhatsApp connected successfully! Session remains persistently active.'
+      );
+    } catch (err) {
+      toast.error('Failed to connect WhatsApp: ' + err.message);
+    } finally {
+      setIsSavingWhatsAppSettings(false);
+    }
+  };
+
+  const handleDisconnectWhatsApp = async () => {
+    if (!window.confirm(lang === 'hi' ? 'क्या आप व्हाट्सएप सत्र डिस्कनेक्ट करना चाहते हैं?' : 'Disconnect WhatsApp session?')) return;
+    try {
+      await disconnectAdminWhatsApp();
+      toast.info(lang === 'hi' ? 'व्हाट्सएप डिस्कनेक्ट कर दिया गया।' : 'WhatsApp disconnected.');
+    } catch (err) {
+      toast.error('Failed to disconnect: ' + err.message);
     }
   };
 
@@ -209,6 +372,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       setPaymentSettings(settings);
       setSettingsForm(settings);
     });
+    const unsubWhatsApp = subscribeAdminWhatsAppSettings((settings) => {
+      setWhatsappSettings(settings);
+      setWhatsappAdminPhoneInput(settings.adminPhone || '9794590044');
+      setWhatsappAdminNameInput(settings.adminName || 'Bajrangi Dubey (Trust Executive)');
+      setWhatsappProviderInput(settings.provider || 'direct');
+      setWhatsappInstanceIdInput(settings.instanceId || '');
+      setWhatsappApiTokenInput(settings.apiToken || '');
+      setWhatsappApiEndpointInput(settings.apiEndpoint || '');
+    });
     loadAnnouncements();
 
     return () => {
@@ -218,6 +390,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       unsubDon();
       unsubMembers();
       unsubSettings();
+      unsubWhatsApp();
     };
   }, []);
 
@@ -683,26 +856,206 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             }`}
           >
             <Settings className="w-4 h-4" />
-            <span>Payment Settings</span>
+            <span>{lang === 'hi' ? 'सेटिंग्स व व्हाट्सएप' : 'Settings & WhatsApp'}</span>
           </button>
         </div>
 
-        {/* Tab 6: Payment Settings Panel */}
+        {/* Tab 6: Settings & WhatsApp Panel */}
         {activeTab === 'paymentSettings' ? (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E9B44C]/35 shadow-card max-w-4xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#E9B44C]/30 pb-4">
-              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                <QrCode className="w-5 h-5" />
+          <div className="space-y-6 max-w-4xl text-left">
+            {/* Card 1: Admin WhatsApp Persistent Connection */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-emerald-600/35 shadow-card space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-600/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                    <MessageSquare className="w-5 h-5 text-emerald-700" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-base sm:text-lg text-[#382719] font-hindi-heading">
+                        {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप कनेक्शन (Admin WhatsApp)' : 'Admin WhatsApp Connection'}
+                      </h3>
+                      {whatsappSettings?.isConnected ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>{lang === 'hi' ? 'सक्रिय रूप से कनेक्टेड' : 'Connected & Active'}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                          <span>{lang === 'hi' ? 'कनेक्टेड नहीं है' : 'Not Connected'}</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#666666] mt-0.5">
+                      {lang === 'hi'
+                        ? 'एक बार कनेक्ट करने के बाद यह हमेशा सक्रिय रहेगा जब तक आप स्वयं डिस्कनेक्ट नहीं करते।'
+                        : 'Session remains persistently active across all reloads until explicitly logged out.'}
+                    </p>
+                  </div>
+                </div>
+
+                {whatsappSettings?.isConnected && (
+                  <button
+                    type="button"
+                    onClick={handleDisconnectWhatsApp}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-center"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'व्हाट्सएप डिस्कनेक्ट करें' : 'Disconnect WhatsApp'}</span>
+                  </button>
+                )}
               </div>
-              <div>
-                <h3 className="font-black text-lg text-[#382719] font-hindi-heading">
-                  Trust Payment & QR Code Settings
-                </h3>
-                <p className="text-xs text-[#666666]">
-                  Configure official QR image, UPI ID, payee name, and membership fee displayed to all members.
-                </p>
-              </div>
+
+              <form onSubmit={handleConnectWhatsApp} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#382719] mb-1">
+                      {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप नंबर (10 अंक) *' : 'Admin WhatsApp Mobile (10 Digits) *'}
+                    </label>
+                    <div className="flex items-center">
+                      <span className="px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-xs font-mono font-bold text-gray-600">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        value={whatsappAdminPhoneInput}
+                        onChange={(e) => setWhatsappAdminPhoneInput(e.target.value.replace(/\D/g, ''))}
+                        placeholder="9794590044"
+                        className="w-full px-3 py-2.5 rounded-r-xl border border-gray-300 text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500/40 focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      {lang === 'hi' ? 'इसी नंबर से सदस्यों को नोटिस व संदेश प्रेषित होंगे।' : 'Notices & messages will be dispatched from this number.'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#382719] mb-1">
+                      {lang === 'hi' ? 'व्यवस्थापक का नाम / पदवी *' : 'Admin Name / Designation *'}
+                    </label>
+                    <input
+                      type="text"
+                      value={whatsappAdminNameInput}
+                      onChange={(e) => setWhatsappAdminNameInput(e.target.value)}
+                      placeholder="e.g. Bajrangi Dubey (Trust Executive)"
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-emerald-500/40 focus:outline-none"
+                      required
+                    />
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      {lang === 'hi' ? 'व्हाट्सएप संदेशों के अंत में प्रेषक के रूप में प्रदर्शित होगा।' : 'Displayed at the end of notices and personal messages.'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Automation Provider Accordion Toggle */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedWhatsApp(!showAdvancedWhatsApp)}
+                    className="text-xs text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1.5"
+                  >
+                    <span>{showAdvancedWhatsApp ? '▼' : '▶'}</span>
+                    <span>{lang === 'hi' ? 'स्वचालित बैकग्राउंड API सेटिंग्स (वैकल्पिक / Advanced)' : 'Automated Background API Settings (Optional)'}</span>
+                  </button>
+
+                  {showAdvancedWhatsApp && (
+                    <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3 animate-fadeIn">
+                      <p className="text-[11px] text-gray-600">
+                        {lang === 'hi'
+                          ? 'डिफ़ॉल्ट रूप से "Direct WhatsApp" सक्रिय है जो बिना किसी शुल्क या API कुंजी के सीधे व्हाट्सएप चैट खोलता है। यदि आप स्वचालित रूप से पृष्ठभूमि में सभी को एक साथ भेजना चाहते हैं, तो UltraMsg या Green API क्रेडेंशियल दर्ज करें।'
+                          : 'Default "Direct WhatsApp" dispatches instantly without API keys. For silent background delivery, provide UltraMsg or Green API keys.'}
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Provider</label>
+                          <select
+                            value={whatsappProviderInput}
+                            onChange={(e) => setWhatsappProviderInput(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs bg-white focus:outline-none"
+                          >
+                            <option value="direct">Direct WhatsApp (No Key Needed)</option>
+                            <option value="ultramsg">UltraMsg API</option>
+                            <option value="greenapi">Green API</option>
+                            <option value="custom">Custom Webhook</option>
+                          </select>
+                        </div>
+
+                        {whatsappProviderInput !== 'direct' && (
+                          <>
+                            <div>
+                              <label className="block text-[11px] font-bold text-gray-700 mb-1">Instance ID</label>
+                              <input
+                                type="text"
+                                value={whatsappInstanceIdInput}
+                                onChange={(e) => setWhatsappInstanceIdInput(e.target.value)}
+                                placeholder="instance12345"
+                                className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-gray-700 mb-1">API Token</label>
+                              <input
+                                type="password"
+                                value={whatsappApiTokenInput}
+                                onChange={(e) => setWhatsappApiTokenInput(e.target.value)}
+                                placeholder="token..."
+                                className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[11px] text-gray-500">
+                    {whatsappSettings?.connectedAt
+                      ? (lang === 'hi' ? `सत्र सक्रिय दिनांक: ${new Date(whatsappSettings.connectedAt).toLocaleDateString('hi-IN')}` : `Connected on: ${new Date(whatsappSettings.connectedAt).toLocaleDateString()}`)
+                      : (lang === 'hi' ? 'व्हाट्सएप कनेक्ट करने हेतु नीचे क्लिक करें।' : 'Click below to connect your WhatsApp number.')}
+                  </span>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingWhatsAppSettings}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isSavingWhatsAppSettings ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{lang === 'hi' ? 'कनेक्ट हो रहा है...' : 'Connecting...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="w-4 h-4" />
+                        <span>{lang === 'hi' ? 'व्हाट्सएप कनेक्ट करें व सेव करें' : 'Connect & Save WhatsApp'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
+
+            {/* Card 2: Payment & QR Settings */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E9B44C]/35 shadow-card space-y-6">
+              <div className="flex items-center gap-3 border-b border-[#E9B44C]/30 pb-4">
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-[#382719] font-hindi-heading">
+                    Trust Payment & QR Code Settings
+                  </h3>
+                  <p className="text-xs text-[#666666]">
+                    Configure official QR image, UPI ID, payee name, and membership fee displayed to all members.
+                  </p>
+                </div>
+              </div>
 
             <form onSubmit={handleSavePaymentSettings} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -835,6 +1188,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
               </div>
             </form>
+            </div>
           </div>
         ) : activeTab === 'announcements' ? (
           /* Tab: Announcements & Notices Panel */
@@ -880,6 +1234,48 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   </div>
                 </div>
 
+                {/* Target Audience Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-[#382719] mb-1.5">
+                    {lang === 'hi' ? 'सूचना प्राप्तकर्ता (Target Audience) *' : 'Target Audience *'}
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setNoticeTargetAudience('both')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                        noticeTargetAudience === 'both'
+                          ? 'bg-emerald-700 text-white border-emerald-800 shadow-2xs'
+                          : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <span>👥 {lang === 'hi' ? 'सभी सदस्य व स्वयंसेवक (Default)' : 'Both (Members & Volunteers)'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNoticeTargetAudience('members')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                        noticeTargetAudience === 'members'
+                          ? 'bg-emerald-700 text-white border-emerald-800 shadow-2xs'
+                          : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <span>🛡️ {lang === 'hi' ? 'केवल सदस्य (Members Only)' : 'Members Only'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNoticeTargetAudience('volunteers')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                        noticeTargetAudience === 'volunteers'
+                          ? 'bg-emerald-700 text-white border-emerald-800 shadow-2xs'
+                          : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <span>🤝 {lang === 'hi' ? 'केवल स्वयंसेवक (Volunteers Only)' : 'Volunteers Only'}</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-[#382719] mb-1">
                     {lang === 'hi' ? 'सूचना का विस्तृत विवरण *' : 'Notice Detailed Content *'}
@@ -888,9 +1284,58 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     rows={4}
                     value={announcementForm.content}
                     onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
-                    placeholder={lang === 'hi' ? 'सूचना का पूरा विवरण लिखें जो सदस्य व स्वयंसेवक डैशबोर्ड पर दिखेगा...' : 'Write the complete announcement content visible on Member & Volunteer Dashboards...'}
+                    placeholder={lang === 'hi' ? 'सूचना का पूरा विवरण लिखें जो सदस्य व स्वयंसेवक डैशबोर्ड पर दिखेगा और व्हाट्सएप पर जाएगा...' : 'Write the complete announcement content visible on Dashboards and sent to WhatsApp...'}
                     className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
+                </div>
+
+                {/* Poster / Image Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-[#382719] mb-1">
+                    {lang === 'hi' ? 'सूचना पोस्टर / छायाचित्र (वैकल्पिक)' : 'Notice Poster / Image (Optional)'}
+                  </label>
+                  {noticeImagePreview ? (
+                    <div className="relative inline-block rounded-xl overflow-hidden border border-gray-300 bg-gray-50 p-1">
+                      <img src={noticeImagePreview} alt="Preview" className="h-28 w-auto rounded-lg object-contain" />
+                      <button
+                        type="button"
+                        onClick={handleClearNoticeImage}
+                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 border border-dashed border-gray-300 text-xs font-bold text-gray-700 cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-emerald-700" />
+                      <span>{lang === 'hi' ? 'चित्र / पोस्टर अपलोड करें' : 'Upload Image / Poster'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleNoticeImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                  <span className="text-[10px] text-gray-500 block mt-1">PNG, JPG, WebP (max 5MB)</span>
+                </div>
+
+                {/* Send on WhatsApp Checkbox */}
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-emerald-950">
+                    <input
+                      type="checkbox"
+                      checked={sendToWhatsAppOnPublish}
+                      onChange={(e) => setSendToWhatsAppOnPublish(e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                    />
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>{lang === 'hi' ? 'प्रकाशित करते ही सभी लक्षित सदस्यों/स्वयंसेवकों के व्हाट्सएप पर भी भेजें' : 'Broadcast to WhatsApp upon publishing'}</span>
+                  </label>
+                  <span className="text-[11px] text-emerald-700 font-mono">
+                    {lang === 'hi' ? 'प्रेषक:' : 'From:'} +91 {whatsappSettings.adminPhone || '9794590044'}
+                  </span>
                 </div>
 
                 <div className="flex justify-end">
@@ -900,7 +1345,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     className="px-6 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-saffron transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{isPublishingNotice ? (lang === 'hi' ? 'प्रकाशित हो रहा है...' : 'Publishing...') : (lang === 'hi' ? 'डैशबोर्ड पर प्रकाशित करें' : 'Publish to Dashboards')}</span>
+                    <span>{isPublishingNotice ? (lang === 'hi' ? 'प्रकाशित हो रहा है...' : 'Publishing...') : (lang === 'hi' ? 'डैशबोर्ड व व्हाट्सएप पर प्रकाशित करें' : 'Publish to Dashboards & WhatsApp')}</span>
                   </button>
                 </div>
               </form>
@@ -918,32 +1363,63 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </div>
               ) : (
                 announcements.map((ann) => (
-                  <div key={ann.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E9B44C]/35 shadow-xs flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                  <div key={ann.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-[#E9B44C]/35 shadow-xs flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-primary/10 text-primary">
                           {ann.category || 'General'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {ann.targetAudience === 'members'
+                            ? '🛡️ Members Only'
+                            : ann.targetAudience === 'volunteers'
+                            ? '🤝 Volunteers Only'
+                            : '👥 All Members & Volunteers'}
                         </span>
                         <span className="text-[11px] text-gray-500 font-mono">
                           {formatDate(ann.publishedAt || ann.createdAt)}
                         </span>
                       </div>
+
                       <h5 className="font-extrabold text-sm sm:text-base text-[#382719]">
                         {ann.title}
                       </h5>
+
+                      {ann.imageUrl && (
+                        <div className="my-2">
+                          <img
+                            src={ann.imageUrl}
+                            alt="Notice poster"
+                            className="max-h-36 rounded-xl border border-gray-200 object-cover shadow-2xs"
+                          />
+                        </div>
+                      )}
+
                       <p className="text-xs text-[#555555] whitespace-pre-wrap leading-relaxed">
                         {ann.content}
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteNotice(ann.id)}
-                      className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex-shrink-0"
-                      title="Delete Notice"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 self-end sm:self-start flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenNoticeBroadcast(ann)}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-all"
+                        title="Re-broadcast on WhatsApp"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>{lang === 'hi' ? 'व्हाट्सएप भेजें' : 'Send WhatsApp'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNotice(ann.id)}
+                        className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex-shrink-0"
+                        title="Delete Notice"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -1381,6 +1857,19 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                     </button>
                                   )}
 
+                                  {/* WhatsApp Personal Message */}
+                                  {(item.whatsapp || item.mobile || item.phone) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenPersonalWhatsApp(item)}
+                                      className="p-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs transition-all flex items-center gap-1 text-[11px] font-bold"
+                                      title={lang === 'hi' ? 'व्हाट्सएप संदेश भेजें' : 'Send WhatsApp Message'}
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                      <span className="hidden xl:inline">WhatsApp</span>
+                                    </button>
+                                  )}
+
                                   {!isRemoved && (
                                     <button
                                       type="button"
@@ -1584,6 +2073,18 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                     title="View & Download Receipt PDF"
                                   >
                                     <Download className="w-4 h-4" />
+                                  </button>
+                                )}
+
+                                {/* WhatsApp Personal Message */}
+                                {(item.whatsapp || item.mobile || item.phone) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenPersonalWhatsApp(item)}
+                                    className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-all flex items-center gap-1 text-[11px] font-bold"
+                                    title={lang === 'hi' ? 'व्हाट्सएप संदेश भेजें' : 'Send WhatsApp Message'}
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5" />
                                   </button>
                                 )}
 
@@ -1849,14 +2350,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         </a>
                       )}
                       {(selectedItem.whatsapp || selectedItem.mobile || selectedItem.phone) && (
-                        <a
-                          href={`https://wa.me/91${(selectedItem.whatsapp || selectedItem.mobile || selectedItem.phone).replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-xs transition-all"
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPersonalWhatsApp(selectedItem)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                         >
-                          <span>WhatsApp</span>
-                        </a>
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>व्हाट्सएप संदेश (WhatsApp)</span>
+                        </button>
                       )}
                       {selectedItem.email && (
                         <a
@@ -2154,6 +2655,26 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         isOpen={Boolean(viewingReceipt)}
         onClose={() => setViewingReceipt(null)}
         receipt={viewingReceipt}
+      />
+
+      {/* WhatsApp Notice Broadcast Modal */}
+      <WhatsAppBroadcastModal
+        isOpen={broadcastModalOpen}
+        onClose={() => setBroadcastModalOpen(false)}
+        notice={currentBroadcastNotice}
+        recipients={broadcastRecipients}
+        adminSettings={whatsappSettings}
+      />
+
+      {/* WhatsApp 1-to-1 Personal Message Modal */}
+      <WhatsAppPersonalModal
+        isOpen={personalWhatsAppModalOpen}
+        onClose={() => {
+          setPersonalWhatsAppModalOpen(false);
+          setPersonalRecipient(null);
+        }}
+        recipient={personalRecipient}
+        adminSettings={whatsappSettings}
       />
 
     </div>

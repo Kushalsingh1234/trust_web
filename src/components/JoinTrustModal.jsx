@@ -183,6 +183,11 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
       errs.mobile = lang === 'hi' ? 'मान्य 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Valid 10-digit mobile required';
     }
 
+    const cleanWhatsapp = (formData.whatsapp || '').replace(/\D/g, '');
+    if (!cleanWhatsapp || cleanWhatsapp.length !== 10) {
+      errs.whatsapp = lang === 'hi' ? 'मान्य 10-अंकीय व्हाट्सएप नंबर अनिवार्य है (सूचनाओं हेतु)' : 'Valid 10-digit WhatsApp number required for notices';
+    }
+
     if (!formData.villageOrLocality.trim()) {
       errs.villageOrLocality = lang === 'hi' ? 'पता / मोहल्ला दर्ज करें' : 'Address/locality required';
     }
@@ -565,9 +570,23 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#382719] mb-1">
-                    {lang === 'hi' ? 'व्हाट्सएप नंबर (यदि अलग हो)' : 'WhatsApp Number (If different)'}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-[#382719]">
+                      {lang === 'hi' ? 'व्हाट्सएप नंबर (सूचनाओं हेतु अनिवार्य) *' : 'WhatsApp Number (Required for Notices) *'}
+                    </label>
+                    {formData.mobile && formData.whatsapp !== formData.mobile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, whatsapp: prev.mobile }));
+                          if (errors.whatsapp) setErrors(prev => ({ ...prev, whatsapp: null }));
+                        }}
+                        className="text-[10px] text-emerald-700 hover:underline font-bold"
+                      >
+                        {lang === 'hi' ? 'मोबाइल नंबर जैसा' : 'Same as Mobile'}
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="whatsapp"
@@ -575,8 +594,11 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
                     value={formData.whatsapp}
                     onChange={handleInputChange}
                     placeholder="9876543210"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none focus:border-primary"
+                    className={`w-full px-3 py-2 rounded-xl border ${
+                      errors.whatsapp ? 'border-red-500 bg-red-50/30' : 'border-gray-300'
+                    } text-xs font-mono focus:outline-none focus:border-primary`}
                   />
+                  {errors.whatsapp && <p className="text-[10px] text-red-500 mt-0.5">{errors.whatsapp}</p>}
                 </div>
 
                 <div className="sm:col-span-2">
