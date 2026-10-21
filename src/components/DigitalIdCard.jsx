@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import TrustLogo from './TrustLogo';
 import { Download, ShieldCheck, Users } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 export const DigitalIdCard = ({ member, onClose }) => {
   const { lang } = useLanguage();
@@ -55,11 +55,16 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
   const formattedCardId = extractCleanOrderId(rawIdNumber);
 
-  // 3. Download ID Card strictly as an image in clean horizontal form
+  // 3. Download ID Card strictly as an image with browser's native C++ rendering engine
   const handleDownloadImage = async () => {
     if (!cardRef.current || isDownloading) return;
     try {
       setIsDownloading(true);
+
+      // Ensure all web fonts are fully ready
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
 
       // Wait for any embedded images in cardRef to load completely
       const imgElements = cardRef.current.querySelectorAll('img');
@@ -73,80 +78,19 @@ export const DigitalIdCard = ({ member, onClose }) => {
         })
       );
 
-      // Clone card to a standard 500px landscape container attached offscreen
-      const clone = cardRef.current.cloneNode(true);
-      clone.id = 'trust-id-card-render-clone';
-      clone.style.width = '500px';
-      clone.style.minWidth = '500px';
-      clone.style.maxWidth = '500px';
-      clone.style.margin = '0px';
-      clone.style.boxSizing = 'border-box';
-      clone.style.transform = 'none';
+      const cardEl = cardRef.current;
+      const width = cardEl.offsetWidth || 490;
+      const height = cardEl.offsetHeight || 280;
 
-      const renderContainer = document.createElement('div');
-      renderContainer.id = 'trust-id-card-render-container';
-      renderContainer.style.position = 'fixed';
-      renderContainer.style.left = '-99999px';
-      renderContainer.style.top = '0px';
-      renderContainer.style.width = '500px';
-      renderContainer.style.pointerEvents = 'none';
-      renderContainer.appendChild(clone);
-      document.body.appendChild(renderContainer);
-
-      // Wait for images inside clone
-      const cloneImgs = clone.querySelectorAll('img');
-      await Promise.all(
-        Array.from(cloneImgs).map((img) => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-        })
-      );
-
-      const canvas = await html2canvas(clone, {
-        scale: 3, // 3x ultra-sharp resolution
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null, // Transparent outside the card
-        logging: false,
+      // Render with native SVG foreignObject - 100% identical to on-screen preview
+      const image = await toPng(cardEl, {
+        width,
+        height,
+        pixelRatio: 3, // 3x ultra-sharp resolution
+        quality: 1.0,
+        cacheBust: true,
       });
 
-      // Remove temporary render container from DOM
-      if (renderContainer.parentNode) {
-        renderContainer.parentNode.removeChild(renderContainer);
-      }
-
-      // Smooth canvas clipping matching exact 16px radius at 3x scale without cutting 2px border
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = canvas.width;
-      finalCanvas.height = canvas.height;
-      const ctx = finalCanvas.getContext('2d');
-
-      const cornerRadius = 16 * 3; // exact 16px matching rounded-2xl at 3x scale
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(0, 0, finalCanvas.width, finalCanvas.height, cornerRadius);
-      } else {
-        const r = cornerRadius;
-        const w = finalCanvas.width;
-        const h = finalCanvas.height;
-        ctx.moveTo(r, 0);
-        ctx.lineTo(w - r, 0);
-        ctx.quadraticCurveTo(w, 0, w, r);
-        ctx.lineTo(w, h - r);
-        ctx.quadraticCurveTo(w, h, w - r, h);
-        ctx.lineTo(r, h);
-        ctx.quadraticCurveTo(0, h, 0, h - r);
-        ctx.lineTo(0, r);
-        ctx.quadraticCurveTo(0, 0, r, 0);
-        ctx.closePath();
-      }
-      ctx.clip();
-      ctx.drawImage(canvas, 0, 0);
-
-      const image = finalCanvas.toDataURL('image/png');
       const previewEl = document.getElementById('exported-img-preview');
       if (previewEl) {
         previewEl.src = image;
@@ -181,6 +125,8 @@ export const DigitalIdCard = ({ member, onClose }) => {
           margin: '0 auto',
           boxSizing: 'border-box',
           borderRadius: '16px',
+          lineHeight: 1.3,
+          fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
         className={`p-3.5 sm:p-5 border-2 shadow-md relative overflow-hidden ${
           isVolunteer
