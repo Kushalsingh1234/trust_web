@@ -36,21 +36,22 @@ export const DigitalIdCard = ({ member, onClose }) => {
     year: 'numeric'
   });
 
-  // 2. Sequential Order ID (e.g. 001, 002, 007 based on order)
+  // 2. Sequential Order ID (e.g. 001, 002, 014 based on order)
   const extractCleanOrderId = (rawId) => {
     if (!rawId) return '001';
     const str = String(rawId).trim();
-    const match = str.match(/\d+/);
-    if (match) {
-      const num = parseInt(match[0], 10);
+    const matches = str.match(/\d+/g);
+    if (matches && matches.length > 0) {
+      const lastNum = matches[matches.length - 1];
+      const num = parseInt(lastNum, 10);
       return String(num).padStart(3, '0');
     }
     return str;
   };
 
   const rawIdNumber = isVolunteer
-    ? (member.volunteerId || member.memberId || member.membershipNumber)
-    : (member.membershipNumber || member.memberId);
+    ? (member.volunteerId || member.memberId || member.membershipNumber || member.membershipId || member.orderNumber || member.orderId || member.id)
+    : (member.memberId || member.membershipNumber || member.membershipId || member.orderNumber || member.orderId || member.id);
 
   const formattedCardId = extractCleanOrderId(rawIdNumber);
 
@@ -73,7 +74,6 @@ export const DigitalIdCard = ({ member, onClose }) => {
       );
 
       // Clone card to a standard 500px landscape container attached to document.body at (0, 0)
-      // This completely decouples export from mobile screen width and scroll offsets
       const clone = cardRef.current.cloneNode(true);
       clone.id = 'trust-id-card-render-clone';
       clone.style.width = '500px';
@@ -124,13 +124,13 @@ export const DigitalIdCard = ({ member, onClose }) => {
         clone.parentNode.removeChild(clone);
       }
 
-      // Clip canvas into a perfect rectangle with curved corners matching the card
+      // Smooth canvas clipping matching exact 16px radius at 3x scale without cutting 2px border
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = canvas.width;
       finalCanvas.height = canvas.height;
       const ctx = finalCanvas.getContext('2d');
 
-      const cornerRadius = 18 * 3; // 18px radius at 3x scale
+      const cornerRadius = 16 * 3; // exact 16px matching rounded-2xl at 3x scale
       ctx.beginPath();
       if (ctx.roundRect) {
         ctx.roundRect(0, 0, finalCanvas.width, finalCanvas.height, cornerRadius);
@@ -175,73 +175,82 @@ export const DigitalIdCard = ({ member, onClose }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-6 border border-primary/30 shadow-card max-w-lg w-full mx-auto text-left relative overflow-hidden">
+    <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 border border-primary/30 shadow-card max-w-lg w-full mx-auto text-left relative overflow-hidden">
       
       {/* Horizontal Card Area */}
       <div
         ref={cardRef}
         id="trust-member-id-card"
-        style={{ maxWidth: '480px', margin: '0 auto', boxSizing: 'border-box' }}
-        className={`w-full rounded-2xl p-3.5 sm:p-5 border-2 shadow-md relative overflow-hidden ${
+        style={{
+          width: '100%',
+          maxWidth: '490px',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          borderRadius: '16px',
+        }}
+        className={`p-3.5 sm:p-5 border-2 shadow-md relative overflow-hidden ${
           isVolunteer
-            ? 'border-emerald-600 bg-gradient-to-br from-[#F0FDF4] via-white to-[#ECFDF5] ring-2 ring-emerald-500/20'
+            ? 'border-emerald-600 bg-gradient-to-br from-[#F0FDF4] via-white to-[#ECFDF5]'
             : 'border-[#E9B44C] bg-gradient-to-br from-[#FFFDF9] via-white to-[#FFF4E0]'
         }`}
       >
-        {/* Background Sacred Watermark - Placed fully inside the card boundary */}
+        {/* Background Sacred Watermark - Elegantly Centered, Non-Colliding */}
         <div
           style={{
             position: 'absolute',
-            right: '16px',
-            bottom: '10px',
-            opacity: isVolunteer ? 0.08 : 0.14,
-            fontSize: '68px',
+            right: '28%',
+            top: '52%',
+            transform: 'translate(50%, -50%)',
+            opacity: isVolunteer ? 0.05 : 0.065,
+            fontSize: '110px',
             lineHeight: 1,
             userSelect: 'none',
             pointerEvents: 'none',
             fontFamily: 'serif',
+            zIndex: 0,
           }}
           className={isVolunteer ? 'text-emerald-700' : 'text-[#E9B44C]'}
         >
           ॐ
         </div>
 
-        {/* Card Header Strip - Full Name without Truncation */}
+        {/* Card Header Strip */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            borderBottomWidth: '2px',
+            borderBottom: isVolunteer ? '1.5px solid rgba(5, 150, 105, 0.25)' : '1.5px solid rgba(233, 180, 76, 0.4)',
             paddingBottom: '10px',
             marginBottom: '12px',
+            position: 'relative',
+            zIndex: 1,
           }}
-          className={isVolunteer ? 'border-emerald-600/30' : 'border-primary/30'}
         >
           <TrustLogo className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0" showText={false} lang={lang} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <span
               style={{
                 fontSize: '10px',
-                fontWeight: '900',
+                fontWeight: 900,
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.03em',
                 display: 'block',
                 lineHeight: '1.2',
               }}
-              className={isVolunteer ? 'text-emerald-800' : 'text-secondary'}
+              className={isVolunteer ? 'text-emerald-800' : 'text-primary'}
             >
               राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
             </span>
             <h3
               style={{
                 fontSize: '12px',
-                fontWeight: '900',
+                fontWeight: 900,
                 textTransform: 'uppercase',
                 letterSpacing: '-0.01em',
                 lineHeight: '1.25',
                 marginTop: '2px',
-                color: '#382719',
+                color: '#29180C',
               }}
               className="font-hindi-heading break-words"
             >
@@ -250,19 +259,19 @@ export const DigitalIdCard = ({ member, onClose }) => {
             <span
               style={{
                 fontSize: '9px',
-                fontWeight: '600',
+                fontWeight: 600,
                 color: '#666666',
                 display: 'block',
                 lineHeight: '1.2',
                 marginTop: '2px',
               }}
             >
-              Registered Charitable Trust • Gorakhpur (U.P.) 273016
+              Registered Public Charitable Trust • Gorakhpur (U.P.) 273016
             </span>
           </div>
         </div>
 
-        {/* Distinct Identity Ribbon: strictly VOLUNTEER ID CARD / MEMBER ID CARD on single row */}
+        {/* Distinct Identity Ribbon: VOLUNTEER ID CARD / MEMBER ID CARD */}
         <div
           style={{
             display: 'flex',
@@ -270,13 +279,14 @@ export const DigitalIdCard = ({ member, onClose }) => {
             justifyContent: 'space-between',
             gap: '8px',
             marginBottom: '12px',
-            padding: '0 10px',
-            height: '28px',
-            lineHeight: '28px',
+            padding: '0 12px',
+            height: '32px',
             borderRadius: '8px',
             color: '#ffffff',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
             boxSizing: 'border-box',
+            position: 'relative',
+            zIndex: 1,
           }}
           className={
             isVolunteer
@@ -288,26 +298,23 @@ export const DigitalIdCard = ({ member, onClose }) => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              height: '100%',
               gap: '6px',
               minWidth: 0,
             }}
           >
             {isVolunteer ? (
-              <Users style={{ width: '15px', height: '15px', flexShrink: 0, color: '#ffffff', display: 'block' }} />
+              <Users style={{ width: '16px', height: '16px', flexShrink: 0, color: '#ffffff' }} />
             ) : (
-              <ShieldCheck style={{ width: '15px', height: '15px', flexShrink: 0, color: '#ffffff', display: 'block' }} />
+              <ShieldCheck style={{ width: '16px', height: '16px', flexShrink: 0, color: '#ffffff' }} />
             )}
             <span
               style={{
-                fontSize: '11px',
-                fontWeight: '900',
+                fontSize: '11.5px',
+                fontWeight: 900,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
-                lineHeight: '28px',
                 color: '#ffffff',
-                display: 'inline-block',
               }}
             >
               {isVolunteer ? 'VOLUNTEER ID CARD' : 'MEMBER ID CARD'}
@@ -316,21 +323,22 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
           <div
             style={{
-              display: 'inline-block',
-              backgroundColor: 'rgba(0, 0, 0, 0.45)',
-              padding: '0 8px',
-              height: '20px',
-              lineHeight: '20px',
-              borderRadius: '5px',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FFFFFF',
+              color: isVolunteer ? '#047857' : '#B45309',
+              padding: '0 10px',
+              height: '22px',
+              borderRadius: '9999px',
+              border: isVolunteer ? '1px solid #A7F3D0' : '1px solid #FDE68A',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               flexShrink: 0,
               boxSizing: 'border-box',
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              fontVariantNumeric: 'tabular-nums',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontSize: '11px',
-              fontWeight: '900',
-              letterSpacing: '0.08em',
-              color: '#ffffff',
+              fontWeight: 900,
+              letterSpacing: '0px',
               textAlign: 'center',
               whiteSpace: 'nowrap',
             }}
@@ -340,28 +348,29 @@ export const DigitalIdCard = ({ member, onClose }) => {
         </div>
 
         {/* Card Body */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', zIndex: 1 }}>
           {/* Avatar / Profile Photo */}
-          <div style={{ width: '80px', flexShrink: 0, textAlign: 'center' }}>
+          <div style={{ width: '84px', flexShrink: 0, textAlign: 'center' }}>
             <div
               style={{
-                width: '80px',
-                height: '96px',
+                width: '84px',
+                height: '100px',
                 margin: '0 auto',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 borderWidth: '2px',
+                borderStyle: 'solid',
                 backgroundColor: '#ffffff',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '4px',
+                padding: '3px',
                 overflow: 'hidden',
                 position: 'relative',
                 boxSizing: 'border-box',
               }}
-              className={isVolunteer ? 'border-emerald-600/50' : 'border-primary/40'}
+              className={isVolunteer ? 'border-emerald-600/50' : 'border-primary/50'}
             >
               {member.photoURL || member.profilePic ? (
                 <img
@@ -372,7 +381,7 @@ export const DigitalIdCard = ({ member, onClose }) => {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    borderRadius: '8px',
+                    borderRadius: '7px',
                     display: 'block',
                   }}
                 />
@@ -380,16 +389,17 @@ export const DigitalIdCard = ({ member, onClose }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                   <div
                     style={{
-                      width: '36px',
-                      height: '36px',
+                      width: '40px',
+                      height: '40px',
                       borderRadius: '9999px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 'bold',
-                      fontSize: '16px',
+                      fontSize: '18px',
                       marginBottom: '4px',
-                      borderWidth: '1px',
+                      borderWidth: '1.5px',
+                      borderStyle: 'solid',
                     }}
                     className={
                       isVolunteer
@@ -402,8 +412,9 @@ export const DigitalIdCard = ({ member, onClose }) => {
                   <span
                     style={{
                       fontSize: '8px',
-                      fontWeight: '900',
+                      fontWeight: 900,
                       textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
                     }}
                     className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
                   >
@@ -412,57 +423,87 @@ export const DigitalIdCard = ({ member, onClose }) => {
                 </div>
               )}
             </div>
-            <span style={{ fontSize: '9px', fontWeight: '600', color: '#666666', display: 'block', marginTop: '4px' }}>
+            <div
+              style={{
+                display: 'inline-block',
+                marginTop: '4px',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                backgroundColor: '#F5F5F4',
+                border: '1px solid #E7E5E4',
+                fontSize: '8.5px',
+                fontWeight: 700,
+                color: '#57534E',
+              }}
+            >
               Gorakhpur, UP
-            </span>
+            </div>
           </div>
 
           {/* Member Credentials */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <div>
-              <span style={{ fontSize: '9px', color: '#666666', display: 'block', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '9px', color: '#78716C', fontWeight: 600, display: 'block', lineHeight: 1.2 }}>
                 {isVolunteer
                   ? (lang === 'hi' ? 'स्वयंसेवक का नाम / Name:' : 'Volunteer Name:')
                   : (lang === 'hi' ? 'सदस्य का नाम / Name:' : 'Member Name:')}
               </span>
-              <span style={{ fontWeight: 900, fontSize: '13px', color: '#382719', display: 'block', lineHeight: 1.25, marginTop: '1px' }}>
+              <span
+                style={{
+                  fontWeight: 900,
+                  fontSize: '15px',
+                  color: '#1C1917',
+                  display: 'block',
+                  lineHeight: 1.2,
+                  marginTop: '2px',
+                }}
+                className="font-hindi-heading"
+              >
                 {member.fullName}
               </span>
             </div>
 
-            {/* Clean Role: Strictly Trust Volunteer or Trust Member, No Emojis or Cat B/C */}
+            {/* Clean Role */}
             <div>
-              <span style={{ fontSize: '9px', color: '#666666', display: 'block', lineHeight: 1.2 }}>
+              <span style={{ fontSize: '9px', color: '#78716C', fontWeight: 600, display: 'block', lineHeight: 1.2 }}>
                 {isVolunteer ? (lang === 'hi' ? 'पद / भूमिका:' : 'Role:') : (lang === 'hi' ? 'पद / भूमिका:' : 'Designation:')}
               </span>
               <span
-                style={{ fontWeight: 800, fontSize: '12px', display: 'block', lineHeight: 1.25, marginTop: '1px' }}
+                style={{
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  display: 'inline-block',
+                  lineHeight: 1.2,
+                  marginTop: '1px',
+                }}
                 className={isVolunteer ? 'text-emerald-800' : 'text-primary'}
               >
                 {isVolunteer ? 'Trust Volunteer' : 'Trust Member'}
               </span>
             </div>
 
-            {/* Issue & Expiry Dates */}
+            {/* Issue & Expiry Dates - Boxed Validity Strip */}
             <div
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: '6px',
-                fontSize: '9px',
-                color: '#666666',
-                borderTop: '1px solid',
-                marginTop: '2px',
+                gap: '8px',
+                marginTop: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor: isVolunteer ? 'rgba(5, 150, 105, 0.08)' : 'rgba(233, 180, 76, 0.12)',
+                border: isVolunteer ? '1px solid rgba(5, 150, 105, 0.22)' : '1px solid rgba(233, 180, 76, 0.3)',
+                fontSize: '9.5px',
+                width: 'fit-content',
               }}
-              className={isVolunteer ? 'border-emerald-600/30' : 'border-[#E9B44C]/30'}
             >
-              <div>
-                <span>{lang === 'hi' ? 'जारी: ' : 'Issued: '}</span>
-                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#382719' }}>{formattedIssueDate}</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'जारी:' : 'Issued:'}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1C1917' }}>{formattedIssueDate}</span>
               </div>
-              <div>
-                <span>{lang === 'hi' ? 'समाप्ति: ' : 'Expiry: '}</span>
+              <span style={{ color: '#CBD5E1', fontWeight: 300 }}>•</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'समाप्ति:' : 'Expiry:'}</span>
                 <span
                   style={{ fontFamily: 'monospace', fontWeight: 800 }}
                   className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
@@ -479,40 +520,46 @@ export const DigitalIdCard = ({ member, onClose }) => {
           style={{
             marginTop: '12px',
             paddingTop: '8px',
-            borderTop: '1px dashed',
+            borderTop: isVolunteer ? '1px dashed rgba(5, 150, 105, 0.35)' : '1px dashed rgba(233, 180, 76, 0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '9px',
             color: '#666666',
+            position: 'relative',
+            zIndex: 1,
           }}
-          className={isVolunteer ? 'border-emerald-600/40' : 'border-[#E9B44C]/60'}
         >
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}
             className={isVolunteer ? 'text-emerald-800' : 'text-trust-green'}
           >
             {isVolunteer ? (
-              <Users style={{ width: '14px', height: '14px' }} className="text-emerald-700" />
+              <Users style={{ width: '15px', height: '15px' }} className="text-emerald-700" />
             ) : (
-              <ShieldCheck style={{ width: '14px', height: '14px' }} className="text-trust-green" />
+              <ShieldCheck style={{ width: '15px', height: '15px' }} className="text-trust-green" />
             )}
-            <span>
-              {isVolunteer
-                ? (lang === 'hi' ? 'अधिकृत सनातन सेवा स्वयंसेवक' : 'Official Sanatan Volunteer')
-                : (lang === 'hi' ? 'अधिकृत ट्रस्ट पहचान पत्र' : 'Official Verified Trust Member')}
-            </span>
+            <div>
+              <span style={{ display: 'block', lineHeight: 1.2 }}>
+                {isVolunteer
+                  ? (lang === 'hi' ? 'अधिकृत सनातन सेवा स्वयंसेवक' : 'Official Sanatan Volunteer')
+                  : (lang === 'hi' ? 'अधिकृत ट्रस्ट पहचान पत्र' : 'Official Verified Trust Member')}
+              </span>
+              <span style={{ fontSize: '7.5px', color: '#78716C', display: 'block', lineHeight: 1.1, fontWeight: 500 }}>
+                {isVolunteer ? 'Authorized Social Volunteer' : 'Registered Member Identity'}
+              </span>
+            </div>
           </div>
+
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontWeight: 800, color: '#382719', display: 'block', lineHeight: 1.2 }}>
+            <span style={{ fontWeight: 800, color: '#1C1917', display: 'block', lineHeight: 1.2 }}>
               {lang === 'hi' ? 'बजरंगी दूबे / कुसुमलता दूबे' : 'Bajrangi Dubey / Kusumlata Dubey'}
             </span>
-            <span style={{ fontSize: '8px', color: '#888888', display: 'block', lineHeight: 1.2 }}>
+            <span style={{ fontSize: '8px', color: '#78716C', display: 'block', lineHeight: 1.2 }}>
               {lang === 'hi' ? 'अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)' : 'Authorized Signatory (Executive)'}
             </span>
           </div>
         </div>
-
       </div>
 
       {/* Action Strip - Image Download Only (No Print, No PDF) */}
@@ -524,6 +571,7 @@ export const DigitalIdCard = ({ member, onClose }) => {
         </p>
         <button
           type="button"
+          id={isVolunteer ? 'volunteer-download-btn' : 'member-download-btn'}
           onClick={handleDownloadImage}
           disabled={isDownloading}
           className={`min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer ${
