@@ -89,6 +89,34 @@ function AppContent() {
     );
   }
 
+  if (location.pathname.startsWith('/id-card-preview')) {
+    return (
+      <div className="min-h-screen bg-neutral-100 p-2 flex flex-col items-center">
+        <div style={{ width: '100%', maxWidth: '360px' }}>
+          <DigitalIdCard
+            member={{
+              fullName: 'Kranti Mishra',
+              volunteerId: '001',
+              category: 'catC',
+              memberType: 'volunteer',
+              role: 'volunteer',
+              cardType: 'volunteer',
+              status: 'approved',
+              approvedAt: { toDate: () => new Date('2026-10-21') }
+            }}
+          />
+        </div>
+        <div className="mt-4 p-4 bg-white rounded-xl shadow w-full max-w-lg text-center">
+          <p className="text-xs font-bold text-gray-500 mb-2">Downloaded Image Result:</p>
+          <img
+            id="exported-img-preview"
+            alt="Export Result"
+            style={{ maxWidth: '100%', margin: '0 auto', display: 'none', borderRadius: '18px', border: '1px solid #ddd' }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Full-screen dashboards with their own dedicated layouts
   if (location.pathname.startsWith('/admin')) {

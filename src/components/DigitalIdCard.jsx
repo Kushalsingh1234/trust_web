@@ -60,7 +60,7 @@ export const DigitalIdCard = ({ member, onClose }) => {
     try {
       setIsDownloading(true);
 
-      // Wait for any embedded images (avatar/logo) to load completely
+      // Wait for any embedded images in cardRef to load completely
       const imgElements = cardRef.current.querySelectorAll('img');
       await Promise.all(
         Array.from(imgElements).map((img) => {
@@ -72,13 +72,57 @@ export const DigitalIdCard = ({ member, onClose }) => {
         })
       );
 
-      const canvas = await html2canvas(cardRef.current, {
+      // Clone card to a standard 500px landscape container attached to document.body at (0, 0)
+      // This completely decouples export from mobile screen width and scroll offsets
+      const clone = cardRef.current.cloneNode(true);
+      clone.id = 'trust-id-card-render-clone';
+      clone.style.width = '500px';
+      clone.style.minWidth = '500px';
+      clone.style.maxWidth = '500px';
+      clone.style.position = 'fixed';
+      clone.style.top = '0px';
+      clone.style.left = '0px';
+      clone.style.zIndex = '-9999';
+      clone.style.margin = '0px';
+      clone.style.boxSizing = 'border-box';
+      clone.style.transform = 'none';
+      document.body.appendChild(clone);
+
+      // Wait for images inside clone
+      const cloneImgs = clone.querySelectorAll('img');
+      await Promise.all(
+        Array.from(cloneImgs).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      const cloneWidth = 500;
+      const cloneHeight = clone.offsetHeight;
+
+      const canvas = await html2canvas(clone, {
         scale: 3, // 3x ultra-sharp resolution
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null, // Transparent outside the card boundary
+        backgroundColor: null, // Transparent outside the card
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        width: cloneWidth,
+        height: cloneHeight,
+        windowWidth: 600,
+        windowHeight: 600,
         logging: false,
       });
+
+      // Remove temporary clone from DOM
+      if (clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
 
       // Clip canvas into a perfect rectangle with curved corners matching the card
       const finalCanvas = document.createElement('canvas');
@@ -126,139 +170,298 @@ export const DigitalIdCard = ({ member, onClose }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 border border-primary/30 shadow-card max-w-lg w-full mx-auto text-left relative overflow-hidden">
+    <div className="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-6 border border-primary/30 shadow-card max-w-lg w-full mx-auto text-left relative overflow-hidden">
       
       {/* Horizontal Card Area */}
       <div
         ref={cardRef}
         id="trust-member-id-card"
         style={{ maxWidth: '480px', margin: '0 auto', boxSizing: 'border-box' }}
-        className={`w-full rounded-2xl p-4 sm:p-5 border-2 shadow-md relative overflow-hidden ${
+        className={`w-full rounded-2xl p-3.5 sm:p-5 border-2 shadow-md relative overflow-hidden ${
           isVolunteer
             ? 'border-emerald-600 bg-gradient-to-br from-[#F0FDF4] via-white to-[#ECFDF5] ring-2 ring-emerald-500/20'
             : 'border-[#E9B44C] bg-gradient-to-br from-[#FFFDF9] via-white to-[#FFF4E0]'
         }`}
       >
-        {/* Background Sacred Watermark - Placed fully inside the card */}
+        {/* Background Sacred Watermark - Placed fully inside the card boundary */}
         <div
-          style={{ opacity: isVolunteer ? 0.08 : 0.14 }}
-          className={`absolute right-4 bottom-2 font-serif text-7xl select-none pointer-events-none leading-none ${
-            isVolunteer ? 'text-emerald-700' : 'text-[#E9B44C]'
-          }`}
+          style={{
+            position: 'absolute',
+            right: '16px',
+            bottom: '10px',
+            opacity: isVolunteer ? 0.08 : 0.14,
+            fontSize: '68px',
+            lineHeight: 1,
+            userSelect: 'none',
+            pointerEvents: 'none',
+            fontFamily: 'serif',
+          }}
+          className={isVolunteer ? 'text-emerald-700' : 'text-[#E9B44C]'}
         >
           ॐ
         </div>
 
         {/* Card Header Strip - Full Name without Truncation */}
-        <div className={`flex items-center gap-3 border-b-2 pb-2.5 mb-3 ${
-          isVolunteer ? 'border-emerald-600/30' : 'border-primary/30'
-        }`}>
-          <TrustLogo className="w-12 h-12 flex-shrink-0" showText={false} lang={lang} />
-          <div className="flex-1 min-w-0">
-            <span className={`text-[10px] font-black uppercase tracking-wider block leading-tight ${
-              isVolunteer ? 'text-emerald-800' : 'text-secondary'
-            }`}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            borderBottomWidth: '2px',
+            paddingBottom: '10px',
+            marginBottom: '12px',
+          }}
+          className={isVolunteer ? 'border-emerald-600/30' : 'border-primary/30'}
+        >
+          <TrustLogo className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0" showText={false} lang={lang} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: '900',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                display: 'block',
+                lineHeight: '1.2',
+              }}
+              className={isVolunteer ? 'text-emerald-800' : 'text-secondary'}
+            >
               राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
             </span>
-            <h3 className="font-extrabold text-xs sm:text-[13px] text-[#382719] leading-snug font-hindi-heading tracking-tight break-words uppercase mt-0.5">
+            <h3
+              style={{
+                fontSize: '12px',
+                fontWeight: '900',
+                textTransform: 'uppercase',
+                letterSpacing: '-0.01em',
+                lineHeight: '1.25',
+                marginTop: '2px',
+                color: '#382719',
+              }}
+              className="font-hindi-heading break-words"
+            >
               RASHTRIYA SANATAN SANSKAR SEVA SANSTHAN
             </h3>
-            <span className="text-[9px] text-[#666666] font-semibold block leading-tight mt-0.5">
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: '600',
+                color: '#666666',
+                display: 'block',
+                lineHeight: '1.2',
+                marginTop: '2px',
+              }}
+            >
               Registered Charitable Trust • Gorakhpur (U.P.) 273016
             </span>
           </div>
         </div>
 
-        {/* Distinct Identity Ribbon: strictly VOLUNTEER ID CARD / MEMBER ID CARD */}
-        <div className={`flex items-center justify-between gap-2 mb-3.5 px-3 py-1.5 rounded-xl text-white shadow-xs ${
-          isVolunteer
-            ? 'bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800'
-            : 'bg-gradient-to-r from-primary via-[#EA6F0B] to-secondary'
-        }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            {isVolunteer ? <Users className="w-4 h-4 shrink-0" /> : <ShieldCheck className="w-4 h-4 shrink-0" />}
-            <span className="text-xs font-black tracking-wider uppercase leading-none">
+        {/* Distinct Identity Ribbon: strictly VOLUNTEER ID CARD / MEMBER ID CARD on single row */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            marginBottom: '12px',
+            padding: '4px 10px',
+            minHeight: '30px',
+            boxSizing: 'border-box',
+            borderRadius: '8px',
+            color: '#ffffff',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          }}
+          className={
+            isVolunteer
+              ? 'bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800'
+              : 'bg-gradient-to-r from-primary via-[#EA6F0B] to-secondary'
+          }
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexShrink: 1 }}>
+            {isVolunteer ? (
+              <Users style={{ width: '15px', height: '15px', flexShrink: 0, color: '#ffffff', display: 'block' }} />
+            ) : (
+              <ShieldCheck style={{ width: '15px', height: '15px', flexShrink: 0, color: '#ffffff', display: 'block' }} />
+            )}
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '900',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                lineHeight: 1,
+                color: '#ffffff',
+                display: 'inline-block',
+              }}
+            >
               {isVolunteer ? 'VOLUNTEER ID CARD' : 'MEMBER ID CARD'}
             </span>
           </div>
-          <div className="inline-flex items-center justify-center bg-black/40 px-3 py-1 rounded-md border border-white/20 shrink-0">
-            <span className="font-mono text-xs font-black tracking-wider text-white leading-none">
+
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              padding: '0 8px',
+              height: '22px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              flexShrink: 0,
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontVariantNumeric: 'tabular-nums',
+                fontSize: '11px',
+                fontWeight: '900',
+                letterSpacing: '0.08em',
+                color: '#ffffff',
+                lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                transform: 'translateY(-0.5px)',
+              }}
+            >
               ID: {formattedCardId}
             </span>
           </div>
         </div>
 
         {/* Card Body */}
-        <div className="grid grid-cols-12 gap-3.5 items-center">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           {/* Avatar / Profile Photo */}
-          <div className="col-span-4 text-center">
-            <div className={`w-20 h-24 mx-auto rounded-xl border-2 bg-white shadow-inner flex flex-col items-center justify-center p-1 overflow-hidden relative ${
-              isVolunteer ? 'border-emerald-600/50' : 'border-primary/40'
-            }`}>
+          <div style={{ width: '80px', flexShrink: 0, textAlign: 'center' }}>
+            <div
+              style={{
+                width: '80px',
+                height: '96px',
+                margin: '0 auto',
+                borderRadius: '12px',
+                borderWidth: '2px',
+                backgroundColor: '#ffffff',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '4px',
+                overflow: 'hidden',
+                position: 'relative',
+                boxSizing: 'border-box',
+              }}
+              className={isVolunteer ? 'border-emerald-600/50' : 'border-primary/40'}
+            >
               {member.photoURL || member.profilePic ? (
                 <img
                   src={member.photoURL || member.profilePic}
                   alt={member.fullName || 'Member'}
-                  className="w-full h-full object-cover rounded-lg"
+                  crossOrigin="anonymous"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    display: 'block',
+                  }}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center h-full">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-base mb-1 border ${
-                    isVolunteer
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                      : 'bg-[#FFF8EF] text-primary border-[#E9B44C]'
-                  }`}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '9999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '16px',
+                      marginBottom: '4px',
+                      borderWidth: '1px',
+                    }}
+                    className={
+                      isVolunteer
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-[#FFF8EF] text-primary border-[#E9B44C]'
+                    }
+                  >
                     ॐ
                   </div>
-                  <span className={`text-[8px] font-black uppercase ${
-                    isVolunteer ? 'text-emerald-700' : 'text-primary'
-                  }`}>
+                  <span
+                    style={{
+                      fontSize: '8px',
+                      fontWeight: '900',
+                      textTransform: 'uppercase',
+                    }}
+                    className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
+                  >
                     {isVolunteer ? 'Volunteer' : 'Verified'}
                   </span>
                 </div>
               )}
             </div>
-            <span className="text-[9px] text-[#666666] font-semibold block mt-1">
+            <span style={{ fontSize: '9px', fontWeight: '600', color: '#666666', display: 'block', marginTop: '4px' }}>
               Gorakhpur, UP
             </span>
           </div>
 
           {/* Member Credentials */}
-          <div className="col-span-8 space-y-2 text-xs">
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div>
-              <span className="text-[10px] text-[#666666] block">
+              <span style={{ fontSize: '9px', color: '#666666', display: 'block', lineHeight: 1.2 }}>
                 {isVolunteer
                   ? (lang === 'hi' ? 'स्वयंसेवक का नाम / Name:' : 'Volunteer Name:')
                   : (lang === 'hi' ? 'सदस्य का नाम / Name:' : 'Member Name:')}
               </span>
-              <span className="font-extrabold text-[#382719] text-xs sm:text-sm block">
+              <span style={{ fontWeight: 900, fontSize: '13px', color: '#382719', display: 'block', lineHeight: 1.25, marginTop: '1px' }}>
                 {member.fullName}
               </span>
             </div>
 
             {/* Clean Role: Strictly Trust Volunteer or Trust Member, No Emojis or Cat B/C */}
             <div>
-              <span className="text-[10px] text-[#666666] block">
+              <span style={{ fontSize: '9px', color: '#666666', display: 'block', lineHeight: 1.2 }}>
                 {isVolunteer ? (lang === 'hi' ? 'पद / भूमिका:' : 'Role:') : (lang === 'hi' ? 'पद / भूमिका:' : 'Designation:')}
               </span>
-              <span className={`font-bold text-xs sm:text-[13px] block ${
-                isVolunteer ? 'text-emerald-800' : 'text-primary'
-              }`}>
+              <span
+                style={{ fontWeight: 800, fontSize: '12px', display: 'block', lineHeight: 1.25, marginTop: '1px' }}
+                className={isVolunteer ? 'text-emerald-800' : 'text-primary'}
+              >
                 {isVolunteer ? 'Trust Volunteer' : 'Trust Member'}
               </span>
             </div>
 
             {/* Issue & Expiry Dates */}
-            <div className={`flex items-center justify-between pt-1.5 text-[10px] text-[#666666] border-t ${
-              isVolunteer ? 'border-emerald-600/30' : 'border-[#E9B44C]/30'
-            }`}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '6px',
+                fontSize: '9px',
+                color: '#666666',
+                borderTop: '1px solid',
+                marginTop: '2px',
+              }}
+              className={isVolunteer ? 'border-emerald-600/30' : 'border-[#E9B44C]/30'}
+            >
               <div>
                 <span>{lang === 'hi' ? 'जारी: ' : 'Issued: '}</span>
-                <span className="font-mono font-bold text-[#382719]">{formattedIssueDate}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#382719' }}>{formattedIssueDate}</span>
               </div>
               <div>
                 <span>{lang === 'hi' ? 'समाप्ति: ' : 'Expiry: '}</span>
-                <span className={`font-mono font-bold ${isVolunteer ? 'text-emerald-700' : 'text-primary'}`}>
+                <span
+                  style={{ fontFamily: 'monospace', fontWeight: 800 }}
+                  className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
+                >
                   {formattedExpiryDate}
                 </span>
               </div>
@@ -267,24 +470,39 @@ export const DigitalIdCard = ({ member, onClose }) => {
         </div>
 
         {/* Card Footer Strip with Authorized Signatory */}
-        <div className={`mt-3.5 pt-2 border-t border-dashed flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[9px] text-[#666666] ${
-          isVolunteer ? 'border-emerald-600/40' : 'border-[#E9B44C]/60'
-        }`}>
-          <div className={`flex items-center gap-1 font-bold ${
-            isVolunteer ? 'text-emerald-800' : 'text-trust-green'
-          }`}>
-            {isVolunteer ? <Users className="w-3.5 h-3.5 text-emerald-700" /> : <ShieldCheck className="w-3.5 h-3.5 text-trust-green" />}
+        <div
+          style={{
+            marginTop: '12px',
+            paddingTop: '8px',
+            borderTop: '1px dashed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '9px',
+            color: '#666666',
+          }}
+          className={isVolunteer ? 'border-emerald-600/40' : 'border-[#E9B44C]/60'}
+        >
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}
+            className={isVolunteer ? 'text-emerald-800' : 'text-trust-green'}
+          >
+            {isVolunteer ? (
+              <Users style={{ width: '14px', height: '14px' }} className="text-emerald-700" />
+            ) : (
+              <ShieldCheck style={{ width: '14px', height: '14px' }} className="text-trust-green" />
+            )}
             <span>
               {isVolunteer
                 ? (lang === 'hi' ? 'अधिकृत सनातन सेवा स्वयंसेवक' : 'Official Sanatan Volunteer')
                 : (lang === 'hi' ? 'अधिकृत ट्रस्ट पहचान पत्र' : 'Official Verified Trust Member')}
             </span>
           </div>
-          <div className="text-left sm:text-right">
-            <span className="font-bold text-[#382719] block">
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontWeight: 800, color: '#382719', display: 'block', lineHeight: 1.2 }}>
               {lang === 'hi' ? 'बजरंगी दूबे / कुसुमलता दूबे' : 'Bajrangi Dubey / Kusumlata Dubey'}
             </span>
-            <span className="text-[8px] text-[#888888]">
+            <span style={{ fontSize: '8px', color: '#888888', display: 'block', lineHeight: 1.2 }}>
               {lang === 'hi' ? 'अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)' : 'Authorized Signatory (Executive)'}
             </span>
           </div>
