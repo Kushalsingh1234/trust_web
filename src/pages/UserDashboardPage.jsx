@@ -170,7 +170,7 @@ export const UserDashboardPage = () => {
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'हाल ही में (Recent)';
+    if (!timestamp) return lang === 'hi' ? 'हाल ही में' : 'Recent';
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds ? timestamp.seconds * 1000 : timestamp);
       return date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-US', {
@@ -179,7 +179,7 @@ export const UserDashboardPage = () => {
         year: 'numeric'
       });
     } catch {
-      return 'हाल ही में (Recent)';
+      return lang === 'hi' ? 'हाल ही में' : 'Recent';
     }
   };
 
@@ -456,14 +456,14 @@ export const UserDashboardPage = () => {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-300">
           <XCircle className="w-3.5 h-3.5 text-rose-600" />
-          <span>{lang === 'hi' ? 'सदस्यता निरस्त (Removed)' : 'Membership Removed'}</span>
+          <span>{lang === 'hi' ? 'सदस्यता निरस्त' : 'Membership Removed'}</span>
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-300">
         <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin-slow" />
-        <span>{lang === 'hi' ? 'समीक्षाधीन (Under review)' : 'Under review'}</span>
+        <span>{lang === 'hi' ? 'समीक्षाधीन' : 'Under Review'}</span>
       </span>
     );
   };
@@ -481,8 +481,8 @@ export const UserDashboardPage = () => {
               </span>
               <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
                 {isVolunteer && !isMember
-                  ? (lang === 'hi' ? 'स्वयंसेवक डैशबोर्ड (Volunteer Dashboard)' : 'Volunteer Dashboard')
-                  : (lang === 'hi' ? 'सदस्य डैशबोर्ड (Member Dashboard)' : 'Member Dashboard')}
+                  ? (lang === 'hi' ? 'स्वयंसेवक डैशबोर्ड' : 'Volunteer Dashboard')
+                  : (lang === 'hi' ? 'सदस्य डैशबोर्ड' : 'Member Dashboard')}
               </span>
             </div>
           </Link>
@@ -592,7 +592,7 @@ export const UserDashboardPage = () => {
                     />
                   )}
                   <h1 className="text-xl sm:text-2xl font-black text-[#382719] font-hindi-heading">
-                    {userProfile?.fullName || 'सदस्य (Member)'}
+                    {userProfile?.fullName || (lang === 'hi' ? 'सदस्य' : 'Member')}
                   </h1>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -603,8 +603,8 @@ export const UserDashboardPage = () => {
                           : 'bg-amber-50 text-amber-800 border border-amber-200'
                       }`}>
                         {isMember
-                          ? (lang === 'hi' ? '🛡️ सत्यापित सदस्य (Member)' : '🛡️ Verified Member')
-                          : (lang === 'hi' ? '🛡️ सदस्य आवेदक (Pending)' : '🛡️ Member Applicant')}
+                          ? (lang === 'hi' ? '🛡️ सत्यापित सदस्य' : '🛡️ Verified Member')
+                          : (lang === 'hi' ? '🛡️ सदस्य आवेदक' : '🛡️ Member Applicant')}
                       </span>
                     )}
 
@@ -615,8 +615,8 @@ export const UserDashboardPage = () => {
                           : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                       }`}>
                         {approvedVolunteer || userProfile?.isVolunteer
-                          ? (lang === 'hi' ? '🤝 सनातन स्वयंसेवक (Volunteer)' : '🤝 Sanatan Volunteer')
-                          : (lang === 'hi' ? '🤝 स्वयंसेवक आवेदक (Pending)' : '🤝 Volunteer Applicant')}
+                          ? (lang === 'hi' ? '🤝 सनातन स्वयंसेवक' : '🤝 Sanatan Volunteer')
+                          : (lang === 'hi' ? '🤝 स्वयंसेवक आवेदक' : '🤝 Volunteer Applicant')}
                       </span>
                     )}
 
@@ -668,7 +668,7 @@ export const UserDashboardPage = () => {
                       title="View Digital Member Card"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'सदस्य पहचान पत्र (Member Card)' : 'Member ID Card'}</span>
+                      <span>{lang === 'hi' ? 'सदस्य पहचान पत्र' : 'Member ID Card'}</span>
                     </button>
                   )}
 
@@ -688,7 +688,7 @@ export const UserDashboardPage = () => {
                       title="View Digital Volunteer Card"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र (Volunteer Card)' : 'Volunteer ID Card'}</span>
+                      <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र' : 'Volunteer ID Card'}</span>
                     </button>
                   )}
 
@@ -729,7 +729,7 @@ export const UserDashboardPage = () => {
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold text-xs shadow-saffron transition-all"
               >
                 <Heart className="w-4 h-4 fill-white" />
-                <span>{lang === 'hi' ? 'दान / समर्पण करें (Donate)' : 'Donate More'}</span>
+                <span>{lang === 'hi' ? 'दान / समर्पण करें' : 'Donate More'}</span>
               </button>
 
               <button
@@ -883,7 +883,7 @@ export const UserDashboardPage = () => {
             }`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी सदस्यता (My Membership)' : 'My Membership'}</span>
+            <span>{lang === 'hi' ? 'मेरी सदस्यता' : 'My Membership'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {effectiveMemberships.length}
             </span>
@@ -899,7 +899,7 @@ export const UserDashboardPage = () => {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी स्वयंसेवक सेवा (Volunteer)' : 'Volunteer Dashboard'}</span>
+            <span>{lang === 'hi' ? 'मेरी स्वयंसेवक सेवा' : 'Volunteer Dashboard'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {effectiveVolunteers.length}
             </span>
@@ -915,7 +915,7 @@ export const UserDashboardPage = () => {
             }`}
           >
             <Heart className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरे दान एवं समर्पण (Donations)' : 'My Donations'}</span>
+            <span>{lang === 'hi' ? 'मेरे दान एवं समर्पण' : 'My Donations'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {donations.length}
             </span>
@@ -931,7 +931,7 @@ export const UserDashboardPage = () => {
             }`}
           >
             <HandHeart className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'मेरी सहायता प्रार्थनाएं (Help Requests)' : 'Help Requests'}</span>
+            <span>{lang === 'hi' ? 'मेरी सहायता प्रार्थनाएं' : 'Help Requests'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {helpRequests.length}
             </span>
@@ -1014,7 +1014,7 @@ export const UserDashboardPage = () => {
                       <div>
                         <span className="text-[#888888] block">{lang === 'hi' ? 'वार्षिक सदस्यता शुल्क:' : 'Annual Fee:'}</span>
                         <span className="font-mono font-bold text-primary">
-                          {item.category === 'catA' ? (lang === 'hi' ? '₹0 (छूट / निःशुल्क)' : '₹0 (Exempted)') : `₹${item.annualFee ?? 200}/वर्ष`}
+                          {item.category === 'catA' ? (lang === 'hi' ? '₹0 (छूट / निःशुल्क)' : '₹0 (Exempted)') : (lang === 'hi' ? `₹${item.annualFee ?? 200}/वर्ष` : `₹${item.annualFee ?? 200}/year`)}
                         </span>
                       </div>
 
@@ -1102,7 +1102,7 @@ export const UserDashboardPage = () => {
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें (PDF)' : 'Download Fee Receipt (PDF)'}</span>
+                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें' : 'Download Fee Receipt'}</span>
                           </button>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
@@ -1125,7 +1125,7 @@ export const UserDashboardPage = () => {
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/60 text-[#382719] font-bold text-xs shadow-xs transition-all"
                         >
                           <CreditCard className="w-3.5 h-3.5 text-primary" />
-                          <span>{lang === 'hi' ? 'सदस्य पहचान पत्र देखें (Member Card)' : 'View Member ID Card'}</span>
+                          <span>{lang === 'hi' ? 'सदस्य पहचान पत्र देखें' : 'View Member ID Card'}</span>
                         </button>
                       </div>
                     )}
@@ -1222,7 +1222,7 @@ export const UserDashboardPage = () => {
                             {lang === 'hi' ? 'सनातन स्वयंसेवक सेवा आवेदन' : 'Volunteer Application'}
                           </span>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF8EF] text-secondary border border-[#E9B44C]">
-                            {item.availability === 'full_time' ? 'पूर्णकालिक' : item.availability === 'few_hours_daily' ? 'प्रतिदिन कुछ घंटे' : 'सप्ताहांत (Weekends)'}
+                            {item.availability === 'full_time' ? 'पूर्णकालिक' : item.availability === 'few_hours_daily' ? 'प्रतिदिन कुछ घंटे' : (lang === 'hi' ? 'सप्ताहांत' : 'Weekends')}
                           </span>
                         </div>
                         <span className="text-xs text-[#777777] flex items-center gap-1.5 mt-0.5">
@@ -1271,7 +1271,7 @@ export const UserDashboardPage = () => {
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                         >
                           <CreditCard className="w-3.5 h-3.5" />
-                          <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र देखें (Volunteer Card)' : 'View Volunteer ID Card'}</span>
+                          <span>{lang === 'hi' ? 'स्वयंसेवक पहचान पत्र देखें' : 'View Volunteer ID Card'}</span>
                         </button>
 
                         {/* Volunteer Fee Receipt or Exemption */}
@@ -1302,7 +1302,7 @@ export const UserDashboardPage = () => {
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs shadow-xs transition-all cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें (PDF)' : 'Download Fee Receipt (PDF)'}</span>
+                            <span>{lang === 'hi' ? 'शुल्क रसीद डाउनलोड करें' : 'Download Fee Receipt'}</span>
                           </button>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
@@ -1423,7 +1423,7 @@ export const UserDashboardPage = () => {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-[#382719] text-sm sm:text-base">
-                            {item.purposeLabel || (item.purpose === 'membership_fee' ? 'सदस्यता शुल्क' : 'समर्पण निधि (Donation)')}
+                            {item.purposeLabel || (item.purpose === 'membership_fee' ? 'सदस्यता शुल्क' : (lang === 'hi' ? 'समर्पण निधि' : 'Donation'))}
                           </span>
                           <span className="font-mono font-black text-primary text-base">
                             ₹{Number(item.verifiedAmount || item.claimedAmount || item.amount || 0).toLocaleString('en-IN')}
@@ -1444,12 +1444,12 @@ export const UserDashboardPage = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 py-3 text-xs">
                       <div>
-                        <span className="text-[#888888] block">{lang === 'hi' ? 'घोषित राशि (Claimed):' : 'Claimed Amount:'}</span>
+                        <span className="text-[#888888] block">{lang === 'hi' ? 'घोषित राशि:' : 'Claimed Amount:'}</span>
                         <span className="font-mono font-bold text-[#382719]">₹{Number(item.claimedAmount || item.amount || 0).toLocaleString('en-IN')}</span>
                       </div>
                       {isApproved && (
                         <div>
-                          <span className="text-[#888888] block">{lang === 'hi' ? 'सत्यापित राशि (Verified):' : 'Verified Amount:'}</span>
+                          <span className="text-[#888888] block">{lang === 'hi' ? 'सत्यापित राशि:' : 'Verified Amount:'}</span>
                           <span className="font-mono font-bold text-emerald-700">₹{Number(item.verifiedAmount || item.amount || 0).toLocaleString('en-IN')}</span>
                         </div>
                       )}
@@ -1479,7 +1479,7 @@ export const UserDashboardPage = () => {
                     {item.status === 'pending' && (
                       <div className="mt-2 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                        <span>{lang === 'hi' ? 'व्यवस्थापक द्वारा सत्यापन एवं रसीद प्रेषण के उपरांत आधिकारिक रसीद (PDF) उपलब्ध होगी।' : 'Receipt available after admin approval and receipt dispatch.'}</span>
+                        <span>{lang === 'hi' ? 'व्यवस्थापक द्वारा सत्यापन एवं रसीद प्रेषण के उपरांत आधिकारिक रसीद उपलब्ध होगी।' : 'Receipt available after admin approval and receipt dispatch.'}</span>
                       </div>
                     )}
 
@@ -1503,7 +1503,7 @@ export const UserDashboardPage = () => {
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>{lang === 'hi' ? 'आधिकारिक रसीद डाउनलोड करें (PDF)' : 'Download Receipt (PDF)'}</span>
+                            <span>{lang === 'hi' ? 'आधिकारिक रसीद डाउनलोड करें' : 'Download Receipt'}</span>
                           </button>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
@@ -1791,7 +1791,7 @@ export const UserDashboardPage = () => {
                 >
                   {isSubmittingDonation
                     ? (lang === 'hi' ? 'समर्पण दर्ज हो रहा है...' : 'Submitting Donation...')
-                    : (lang === 'hi' ? 'समर्पण जमा करें (Submit Donation)' : 'Submit Donation')}
+                    : (lang === 'hi' ? 'समर्पण जमा करें' : 'Submit Donation')}
                 </button>
               </div>
             </form>
@@ -1806,8 +1806,8 @@ export const UserDashboardPage = () => {
             <div className="px-5 py-3.5 bg-primary text-white flex items-center justify-between">
               <span className="font-black text-sm">
                 {viewingCard.cardType === 'volunteer'
-                  ? (lang === 'hi' ? 'स्वयंसेवक पहचान पत्र (Volunteer ID Card)' : 'Volunteer ID Card')
-                  : (lang === 'hi' ? 'सदस्यता पहचान पत्र (Member ID Card)' : 'Member ID Card')}
+                  ? (lang === 'hi' ? 'स्वयंसेवक पहचान पत्र' : 'Volunteer ID Card')
+                  : (lang === 'hi' ? 'सदस्यता पहचान पत्र' : 'Member ID Card')}
               </span>
               <button
                 type="button"

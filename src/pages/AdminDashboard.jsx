@@ -57,6 +57,7 @@ import {
   Heart,
   Home,
   LogOut,
+  Globe,
   X,
   AlertCircle,
   Check,
@@ -720,103 +721,113 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     <div className="min-h-screen bg-[#FFFDF9] text-[#454545] flex flex-col font-sans">
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-[#382719] text-white shadow-md border-b border-[#E9B44C]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <TrustLogo className="w-9 h-9" showText={false} lang={lang} />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-white text-base tracking-tight font-hindi-heading">
-                  सनातन संस्कार ट्रस्ट
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <TrustLogo className="w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0" showText={false} lang={lang} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-white text-sm sm:text-base tracking-tight font-hindi-heading truncate">
+                  {lang === 'hi' ? 'सनातन संस्कार ट्रस्ट' : 'Sanatan Sanskar Trust'}
                 </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-primary text-white">
-                  {lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin)' : 'Admin Portal'}
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-primary text-white flex-shrink-0">
+                  {lang === 'hi' ? 'व्यवस्थापक' : 'Admin'}
                 </span>
               </div>
-              <span className="text-[11px] text-[#E9B44C] font-mono">
-                {lang === 'hi' ? 'सुरक्षित प्रशासनिक सत्र (Admin Management Session)' : 'Protected Admin Management Session'}
+              <span className="text-[10px] sm:text-[11px] text-[#E9B44C] font-mono block truncate">
+                {lang === 'hi' ? 'सुरक्षित व्यवस्थापक सत्र' : 'Protected Admin Session'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             <button
               type="button"
               onClick={toggleLanguage}
-              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all"
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              title={lang === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}
             >
-              {lang === 'hi' ? 'English' : 'हिंदी'}
+              <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
+              <span>{lang === 'hi' ? 'English' : 'हिंदी'}</span>
             </button>
-
 
             <button
               type="button"
               onClick={handleExitAdmin}
-              className="px-3 py-1.5 rounded-xl bg-red-600/90 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-red-600/90 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs cursor-pointer"
               title={lang === 'hi' ? 'एडमिन सत्र बंद करें' : 'Exit Admin Panel'}
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>{lang === 'hi' ? 'एडमिन सत्र बंद करें' : 'Exit Admin'}</span>
+              <span className="hidden sm:inline">{lang === 'hi' ? 'सत्र बंद करें' : 'Exit Admin'}</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Admin Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 w-full space-y-5 sm:space-y-6">
         
         {/* Metric Badges Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-[#E9B44C]/30 shadow-xs">
-            <span className="text-xs text-[#777777] font-bold block mb-1">
-              {lang === 'hi' ? 'सत्यापित ट्रस्ट सदस्य' : 'Active Members'}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-[#E9B44C]/30 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] sm:text-xs text-[#777777] font-bold block mb-1 truncate">
+              {lang === 'hi' ? 'सक्रिय सदस्य' : 'Active Members'}
             </span>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-black text-[#382719] font-mono">{totalActiveMembers}</span>
-              <ShieldCheck className="w-6 h-6 text-emerald-600" />
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-xl sm:text-2xl font-black text-[#382719] font-mono">{totalActiveMembers}</span>
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-amber-50/70 p-4 rounded-2xl border border-amber-300 shadow-xs">
-            <span className="text-xs text-amber-800 font-bold block mb-1">
-              लंबित सदस्यता आवेदन
+          <div className="bg-amber-50/70 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-amber-300 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] sm:text-xs text-amber-800 font-bold block mb-1 truncate">
+              {lang === 'hi' ? 'लंबित सदस्यता' : 'Pending Memberships'}
             </span>
-            <span className="text-2xl font-black text-amber-700 font-mono">
-              {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length}
-            </span>
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-xl sm:text-2xl font-black text-amber-700 font-mono">
+                {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 flex-shrink-0" />
+            </div>
           </div>
 
-          <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-300 shadow-xs">
-            <span className="text-xs text-emerald-800 font-bold block mb-1">
-              लंबित दान एवं समर्पण
+          <div className="bg-emerald-50/70 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-emerald-300 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] sm:text-xs text-emerald-800 font-bold block mb-1 truncate">
+              {lang === 'hi' ? 'लंबित दान/समर्पण' : 'Pending Donations'}
             </span>
-            <span className="text-2xl font-black text-emerald-700 font-mono">
-              {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length}
-            </span>
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-xl sm:text-2xl font-black text-emerald-700 font-mono">
+                {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 flex-shrink-0" />
+            </div>
           </div>
 
-          <div className="bg-rose-50/70 p-4 rounded-2xl border border-rose-300 shadow-xs">
-            <span className="text-xs text-rose-800 font-bold block mb-1">
-              सहायता प्रार्थनाएं (Help)
+          <div className="bg-rose-50/70 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-rose-300 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] sm:text-xs text-rose-800 font-bold block mb-1 truncate">
+              {lang === 'hi' ? 'सहायता प्रार्थनाएं' : 'Help Requests'}
             </span>
-            <span className="text-2xl font-black text-rose-700 font-mono">
-              {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length}
-            </span>
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-xl sm:text-2xl font-black text-rose-700 font-mono">
+                {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+              <HandHeart className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 flex-shrink-0" />
+            </div>
           </div>
         </div>
 
         {/* 6 Core Tabs Navigation */}
-        <div className="flex border-b border-[#E9B44C]/30 overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 pb-1">
+        <div className="flex border-b border-[#E9B44C]/30 overflow-x-auto no-scrollbar gap-1 sm:gap-2 pb-1 scroll-smooth">
           <button
             type="button"
             onClick={() => { setActiveTab('helpRequests'); setSearchQuery(''); setStatusFilter('all'); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'helpRequests'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <HandHeart className="w-4 h-4" />
-            <span>Help Requests</span>
+            <HandHeart className="w-4 h-4 flex-shrink-0" />
+            <span>{lang === 'hi' ? 'सहायता प्रार्थनाएं' : 'Help Requests'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {helpRequests.length}
             </span>
@@ -825,44 +836,44 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => { setActiveTab('memberships'); setSearchQuery(''); setStatusFilter('all'); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'memberships'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Memberships</span>
+            <UserPlus className="w-4 h-4 flex-shrink-0" />
+            <span>{lang === 'hi' ? 'सदस्यता आवेदन' : 'Membership Applications'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {memberships.length}
             </span>
           </button>
 
-          {/* New Tab: Members */}
+          {/* Tab: Members */}
           <button
             type="button"
             onClick={() => { setActiveTab('members'); setSearchQuery(''); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'members'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Members ({totalActiveMembers})</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>{lang === 'hi' ? `सत्यापित सदस्य (${totalActiveMembers})` : `Members (${totalActiveMembers})`}</span>
           </button>
 
           <button
             type="button"
             onClick={() => { setActiveTab('volunteers'); setSearchQuery(''); setStatusFilter('all'); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'volunteers'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>Volunteers</span>
+            <Users className="w-4 h-4 flex-shrink-0" />
+            <span>{lang === 'hi' ? 'स्वयंसेवक' : 'Volunteers'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {volunteers.length}
             </span>
@@ -871,14 +882,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => { setActiveTab('donations'); setSearchQuery(''); setStatusFilter('all'); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'donations'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <Heart className="w-4 h-4" />
-            <span>Donations</span>
+            <Heart className="w-4 h-4 flex-shrink-0" />
+            <span>{lang === 'hi' ? 'समर्पण व दान' : 'Donations'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {donations.length}
             </span>
@@ -888,30 +899,30 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           <button
             type="button"
             onClick={() => { setActiveTab('announcements'); setSearchQuery(''); }}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'announcements'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <Bell className="w-4 h-4 text-primary" />
+            <Bell className="w-4 h-4 text-primary flex-shrink-0" />
             <span>{lang === 'hi' ? 'सूचनाएं व संदेश' : 'Notices & Updates'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
               {announcements.length}
             </span>
           </button>
 
-          {/* New Tab: Payment Settings */}
+          {/* Tab: Payment Settings */}
           <button
             type="button"
             onClick={() => setActiveTab('paymentSettings')}
-            className={`min-h-[44px] shrink-0 py-2.5 px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+            className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'paymentSettings'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
                 : 'border-transparent text-[#666666] hover:text-primary'
             }`}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-4 h-4 flex-shrink-0" />
             <span>{lang === 'hi' ? 'सेटिंग्स व व्हाट्सएप' : 'Settings & WhatsApp'}</span>
           </button>
         </div>
@@ -978,19 +989,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     {baileysServerState?.connected ? (
                       <>
                         <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                        <span>स्वचालित व्हाट्सएप प्रसारण प्रणाली सक्रिय है</span>
+                        <span>{lang === 'hi' ? 'स्वचालित व्हाट्सएप प्रसारण प्रणाली सक्रिय है' : 'Automated WhatsApp Broadcasting is Active'}</span>
                       </>
                     ) : (
                       <>
                         <Smartphone className="w-4 h-4 text-amber-700" />
-                        <span>व्हाट्सएप डिवाइस अभी लिंक नहीं है</span>
+                        <span>{lang === 'hi' ? 'व्हाट्सएप डिवाइस अभी लिंक नहीं है' : 'WhatsApp Device Not Linked'}</span>
                       </>
                     )}
                   </div>
                   <p className="text-[11px] leading-relaxed text-gray-700">
                     {baileysServerState?.connected
-                      ? `आपके नंबर (+91 ${baileysServerState?.phoneNumber || ''}) से व्हाट्सएप जुड़ा हुआ है। जब भी आप नोटिस बोर्ड पर कोई सूचना या व्यक्तिगत संदेश पोस्ट करेंगे, वह सीधे बिना कोई विंडो खोले पृष्ठभूमि में स्वतः भेजा जाएगा।`
-                      : 'उपरोक्त "QR कोड स्कैन कर लिंक करें" बटन पर क्लिक करके अपने व्हाट्सएप से QR कोड स्कैन करें। एक बार स्कैन करने के बाद आपको दोबारा लॉगिन नहीं करना पड़ेगा।'}
+                      ? (lang === 'hi'
+                          ? `आपके नंबर (+91 ${baileysServerState?.phoneNumber || ''}) से व्हाट्सएप जुड़ा हुआ है। जब भी आप नोटिस बोर्ड पर कोई सूचना या व्यक्तिगत संदेश पोस्ट करेंगे, वह सीधे बिना कोई विंडो खोले पृष्ठभूमि में स्वतः भेजा जाएगा।`
+                          : `Connected with +91 ${baileysServerState?.phoneNumber || ''}. All broadcast notices and direct messages will be sent automatically in the background.`)
+                      : (lang === 'hi'
+                          ? 'उपरोक्त "QR कोड स्कैन कर लिंक करें" बटन पर क्लिक करके अपने व्हाट्सएप से QR कोड स्कैन करें। एक बार स्कैन करने के बाद आपको दोबारा लॉगिन नहीं करना पड़ेगा।'
+                          : 'Click "Scan QR Code to Link" above to pair your WhatsApp account. Once scanned, pairing is saved automatically.')}
                   </p>
                 </div>
 
@@ -1037,7 +1052,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 {/* QR Preview & Upload Box */}
                 <div className="md:col-span-4 p-4 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/40 text-center space-y-3">
                   <span className="text-xs font-bold text-[#382719] block">
-                    Current Payment QR Code
+                    {lang === 'hi' ? 'वर्तमान भुगतान QR कोड' : 'Current Payment QR Code'}
                   </span>
                   
                   <div className="w-40 h-40 mx-auto p-2 rounded-xl bg-white border border-[#E9B44C] flex items-center justify-center overflow-hidden shadow-xs">
@@ -1052,7 +1067,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div>
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E9B44C] text-xs font-bold text-[#382719] hover:bg-primary hover:text-white cursor-pointer transition-all shadow-xs">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Upload New QR Image</span>
+                      <span>{lang === 'hi' ? 'नया QR कोड अपलोड करें' : 'Upload New QR Image'}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1068,13 +1083,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 <div className="md:col-span-8 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-[#382719] mb-1">
-                      Payee / Trust Official Display Name *
+                      {lang === 'hi' ? 'ट्रस्ट का आधिकारिक नाम (Payee Name) *' : 'Payee / Trust Official Display Name *'}
                     </label>
                     <input
                       type="text"
                       value={settingsForm?.payeeName || ''}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, payeeName: e.target.value }))}
-                      placeholder="e.g. Rashtriya Sanatan Sanskar Seva Sansthan (Trust)"
+                      placeholder={lang === 'hi' ? 'उदा. राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)' : 'e.g. Rashtriya Sanatan Sanskar Seva Sansthan (Trust)'}
                       className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:ring-2 focus:ring-primary/40 focus:outline-none"
                       required
                     />
@@ -1083,7 +1098,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-[#382719] mb-1">
-                        Trust UPI ID *
+                        {lang === 'hi' ? 'ट्रस्ट UPI ID *' : 'Trust UPI ID *'}
                       </label>
                       <input
                         type="text"
@@ -1097,7 +1112,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                     <div>
                       <label className="block text-xs font-bold text-[#382719] mb-1">
-                        Annual Membership Fee (INR) *
+                        {lang === 'hi' ? 'वार्षिक सदस्यता शुल्क (₹) *' : 'Annual Membership Fee (INR) *'}
                       </label>
                       <input
                         type="number"
@@ -1113,7 +1128,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-[#382719] mb-1">
-                        Bank Account Number
+                        {lang === 'hi' ? 'बैंक खाता संख्या' : 'Bank Account Number'}
                       </label>
                       <input
                         type="text"
@@ -1125,7 +1140,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                     <div>
                       <label className="block text-xs font-bold text-[#382719] mb-1">
-                        Bank IFSC Code
+                        {lang === 'hi' ? 'बैंक IFSC कोड' : 'Bank IFSC Code'}
                       </label>
                       <input
                         type="text"
@@ -1138,13 +1153,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                   <div>
                     <label className="block text-xs font-bold text-[#382719] mb-1">
-                      80G Tax Exemption Registration Number (Optional)
+                      {lang === 'hi' ? '80G आयकर छूट पंजीकरण संख्या (वैकल्पिक)' : '80G Tax Exemption Registration Number (Optional)'}
                     </label>
                     <input
                       type="text"
                       value={settingsForm?.section80G || ''}
                       onChange={(e) => setSettingsForm(prev => ({ ...prev, section80G: e.target.value }))}
-                      placeholder="e.g. AAATR1234EF20261 (Printed on official receipts if present)"
+                      placeholder={lang === 'hi' ? 'उदा. AAATR1234EF20261 (आधिकारिक रसीद पर प्रदर्शित होगा)' : 'e.g. AAATR1234EF20261 (Printed on official receipts if present)'}
                       className="w-full px-3 py-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none"
                     />
                   </div>
@@ -1155,7 +1170,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       disabled={isSavingSettings}
                       className="px-6 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-saffron transition-all disabled:opacity-50"
                     >
-                      {isSavingSettings ? 'Saving Settings...' : 'Save Payment Settings'}
+                      {isSavingSettings ? (lang === 'hi' ? 'सेटिंग्स सहेजी जा रही हैं...' : 'Saving Settings...') : (lang === 'hi' ? 'पेमेंट सेटिंग्स सहेजें' : 'Save Payment Settings')}
                     </button>
                   </div>
                 </div>
@@ -1554,8 +1569,8 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={
                     activeTab === 'members'
-                      ? 'Search by Member ID (TRUST-M-...), Name, Phone, or Payment ID...'
-                      : 'Search by Name, Phone, Payment ID / UTR...'
+                      ? (lang === 'hi' ? 'सदस्य ID, नाम, फोन या भुगतान ID द्वारा खोजें...' : 'Search by Member ID, Name, Phone, or Payment ID...')
+                      : (lang === 'hi' ? 'नाम, फोन, भुगतान ID / UTR द्वारा खोजें...' : 'Search by Name, Phone, Payment ID / UTR...')
                   }
                   className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#E9B44C]/40 bg-[#FFF8EF]/30 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
                 />
@@ -1563,48 +1578,48 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
               {/* Status Filter for general tabs vs member filter */}
               {activeTab === 'members' ? (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   <button
                     type="button"
                     onClick={() => setMemberFilter('active')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       memberFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-[#FFF8EF] text-[#666666]'
                     }`}
                   >
-                    Active Members ({totalActiveMembers})
+                    {lang === 'hi' ? `सक्रिय सदस्य (${totalActiveMembers})` : `Active Members (${totalActiveMembers})`}
                   </button>
                   <button
                     type="button"
                     onClick={() => setMemberFilter('removed')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       memberFilter === 'removed' ? 'bg-rose-600 text-white' : 'bg-[#FFF8EF] text-[#666666]'
                     }`}
                   >
-                    Removed ({membersList.filter(m => m.status === 'removed').length})
+                    {lang === 'hi' ? `हटाए गए (${membersList.filter(m => m.status === 'removed').length})` : `Removed (${membersList.filter(m => m.status === 'removed').length})`}
                   </button>
                   <button
                     type="button"
                     onClick={() => setMemberFilter('all')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       memberFilter === 'all' ? 'bg-primary text-white' : 'bg-[#FFF8EF] text-[#666666]'
                     }`}
                   >
-                    All History
+                    {lang === 'hi' ? 'सभी इतिहास' : 'All History'}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   {[
-                    { id: 'all', label: 'All' },
-                    { id: 'pending', label: 'Pending' },
-                    { id: 'approved', label: 'Approved' },
-                    { id: 'rejected', label: 'Rejected' },
+                    { id: 'all', label: lang === 'hi' ? 'सभी' : 'All' },
+                    { id: 'pending', label: lang === 'hi' ? 'लंबित' : 'Pending' },
+                    { id: 'approved', label: lang === 'hi' ? 'स्वीकृत' : 'Approved' },
+                    { id: 'rejected', label: lang === 'hi' ? 'अस्वीकृत' : 'Rejected' },
                   ].map((f) => (
                     <button
                       key={f.id}
                       type="button"
                       onClick={() => setStatusFilter(f.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                         statusFilter === f.id
                           ? 'bg-primary text-white shadow-xs'
                           : 'bg-[#FFF8EF] text-[#666666] hover:text-[#382719] border border-[#E9B44C]/40'
@@ -1625,32 +1640,32 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <tr className="bg-[#FFF8EF] border-b border-[#E9B44C]/30 text-[#382719] font-black uppercase text-[11px] tracking-wider">
                       {activeTab === 'members' ? (
                         <>
-                          <th className="py-3 px-4">Member ID & Status</th>
-                          <th className="py-3 px-4">Member Name</th>
-                          <th className="py-3 px-4">Phone & Location</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'सदस्य ID व स्थिति' : 'Member ID & Status'}</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'सदस्य का नाम' : 'Member Name'}</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'फोन व स्थान' : 'Phone & Location'}</th>
                           <th className="py-3 px-4">
-                            {memberCategorySection === 'catA' ? 'Assistance Needed & Hardship' :
-                             memberCategorySection === 'catB' ? 'Profession & Workplace' :
-                             memberCategorySection === 'catC' ? 'Availability & Seva Wings' :
-                             'Category & Details'}
+                            {memberCategorySection === 'catA' ? (lang === 'hi' ? 'आवश्यक सहायता' : 'Assistance Needed') :
+                             memberCategorySection === 'catB' ? (lang === 'hi' ? 'व्यवसाय व कार्यक्षेत्र' : 'Profession & Workplace') :
+                             memberCategorySection === 'catC' ? (lang === 'hi' ? 'सेवा क्षेत्र' : 'Seva Wings') :
+                             (lang === 'hi' ? 'श्रेणी व विवरण' : 'Category & Details')}
                           </th>
                           <th className="py-3 px-4">
-                            {memberCategorySection === 'catA' ? 'Approved Date' : 'Payment ID / Fee'}
+                            {memberCategorySection === 'catA' ? (lang === 'hi' ? 'स्वीकृति दिनांक' : 'Approved Date') : (lang === 'hi' ? 'भुगतान ID / शुल्क' : 'Payment ID / Fee')}
                           </th>
-                          <th className="py-3 px-4 text-right">Actions</th>
+                          <th className="py-3 px-4 text-right">{lang === 'hi' ? 'कार्रवाई' : 'Actions'}</th>
                         </>
                       ) : (
                         <>
-                          <th className="py-3 px-4">Date</th>
-                          <th className="py-3 px-4">Applicant / Donor</th>
-                          <th className="py-3 px-4">Phone</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'दिनांक' : 'Date'}</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'आवेदक / दानदाता' : 'Applicant / Donor'}</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'मोबाइल नंबर' : 'Phone'}</th>
                           <th className="py-3 px-4">
                             {activeTab === 'donations' || activeTab === 'memberships'
-                              ? 'Payment ID & Claimed Amt'
-                              : 'Details / Purpose'}
+                              ? (lang === 'hi' ? 'भुगतान ID व राशि' : 'Payment ID & Claimed Amt')
+                              : (lang === 'hi' ? 'विवरण / प्रयोजन' : 'Details / Purpose')}
                           </th>
-                          <th className="py-3 px-4">Status</th>
-                          <th className="py-3 px-4 text-right">Actions</th>
+                          <th className="py-3 px-4">{lang === 'hi' ? 'स्थिति' : 'Status'}</th>
+                          <th className="py-3 px-4 text-right">{lang === 'hi' ? 'कार्रवाई' : 'Actions'}</th>
                         </>
                       )}
                     </tr>
@@ -1659,7 +1674,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     {currentDisplayData.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-12 text-center text-[#888888]">
-                          No records found matching filters.
+                          {lang === 'hi' ? 'खोज या फ़िल्टर के अनुसार कोई रिकॉर्ड नहीं मिला।' : 'No records found matching filters.'}
                         </td>
                       </tr>
                     ) : (
@@ -1983,19 +1998,19 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               {status === 'approved' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                  <span>Approved</span>
+                                  <span>{lang === 'hi' ? 'स्वीकृत' : 'Approved'}</span>
                                 </span>
                               )}
                               {status === 'rejected' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                   <XCircle className="w-3 h-3 text-rose-600" />
-                                  <span>Rejected</span>
+                                  <span>{lang === 'hi' ? 'अस्वीकृत' : 'Rejected'}</span>
                                 </span>
                               )}
                               {status === 'pending' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
                                   <Clock className="w-3 h-3 text-amber-600" />
-                                  <span>Pending</span>
+                                  <span>{lang === 'hi' ? 'लंबित' : 'Pending'}</span>
                                 </span>
                               )}
                             </td>
@@ -2006,7 +2021,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   type="button"
                                   onClick={() => handleOpenView(item)}
                                   className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#382719] transition-all"
-                                  title="View Details"
+                                  title={lang === 'hi' ? 'विवरण देखें' : 'View Details'}
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
@@ -2015,15 +2030,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   const isExempted = item.claimedAmount === 0 || item.paymentId === 'CROSS_APPROVED_FREE' || item.paymentStatus === 'exempted' || item.category === 'catA';
                                   if (isExempted) {
                                     return (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Cross-exempted (₹0) - No Receipt Required">
-                                        निःशुल्क (₹0)
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title={lang === 'hi' ? 'निःशुल्क (₹0)' : 'Exempted (₹0)'}>
+                                        {lang === 'hi' ? 'निःशुल्क (₹0)' : 'Exempted (₹0)'}
                                       </span>
                                     );
                                   }
                                   return item.receiptSent ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Receipt Dispatched">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title={lang === 'hi' ? 'रसीद भेजी जा चुकी है' : 'Receipt Dispatched'}>
                                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                      <span>रसीद भेजी गई</span>
+                                      <span>{lang === 'hi' ? 'रसीद भेजी गई' : 'Receipt Sent'}</span>
                                     </span>
                                   ) : (
                                     <button
@@ -2034,7 +2049,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                       title={lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt to User'}
                                     >
                                       <Send className="w-3 h-3" />
-                                      <span>रसीद भेजें</span>
+                                      <span>{lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt'}</span>
                                     </button>
                                   );
                                 })()}
@@ -2044,7 +2059,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                     type="button"
                                     onClick={() => handleDownloadReceipt(item)}
                                     className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-all"
-                                    title="View & Download Receipt PDF"
+                                    title={lang === 'hi' ? 'रसीद देखें एवं डाउनलोड करें' : 'View & Download Receipt'}
                                   >
                                     <Download className="w-4 h-4" />
                                   </button>
@@ -2069,7 +2084,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                       type="button"
                                       onClick={() => handleOpenApprove(item)}
                                       className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-all cursor-pointer"
-                                      title={lang === 'hi' ? 'स्वीकृत करें (Approve)' : 'Approve'}
+                                      title={lang === 'hi' ? 'स्वीकृत करें' : 'Approve'}
                                     >
                                       <Check className="w-4 h-4" />
                                     </button>
@@ -2078,7 +2093,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                       type="button"
                                       onClick={() => handleOpenReject(item)}
                                       className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-all cursor-pointer"
-                                      title={lang === 'hi' ? 'अस्वीकृत करें (Reject)' : 'Reject'}
+                                      title={lang === 'hi' ? 'अस्वीकृत करें' : 'Reject'}
                                     >
                                       <X className="w-4 h-4" />
                                     </button>
@@ -2091,7 +2106,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                     type="button"
                                     onClick={() => handleOpenRemoveMember(item)}
                                     className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 transition-all cursor-pointer"
-                                    title={lang === 'hi' ? 'सदस्यता रद्द करें (Cancel Membership)' : 'Cancel / Revoke Membership'}
+                                    title={lang === 'hi' ? 'सदस्यता रद्द करें' : 'Cancel / Revoke Membership'}
                                   >
                                     <UserX className="w-4 h-4" />
                                   </button>
@@ -2144,10 +2159,20 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 {modalMode === 'removeMember' && <UserX className="w-5 h-5" />}
                 {modalMode === 'view' && <Eye className="w-5 h-5" />}
                 <h3 className="font-black text-sm sm:text-base font-hindi-heading">
-                  {modalMode === 'approve' && (activeTab === 'memberships' ? 'Approve Membership & Issue Member ID' : 'Approve Donation & Enter Verified Amount')}
-                  {modalMode === 'reject' && 'Reject Record (Provide Reason)'}
-                  {modalMode === 'removeMember' && 'Remove Member & Revoke Badge'}
-                  {modalMode === 'view' && 'Full Record Inspection'}
+                  {modalMode === 'approve' && (
+                    lang === 'hi'
+                      ? (activeTab === 'memberships' ? 'सदस्यता स्वीकृत करें एवं आईडी जारी करें' : 'स्वीकृत करें एवं सत्यापित राशि दर्ज करें')
+                      : (activeTab === 'memberships' ? 'Approve Membership & Issue Member ID' : 'Approve Record & Enter Verified Amount')
+                  )}
+                  {modalMode === 'reject' && (
+                    lang === 'hi' ? 'आवेदन अस्वीकृत करें (कारण दर्ज करें)' : 'Reject Record (Provide Reason)'
+                  )}
+                  {modalMode === 'removeMember' && (
+                    lang === 'hi' ? 'सदस्यता रद्द करें' : 'Remove Member & Revoke Badge'
+                  )}
+                  {modalMode === 'view' && (
+                    lang === 'hi' ? 'पूर्ण विवरण देखें' : 'Full Record Details'
+                  )}
                 </h3>
               </div>
               <button
@@ -2165,7 +2190,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               {/* Record Summary Box */}
               <div className="p-4 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/30 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#888888] font-bold">Applicant / Contributor:</span>
+                  <span className="text-[#888888] font-bold">{lang === 'hi' ? 'आवेदक / दानकर्ता:' : 'Applicant / Contributor:'}</span>
                   <div className="flex items-center gap-1.5">
                     {selectedItem.category && (
                       <MemberBadge
@@ -2183,13 +2208,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                 {selectedItem.username && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#888888] font-bold">Username:</span>
+                    <span className="text-[#888888] font-bold">{lang === 'hi' ? 'यूज़रनेम:' : 'Username:'}</span>
                     <span className="font-mono font-bold text-secondary">@{selectedItem.username}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <span className="text-[#888888] font-bold">Phone Number:</span>
+                  <span className="text-[#888888] font-bold">{lang === 'hi' ? 'मोबाइल नंबर:' : 'Phone Number:'}</span>
                   <span className="font-mono font-bold text-primary">
                     {selectedItem.phone || selectedItem.donorPhone || selectedItem.payerMobile || selectedItem.mobile}
                   </span>
@@ -2197,14 +2222,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                 {selectedItem.email && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#888888] font-bold">Email:</span>
+                    <span className="text-[#888888] font-bold">{lang === 'hi' ? 'ईमेल:' : 'Email:'}</span>
                     <span className="font-mono text-xs text-[#555555]">{selectedItem.email}</span>
                   </div>
                 )}
 
                 {selectedItem.address && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#888888] font-bold">Address / City:</span>
+                    <span className="text-[#888888] font-bold">{lang === 'hi' ? 'पता / शहर:' : 'Address / City:'}</span>
                     <span className="text-xs text-[#454545] text-right max-w-[60%]">
                       {[selectedItem.address, selectedItem.block, selectedItem.district, selectedItem.state].filter(Boolean).join(', ')}
                     </span>
@@ -2217,16 +2242,18 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#382719] flex items-center gap-1.5">
                         <Award className="w-3.5 h-3.5 text-primary" />
-                        <span>भुगतान प्रमाण (Payment Proof)</span>
+                        <span>{lang === 'hi' ? 'भुगतान प्रमाण' : 'Payment Proof'}</span>
                       </span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary">
-                        {selectedItem.paymentProofType === 'screenshot' || selectedItem.paymentScreenshotUrl ? 'Screenshot' : 'UTR Number'}
+                        {selectedItem.paymentProofType === 'screenshot' || selectedItem.paymentScreenshotUrl 
+                          ? (lang === 'hi' ? 'स्क्रीनशॉट' : 'Screenshot') 
+                          : 'UTR / Ref'}
                       </span>
                     </div>
 
                     {(selectedItem.paymentId || selectedItem.utrNumber) && (
                       <div className="flex items-center justify-between bg-[#FFF8EF] p-2 rounded-lg font-mono">
-                        <span className="text-xs text-[#666666] font-bold">UTR / Ref No:</span>
+                        <span className="text-xs text-[#666666] font-bold">{lang === 'hi' ? 'यूटीआर / संदर्भ संख्या:' : 'UTR / Ref No:'}</span>
                         <span className="text-xs font-black text-primary tracking-wider">
                           {selectedItem.paymentId || selectedItem.utrNumber}
                         </span>
@@ -2249,7 +2276,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-bold"
                           >
-                            <span>पूर्ण आकार में स्क्रीनशॉट देखें (View Full Image)</span>
+                            <span>{lang === 'hi' ? 'पूर्ण आकार में स्क्रीनशॉट देखें' : 'View Full Image'}</span>
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
@@ -2262,7 +2289,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 {(selectedItem.helpType || selectedItem.bankAccount || selectedItem.amountNeeded || activeTab === 'helpRequests') && (
                   <div className="p-3.5 bg-white rounded-xl border border-primary/20 space-y-2.5 mt-2">
                     <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
-                      <span className="font-black text-xs text-[#382719]">सहायता प्रार्थी विवरण (Help Details)</span>
+                      <span className="font-black text-xs text-[#382719]">{lang === 'hi' ? 'सहायता प्रार्थी विवरण' : 'Help Seeker Details'}</span>
                       {selectedItem.urgency && (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
                           selectedItem.urgency === 'urgent' || selectedItem.urgency === 'emergency' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
@@ -2274,38 +2301,38 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                     {selectedItem.description && (
                       <div className="text-xs text-[#555555] bg-gray-50 p-2 rounded-lg">
-                        <span className="font-bold text-[#382719] block mb-0.5">समस्या / आवश्यकता:</span>
+                        <span className="font-bold text-[#382719] block mb-0.5">{lang === 'hi' ? 'समस्या / आवश्यकता:' : 'Description / Requirement:'}</span>
                         <p className="whitespace-pre-line">{selectedItem.description}</p>
                       </div>
                     )}
 
                     {selectedItem.amountNeeded && (
                       <div className="flex items-center justify-between font-mono text-xs">
-                        <span className="font-bold text-[#666666]">आवश्यक राशि:</span>
+                        <span className="font-bold text-[#666666]">{lang === 'hi' ? 'आवश्यक राशि:' : 'Amount Needed:'}</span>
                         <span className="font-black text-primary text-sm">₹{Number(selectedItem.amountNeeded).toLocaleString('en-IN')}</span>
                       </div>
                     )}
 
                     {/* Bank Details */}
                     <div className="bg-[#FFF8EF] p-2.5 rounded-lg border border-[#E9B44C]/30 space-y-1 text-xs">
-                      <span className="font-bold text-secondary block text-[11px] uppercase tracking-wider">बैंक खाता विवरण (Bank Details)</span>
+                      <span className="font-bold text-secondary block text-[11px] uppercase tracking-wider">{lang === 'hi' ? 'बैंक खाता विवरण' : 'Bank Account Details'}</span>
                       <div className="flex justify-between">
-                        <span className="text-[#666666]">खाता संख्या (A/C):</span>
+                        <span className="text-[#666666]">{lang === 'hi' ? 'खाता संख्या:' : 'A/C Number:'}</span>
                         <span className="font-mono font-bold text-[#382719]">{selectedItem.bankAccount || selectedItem.accountNumber || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#666666]">IFSC कोड:</span>
+                        <span className="text-[#666666]">{lang === 'hi' ? 'IFSC कोड:' : 'IFSC Code:'}</span>
                         <span className="font-mono font-bold text-[#382719]">{selectedItem.ifsc || 'N/A'}</span>
                       </div>
                       {selectedItem.accountHolderName && (
                         <div className="flex justify-between">
-                          <span className="text-[#666666]">खाताधारक का नाम:</span>
+                          <span className="text-[#666666]">{lang === 'hi' ? 'खाताधारक का नाम:' : 'Account Holder:'}</span>
                           <span className="font-bold text-[#382719]">{selectedItem.accountHolderName}</span>
                         </div>
                       )}
                       {(selectedItem.bankName || selectedItem.upiId) && (
                         <div className="flex justify-between">
-                          <span className="text-[#666666]">बैंक / UPI ID:</span>
+                          <span className="text-[#666666]">{lang === 'hi' ? 'बैंक / UPI ID:' : 'Bank / UPI ID:'}</span>
                           <span className="font-mono text-[#382719]">{selectedItem.bankName || selectedItem.upiId}</span>
                         </div>
                       )}
@@ -2313,14 +2340,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                     {/* Direct Contact Links */}
                     <div className="pt-1.5 flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold text-[#666666]">संपर्क करें:</span>
+                      <span className="text-[11px] font-bold text-[#666666]">{lang === 'hi' ? 'संपर्क करें:' : 'Contact:'}</span>
                       {(selectedItem.mobile || selectedItem.phone) && (
                         <a
                           href={`tel:${selectedItem.mobile || selectedItem.phone}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all"
                         >
                           <Phone className="w-3 h-3" />
-                          <span>Call</span>
+                          <span>{lang === 'hi' ? 'कॉल' : 'Call'}</span>
                         </a>
                       )}
                       {(selectedItem.whatsapp || selectedItem.mobile || selectedItem.phone) && (
@@ -2330,7 +2357,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>व्हाट्सएप संदेश (WhatsApp)</span>
+                          <span>{lang === 'hi' ? 'व्हाट्सएप संदेश' : 'WhatsApp'}</span>
                         </button>
                       )}
                       {selectedItem.email && (
@@ -2339,7 +2366,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all"
                         >
                           <Mail className="w-3 h-3" />
-                          <span>Email</span>
+                          <span>{lang === 'hi' ? 'ईमेल' : 'Email'}</span>
                         </a>
                       )}
                     </div>
@@ -2347,7 +2374,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 )}
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[#888888] font-bold">User Claimed Amount:</span>
+                  <span className="text-[#888888] font-bold">{lang === 'hi' ? 'दावा की गई राशि:' : 'Claimed Amount:'}</span>
                   <span className="font-mono font-bold text-[#382719]">
                     ₹{selectedItem.claimedAmount || selectedItem.amount || 200}/-
                   </span>
@@ -2355,14 +2382,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
                 {selectedItem.memberId && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#888888] font-bold">Member ID:</span>
+                    <span className="text-[#888888] font-bold">{lang === 'hi' ? 'सदस्य आईडी:' : 'Member ID:'}</span>
                     <span className="font-mono font-black text-emerald-700">{selectedItem.memberId}</span>
                   </div>
                 )}
 
                 {selectedItem.receiptNumber && (
                   <div className="flex items-center justify-between">
-                    <span className="text-[#888888] font-bold">Receipt Number:</span>
+                    <span className="text-[#888888] font-bold">{lang === 'hi' ? 'रसीद संख्या:' : 'Receipt Number:'}</span>
                     <span className="font-mono font-bold text-primary">{selectedItem.receiptNumber}</span>
                   </div>
                 )}
@@ -2376,10 +2403,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 shadow-xs">
                       <div>
                         <span className="font-bold text-xs text-emerald-900 block">
-                          निःशुल्क पंजीकरण छूट (₹0 Fee Exemption)
+                          {lang === 'hi' ? 'निःशुल्क पंजीकरण छूट (₹0)' : 'Free Registration Exemption (₹0)'}
                         </span>
                         <span className="text-[11px] text-emerald-800">
-                          पूर्व-स्वीकृत सदस्य/स्वयंसेवक छूट के तहत यह पंजीकरण पूर्णतः निःशुल्क (₹0) है। रसीद आवश्यक नहीं है।
+                          {lang === 'hi' 
+                            ? 'पूर्व-स्वीकृत सदस्य/स्वयंसेवक छूट के तहत यह पंजीकरण पूर्णतः निःशुल्क (₹0) है। रसीद आवश्यक नहीं है।'
+                            : 'This registration is completely free (₹0) under pre-approved exemption. Receipt is not required.'}
                         </span>
                       </div>
                     </div>
@@ -2389,12 +2418,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div className="p-3.5 rounded-2xl bg-white border border-[#E9B44C]/40 flex items-center justify-between gap-3 shadow-xs">
                     <div>
                       <span className="font-bold text-xs text-[#382719] block">
-                        {selectedItem.receiptSent ? 'रसीद प्रेषित है (Receipt Sent ✓)' : 'रसीद अभी सदस्य/स्वयंसेवक को नहीं भेजी गई है'}
+                        {selectedItem.receiptSent 
+                          ? (lang === 'hi' ? 'रसीद प्रेषित है' : 'Receipt Dispatched') 
+                          : (lang === 'hi' ? 'रसीद अभी नहीं भेजी गई है' : 'Receipt not yet dispatched')}
                       </span>
                       <span className="text-[11px] text-[#777777]">
                         {selectedItem.receiptSent
-                          ? 'उपयोगकर्ता अपने डैशबोर्ड से रसीद डाउनलोड कर सकते हैं।'
-                          : 'रसीद भेजने के बाद ही उपयोगकर्ता इसे अपने डैशबोर्ड से डाउनलोड कर सकेंगे।'}
+                          ? (lang === 'hi' ? 'उपयोगकर्ता अपने डैशबोर्ड से रसीद डाउनलोड कर सकते हैं।' : 'User can download the receipt from their dashboard.')
+                          : (lang === 'hi' ? 'रसीद भेजने के बाद ही उपयोगकर्ता इसे अपने डैशबोर्ड से डाउनलोड कर सकेंगे।' : 'User can only download receipt once sent by admin.')}
                       </span>
                     </div>
 
@@ -2405,7 +2436,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>रसीद देखें</span>
+                        <span>{lang === 'hi' ? 'रसीद देखें' : 'View Receipt'}</span>
                       </button>
                     ) : (
                       <button
@@ -2415,7 +2446,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                         className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>रसीद भेजें (Send Receipt)</span>
+                        <span>{lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt'}</span>
                       </button>
                     )}
                   </div>
@@ -2428,25 +2459,33 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 return (
                   <div className="space-y-4">
                     <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs leading-relaxed">
-                      <strong>Transaction Action: </strong>
+                      <strong>{lang === 'hi' ? 'स्वीकृति सूचना: ' : 'Transaction Action: '}</strong>
                       {isItemExempted
-                        ? `Approving as ${activeTab === 'volunteers' ? 'Volunteer' : 'Member'} under Free Exemption (₹0). Generates ${activeTab === 'volunteers' ? 'Volunteer ID (TRUST-V-XXXX)' : 'Member ID (TRUST-M-XXXX)'}.`
+                        ? (lang === 'hi' 
+                            ? `निःशुल्क छूट (₹0) के तहत स्वीकृत किया जा रहा है। ${activeTab === 'volunteers' ? 'स्वयंसेवक आईडी (TRUST-V-XXXX)' : 'सदस्य आईडी (TRUST-M-XXXX)'} जारी होगी।`
+                            : `Approving under Free Exemption (₹0). Generates ${activeTab === 'volunteers' ? 'Volunteer ID (TRUST-V-XXXX)' : 'Member ID (TRUST-M-XXXX)'}.`)
                         : activeTab === 'volunteers'
-                        ? 'Approving generates a unique sequential Volunteer ID (TRUST-V-XXXX), marks users/{uid}.isVolunteer = true, and generates an official receipt.'
+                        ? (lang === 'hi' 
+                            ? 'स्वीकृति पर स्वयंसेवक आईडी जारी होगी एवं आधिकारिक रसीद बनेगी।' 
+                            : 'Approving generates a unique sequential Volunteer ID (TRUST-V-XXXX) and an official receipt.')
                         : activeTab === 'memberships'
-                        ? 'Approving generates a unique sequential Member ID (TRUST-M-XXXX), marks users/{uid}.isMember = true, and generates an official receipt.'
-                        : 'Approving saves the admin-entered verified amount and generates a unique receipt number from counters/receipts.'}
+                        ? (lang === 'hi' 
+                            ? 'स्वीकृति पर सदस्य आईडी जारी होगी एवं आधिकारिक रसीद बनेगी।' 
+                            : 'Approving generates a unique sequential Member ID (TRUST-M-XXXX) and an official receipt.')
+                        : (lang === 'hi' 
+                            ? 'स्वीकृति पर सत्यापित राशि दर्ज होगी एवं आधिकारिक रसीद संख्या जारी होगी।' 
+                            : 'Approving saves the admin-entered verified amount and generates an official receipt number.')}
                     </div>
 
                     {isItemExempted ? (
                       <div className="p-3 rounded-xl bg-emerald-100/70 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                        <span>यह पंजीकरण पूर्व-स्वीकृत छूट के तहत पूर्णतः निःशुल्क (₹0) है। किसी शुल्क सत्यापन की आवश्यकता नहीं है।</span>
+                        <span>{lang === 'hi' ? 'यह पंजीकरण पूर्व-स्वीकृत छूट के तहत पूर्णतः निःशुल्क (₹0) है।' : 'This registration is free under exemption (₹0).'}</span>
                       </div>
                     ) : (
                       <div>
                         <label className="block text-xs font-black text-[#382719] mb-1">
-                          Verified Amount Received (INR ₹) *
+                          {lang === 'hi' ? 'प्राप्त सत्यापित राशि (INR ₹) *' : 'Verified Amount Received (INR ₹) *'}
                         </label>
                         <input
                           type="number"
@@ -2457,42 +2496,46 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                           required
                         />
                         <span className="text-[11px] text-[#666666] block mt-1">
-                          The official receipt will ALWAYS reflect this verified amount, not what the applicant claimed.
+                          {lang === 'hi' 
+                            ? 'आधिकारिक रसीद में हमेशा यही सत्यापित राशि दर्ज होगी।' 
+                            : 'The official receipt will ALWAYS reflect this verified amount.'}
                         </span>
                       </div>
                     )}
 
                     <div>
-                    <label className="block text-xs font-bold text-[#382719] mb-1">
-                      Admin Note (Optional):
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={adminNoteInput}
-                      onChange={(e) => setAdminNoteInput(e.target.value)}
-                      placeholder="e.g. Bank of India UTR verified successfully."
-                      className="w-full p-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none"
-                    />
+                      <label className="block text-xs font-bold text-[#382719] mb-1">
+                        {lang === 'hi' ? 'व्यवस्थापक टिप्पणी (वैकल्पिक):' : 'Admin Note (Optional):'}
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={adminNoteInput}
+                        onChange={(e) => setAdminNoteInput(e.target.value)}
+                        placeholder={lang === 'hi' ? 'उदा. बैंक खाता यूटीआर सफलतापूर्वक सत्यापित हुआ।' : 'e.g. Bank statement UTR verified successfully.'}
+                        className="w-full p-2.5 rounded-xl border border-[#E9B44C]/50 text-xs focus:outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
               {/* Reject Form Inputs */}
               {modalMode === 'reject' && (
                 <div className="space-y-3">
                   <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
-                    Please provide a clear reason. The user will see this on their dashboard and can re-apply with a valid Payment ID.
+                    {lang === 'hi' 
+                      ? 'कृपया स्पष्ट कारण बताएं। आवेदक यह कारण अपने डैशबोर्ड पर देख सकेंगे।' 
+                      : 'Please provide a clear reason. The user will see this on their dashboard.'}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-rose-900 mb-1">
-                      Reason for Rejection *
+                      {lang === 'hi' ? 'अस्वीकृति का कारण *' : 'Reason for Rejection *'}
                     </label>
                     <textarea
                       rows={3}
                       value={rejectReasonInput}
                       onChange={(e) => setRejectReasonInput(e.target.value)}
-                      placeholder="e.g. UTR number not found in Bank of India statement or invalid amount."
+                      placeholder={lang === 'hi' ? 'उदा. बैंक स्टेटमेंट में यूटीआर नहीं मिला या अमान्य राशि।' : 'e.g. UTR number not found in bank statement or invalid amount.'}
                       className="w-full p-3 rounded-xl border border-rose-300 text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
                     />
                   </div>
@@ -2505,22 +2548,26 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs leading-relaxed flex items-start gap-2">
                     <ShieldAlert className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold">Are you sure you want to remove this member?</p>
+                      <p className="font-bold">
+                        {lang === 'hi' ? 'क्या आप वाकई इस सदस्य की सदस्यता रद्द करना चाहते हैं?' : 'Are you sure you want to remove this member?'}
+                      </p>
                       <p className="mt-1">
-                        Their membership status will be set to "removed", their Verified Member badge will be revoked from their dashboard immediately, but history will be preserved.
+                        {lang === 'hi' 
+                          ? 'इनकी सदस्यता स्थिति रद्द कर दी जाएगी एवं सत्यापित सदस्य बैज हट जाएगा।' 
+                          : 'Their membership will be cancelled and verified badge will be revoked immediately.'}
                       </p>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-rose-900 mb-1">
-                      Reason for Removal (Shown to User) *
+                      {lang === 'hi' ? 'रद्द करने का कारण (उपयोगकर्ता को दिखेगा) *' : 'Reason for Removal (Shown to User) *'}
                     </label>
                     <textarea
                       rows={3}
                       value={removeReasonInput}
                       onChange={(e) => setRemoveReasonInput(e.target.value)}
-                      placeholder="e.g. Membership term expired, or revoked due to trust conduct policy."
+                      placeholder={lang === 'hi' ? 'उदा. सदस्यता अवधि समाप्त, अथवा संस्था के नियमों का उल्लंघन।' : 'e.g. Membership term expired, or policy violation.'}
                       className="w-full p-3 rounded-xl border border-rose-300 text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
                     />
                   </div>
@@ -2534,9 +2581,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="px-4 py-2 rounded-xl border border-[#E9B44C]/50 text-[#382719] font-bold text-xs hover:bg-white transition-all"
+                className="px-4 py-2 rounded-xl border border-[#E9B44C]/50 text-[#382719] font-bold text-xs hover:bg-white transition-all cursor-pointer"
               >
-                Close
+                {lang === 'hi' ? 'बंद करें' : 'Close'}
               </button>
 
               {modalMode === 'approve' && (
@@ -2544,9 +2591,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   type="button"
                   onClick={handleConfirmAction}
                   disabled={isProcessing}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isProcessing ? 'Processing Transaction...' : 'Confirm & Approve'}
+                  {isProcessing 
+                    ? (lang === 'hi' ? 'प्रक्रिया जारी...' : 'Processing...') 
+                    : (lang === 'hi' ? 'पुष्टि करें एवं स्वीकृत करें' : 'Confirm & Approve')}
                 </button>
               )}
 
@@ -2555,9 +2604,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   type="button"
                   onClick={handleConfirmAction}
                   disabled={isProcessing}
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isProcessing ? 'Processing...' : 'Confirm Reject'}
+                  {isProcessing 
+                    ? (lang === 'hi' ? 'प्रक्रिया जारी...' : 'Processing...') 
+                    : (lang === 'hi' ? 'अस्वीकृत करें' : 'Confirm Reject')}
                 </button>
               )}
 
@@ -2572,7 +2623,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   <span>
                     {isProcessing
                       ? (lang === 'hi' ? 'रद्द किया जा रहा है...' : 'Revoking...')
-                      : (lang === 'hi' ? 'सदस्यता रद्द करें (Confirm Revoke)' : 'Confirm Remove Member')}
+                      : (lang === 'hi' ? 'सदस्यता रद्द करें' : 'Confirm Remove Member')}
                   </span>
                 </button>
               )}
@@ -2585,7 +2636,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       setModalMode('reject');
                       setRejectReasonInput('');
                     }}
-                    className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                     <span>{lang === 'hi' ? 'अस्वीकृत करें' : 'Reject'}</span>
@@ -2597,7 +2648,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       setModalMode('approve');
                       setVerifiedAmountInput(String(selectedItem.claimedAmount || selectedItem.amount || 200));
                     }}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     <span>{lang === 'hi' ? 'स्वीकृत करें' : 'Approve'}</span>
@@ -2612,7 +2663,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     setModalMode('removeMember');
                     setRemoveReasonInput('');
                   }}
-                  className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserX className="w-4 h-4" />
                   <span>{lang === 'hi' ? 'सदस्यता रद्द करें' : 'Cancel Membership'}</span>

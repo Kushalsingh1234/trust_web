@@ -14,13 +14,14 @@ import {
   AlertCircle,
   CheckCircle2,
   Send,
-  Printer,
+  Download,
   Copy,
   Clock,
   Building,
   HelpCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import html2canvas from 'html2canvas';
 
 const REASON_CATEGORIES = [
   { id: 'medical', labelHi: '🏥 गंभीर बीमारी / चिकित्सा व दवा उपचार', labelEn: '🏥 Medical / Emergency Hospitalization' },
@@ -190,8 +191,27 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const [isExportingSlip, setIsExportingSlip] = useState(false);
+  const handleDownloadSlip = async () => {
+    if (!printRef.current) return;
+    setIsExportingSlip(true);
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#FFF8EF',
+        logging: false
+      });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `sahayata-slip-${submittedId || 'request'}.jpg`;
+      link.click();
+    } catch (err) {
+      console.error('Slip download failed:', err);
+    } finally {
+      setIsExportingSlip(false);
+    }
   };
 
   const selectedCategoryObj = REASON_CATEGORIES.find(c => c.id === formData.category) || REASON_CATEGORIES[0];
@@ -808,11 +828,12 @@ _निवेदन: कृपया इस आवेदन की समीक�
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={handlePrint}
-                    className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#382719] transition-colors"
+                    onClick={handleDownloadSlip}
+                    disabled={isExportingSlip}
+                    className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-xs sm:text-sm font-bold text-[#382719] transition-colors disabled:opacity-50"
                   >
-                    <Printer className="w-4 h-4 text-primary" />
-                    <span>{lang === 'hi' ? 'रसीद / पर्ची प्रिंट करें' : 'Print Application Slip'}</span>
+                    <Download className="w-4 h-4 text-primary" />
+                    <span>{lang === 'hi' ? 'रसीद / पर्ची डाउनलोड करें' : 'Download Application Slip'}</span>
                   </button>
 
                   <button

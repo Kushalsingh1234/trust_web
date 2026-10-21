@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Printer, CheckCircle2, Shield, Download, HeartHandshake, UserPlus } from 'lucide-react';
+import { X, CheckCircle2, Shield, Download, Image as ImageIcon, HeartHandshake, UserPlus, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
   const { lang, t } = useLanguage();
@@ -74,8 +76,60 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadImage = async () => {
+    if (!receiptRef.current) return;
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#FFF8EF',
+        logging: false
+      });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${receiptNo}.jpg`;
+      link.click();
+    } catch (err) {
+      console.error('Image download failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!receiptRef.current) return;
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#FFF8EF',
+        logging: false
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const yOffset = Math.max(margin, (pdfHeight - imgHeight) / 2);
+
+      pdf.addImage(imgData, 'JPEG', margin, yOffset, imgWidth, imgHeight);
+      pdf.save(`${receiptNo}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -364,7 +418,7 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                       : 'Official Digital Receipt generated successfully.'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setGenerated(false)}
@@ -374,11 +428,21 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                   </button>
                   <button
                     type="button"
-                    onClick={handlePrint}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold text-xs shadow-md transition-all active:scale-95"
+                    onClick={handleDownloadImage}
+                    disabled={isExporting}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
                   >
-                    <Printer className="w-4 h-4" />
-                    <span>{t.receiptModal.print}</span>
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'इमेज (PNG)' : 'Download Image'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={isExporting}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{lang === 'hi' ? 'PDF डाउनलोड' : 'Download PDF'}</span>
                   </button>
                 </div>
               </div>
@@ -549,14 +613,26 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
                 >
                   {t.receiptModal.close}
                 </button>
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{t.receiptModal.print}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadImage}
+                    disabled={isExporting}
+                    className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md flex-1 sm:flex-none disabled:opacity-50"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>{lang === 'hi' ? 'इमेज डाउनलोड' : 'Download Image'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={isExporting}
+                    className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-sm shadow-md flex-1 sm:flex-none disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>{lang === 'hi' ? 'PDF डाउनलोड' : 'Download PDF'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

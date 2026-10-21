@@ -144,11 +144,11 @@ export const Navbar = ({
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-xs transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-[#382719] hover:text-primary bg-white hover:bg-[#FFF8EF] border border-[#E9B44C]/40 shadow-xs transition-all active:scale-95 whitespace-nowrap cursor-pointer"
             aria-label={`Switch language to ${lang === 'en' ? 'Hindi' : 'English'}`}
           >
             <Globe className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
-            <span>{lang === 'en' ? 'हिंदी' : 'EN'}</span>
+            <span>{lang === 'en' ? 'हिंदी' : 'English'}</span>
           </button>
 
           {/* User Auth Section: Login / Sign Up vs Profile Dropdown */}
@@ -321,7 +321,7 @@ export const Navbar = ({
                 >
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>{lang === 'hi' ? 'आपकी सदस्यता सक्रिय है (डैशबोर्ड)' : 'Active Membership (Dashboard)'}</span>
+                    <span>{lang === 'hi' ? 'सक्रिय सदस्यता डैशबोर्ड' : 'Active Membership Dashboard'}</span>
                   </div>
                   <span className="text-emerald-700 text-xs">→</span>
                 </Link>
@@ -339,7 +339,7 @@ export const Navbar = ({
                     <UserPlus className="w-4 h-4 text-primary" />
                     <span>{lang === 'hi' ? 'सदस्यता विधान एवं आवेदन' : 'Membership Application'}</span>
                   </div>
-                  <span className="text-secondary font-mono font-bold text-xs">₹200/yr</span>
+                  <span className="text-secondary font-mono font-bold text-xs">{lang === 'hi' ? '₹200/वर्ष' : '₹200/yr'}</span>
                 </Link>
               )}
 
@@ -362,7 +362,6 @@ export const Navbar = ({
                 </Link>
               )}
 
-
               {/* Dedicated Receipt Download Action in Mobile */}
               <button
                 type="button"
@@ -370,7 +369,7 @@ export const Navbar = ({
                   setMobileMenuOpen(false);
                   onOpenReceiptModal();
                 }}
-                className="w-full px-3 py-3 text-sm rounded-xl transition-colors flex items-center justify-between min-h-[44px] text-primary font-bold hover:bg-white bg-primary/5 border border-primary/25"
+                className="w-full px-3 py-3 text-sm rounded-xl transition-colors flex items-center justify-between min-h-[44px] text-primary font-bold hover:bg-white bg-primary/5 border border-primary/25 cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <Download className="w-4 h-4 text-primary" />
@@ -382,6 +381,24 @@ export const Navbar = ({
 
             {/* Action buttons inside mobile drawer */}
             <div className="pt-3 border-t border-[#E9B44C]/25 flex flex-col gap-2.5">
+              {/* Language Switcher inside mobile drawer */}
+              <button
+                type="button"
+                onClick={() => {
+                  toggleLanguage();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl bg-white border border-[#E9B44C]/50 text-[#382719] text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-secondary" />
+                  <span>{lang === 'hi' ? 'भाषा बदलें (Language)' : 'Switch Language'}</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-black">
+                  {lang === 'en' ? 'हिंदी' : 'English'}
+                </span>
+              </button>
+
               <Link
                 to="/donate"
                 onClick={() => setMobileMenuOpen(false)}

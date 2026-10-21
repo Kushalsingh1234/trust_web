@@ -121,7 +121,7 @@ export const LoginPage = () => {
               title="Toggle Language"
             >
               <Globe className="w-3.5 h-3.5 text-[#E9B44C]" />
-              <span>{lang === 'hi' ? 'EN' : 'हिंदी'}</span>
+              <span>{lang === 'hi' ? 'English' : 'हिंदी'}</span>
             </button>
           </div>
           <div className="relative z-10 flex flex-col items-center">

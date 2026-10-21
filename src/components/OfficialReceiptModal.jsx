@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Printer, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -88,11 +88,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
   const formattedDate = getDateString();
 
-  // Print Receipt
-  const handlePrint = () => {
-    window.print();
-  };
-
   // Download PDF matching authentic landscape voucher
   const handleDownloadPDF = async () => {
     if (!receiptCardRef.current) return;
@@ -121,7 +116,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       pdf.save(`${receiptNumber}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      window.print();
     } finally {
       setIsExporting(false);
     }
@@ -184,17 +178,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               title="Download high-resolution image"
             >
               <ImageIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">इमेज (PNG)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/30 hover:bg-black/40 text-white font-bold text-xs shadow-xs transition-all"
-              title="Print Receipt"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>प्रिंट</span>
+              <span>इमेज (PNG)</span>
             </button>
 
             <button
