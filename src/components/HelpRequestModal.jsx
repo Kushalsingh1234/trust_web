@@ -93,6 +93,7 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
       ? '15/10/2026 10:45 PM'
       : '';
   });
+  const [isExportingSlip, setIsExportingSlip] = useState(false);
 
   if (!isOpen) return null;
 
@@ -191,7 +192,6 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const [isExportingSlip, setIsExportingSlip] = useState(false);
   const handleDownloadSlip = async () => {
     if (!printRef.current) return;
     setIsExportingSlip(true);

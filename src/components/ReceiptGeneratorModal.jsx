@@ -31,6 +31,7 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
   });
 
   const receiptRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -75,8 +76,6 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
       // Confetti fallback
     }
   };
-
-  const [isExporting, setIsExporting] = useState(false);
 
   const handleDownloadImage = async () => {
     if (!receiptRef.current) return;
