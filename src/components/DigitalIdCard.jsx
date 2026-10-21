@@ -73,20 +73,25 @@ export const DigitalIdCard = ({ member, onClose }) => {
         })
       );
 
-      // Clone card to a standard 500px landscape container attached to document.body at (0, 0)
+      // Clone card to a standard 500px landscape container attached offscreen
       const clone = cardRef.current.cloneNode(true);
       clone.id = 'trust-id-card-render-clone';
       clone.style.width = '500px';
       clone.style.minWidth = '500px';
       clone.style.maxWidth = '500px';
-      clone.style.position = 'fixed';
-      clone.style.top = '0px';
-      clone.style.left = '0px';
-      clone.style.zIndex = '-9999';
       clone.style.margin = '0px';
       clone.style.boxSizing = 'border-box';
       clone.style.transform = 'none';
-      document.body.appendChild(clone);
+
+      const renderContainer = document.createElement('div');
+      renderContainer.id = 'trust-id-card-render-container';
+      renderContainer.style.position = 'fixed';
+      renderContainer.style.left = '-99999px';
+      renderContainer.style.top = '0px';
+      renderContainer.style.width = '500px';
+      renderContainer.style.pointerEvents = 'none';
+      renderContainer.appendChild(clone);
+      document.body.appendChild(renderContainer);
 
       // Wait for images inside clone
       const cloneImgs = clone.querySelectorAll('img');
@@ -100,28 +105,17 @@ export const DigitalIdCard = ({ member, onClose }) => {
         })
       );
 
-      const cloneWidth = 500;
-      const cloneHeight = clone.offsetHeight;
-
       const canvas = await html2canvas(clone, {
         scale: 3, // 3x ultra-sharp resolution
         useCORS: true,
         allowTaint: true,
         backgroundColor: null, // Transparent outside the card
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        width: cloneWidth,
-        height: cloneHeight,
-        windowWidth: 600,
-        windowHeight: 600,
         logging: false,
       });
 
-      // Remove temporary clone from DOM
-      if (clone.parentNode) {
-        clone.parentNode.removeChild(clone);
+      // Remove temporary render container from DOM
+      if (renderContainer.parentNode) {
+        renderContainer.parentNode.removeChild(renderContainer);
       }
 
       // Smooth canvas clipping matching exact 16px radius at 3x scale without cutting 2px border
@@ -274,13 +268,10 @@ export const DigitalIdCard = ({ member, onClose }) => {
         {/* Distinct Identity Ribbon: VOLUNTEER ID CARD / MEMBER ID CARD */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px',
+            height: '32px',
+            lineHeight: '32px',
             marginBottom: '12px',
             padding: '0 12px',
-            height: '32px',
             borderRadius: '8px',
             color: '#ffffff',
             boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
@@ -298,8 +289,8 @@ export const DigitalIdCard = ({ member, onClose }) => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
+              height: '32px',
               gap: '6px',
-              minWidth: 0,
             }}
           >
             {isVolunteer ? (
@@ -314,7 +305,9 @@ export const DigitalIdCard = ({ member, onClose }) => {
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
+                lineHeight: '32px',
                 color: '#ffffff',
+                display: 'inline-block',
               }}
             >
               {isVolunteer ? 'VOLUNTEER ID CARD' : 'MEMBER ID CARD'}
@@ -323,17 +316,17 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
           <div
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              position: 'absolute',
+              right: '8px',
+              top: '5px',
+              height: '22px',
+              lineHeight: '20px',
               backgroundColor: '#FFFFFF',
               color: isVolunteer ? '#047857' : '#B45309',
               padding: '0 10px',
-              height: '22px',
               borderRadius: '9999px',
               border: isVolunteer ? '1px solid #A7F3D0' : '1px solid #FDE68A',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              flexShrink: 0,
               boxSizing: 'border-box',
               fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontSize: '11px',
@@ -361,11 +354,6 @@ export const DigitalIdCard = ({ member, onClose }) => {
                 borderStyle: 'solid',
                 backgroundColor: '#ffffff',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '3px',
                 overflow: 'hidden',
                 position: 'relative',
                 boxSizing: 'border-box',
@@ -386,20 +374,20 @@ export const DigitalIdCard = ({ member, onClose }) => {
                   }}
                 />
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <div style={{ padding: '14px 0 10px', textAlign: 'center' }}>
                   <div
                     style={{
                       width: '40px',
                       height: '40px',
+                      lineHeight: '38px',
                       borderRadius: '9999px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      margin: '0 auto 6px',
+                      textAlign: 'center',
                       fontWeight: 'bold',
-                      fontSize: '18px',
-                      marginBottom: '4px',
+                      fontSize: '19px',
                       borderWidth: '1.5px',
                       borderStyle: 'solid',
+                      boxSizing: 'border-box',
                     }}
                     className={
                       isVolunteer
@@ -415,6 +403,8 @@ export const DigitalIdCard = ({ member, onClose }) => {
                       fontWeight: 900,
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
+                      display: 'block',
+                      lineHeight: 1,
                     }}
                     className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
                   >
@@ -426,14 +416,16 @@ export const DigitalIdCard = ({ member, onClose }) => {
             <div
               style={{
                 display: 'inline-block',
-                marginTop: '4px',
-                padding: '1px 6px',
+                marginTop: '6px',
+                padding: '2px 8px',
+                lineHeight: '13px',
                 borderRadius: '4px',
                 backgroundColor: '#F5F5F4',
                 border: '1px solid #E7E5E4',
                 fontSize: '8.5px',
                 fontWeight: 700,
                 color: '#57534E',
+                boxSizing: 'border-box',
               }}
             >
               Gorakhpur, UP
@@ -483,27 +475,25 @@ export const DigitalIdCard = ({ member, onClose }) => {
             </div>
 
             {/* Issue & Expiry Dates - Boxed Validity Strip */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                backgroundColor: isVolunteer ? 'rgba(5, 150, 105, 0.08)' : 'rgba(233, 180, 76, 0.12)',
-                border: isVolunteer ? '1px solid rgba(5, 150, 105, 0.22)' : '1px solid rgba(233, 180, 76, 0.3)',
-                fontSize: '9.5px',
-                width: 'fit-content',
-              }}
-            >
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'जारी:' : 'Issued:'}</span>
+            <div>
+              <div
+                style={{
+                  display: 'inline-block',
+                  marginTop: '4px',
+                  padding: '3px 8px 4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: isVolunteer ? 'rgba(5, 150, 105, 0.08)' : 'rgba(233, 180, 76, 0.12)',
+                  border: isVolunteer ? '1px solid rgba(5, 150, 105, 0.22)' : '1px solid rgba(233, 180, 76, 0.3)',
+                  fontSize: '9.5px',
+                  lineHeight: '14px',
+                  whiteSpace: 'nowrap',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'जारी:' : 'Issued:'} </span>
                 <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1C1917' }}>{formattedIssueDate}</span>
-              </div>
-              <span style={{ color: '#CBD5E1', fontWeight: 300 }}>•</span>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'समाप्ति:' : 'Expiry:'}</span>
+                <span style={{ color: '#A8A29E', margin: '0 6px', fontWeight: 700 }}>•</span>
+                <span style={{ color: '#78716C', fontWeight: 600 }}>{lang === 'hi' ? 'समाप्ति:' : 'Expiry:'} </span>
                 <span
                   style={{ fontFamily: 'monospace', fontWeight: 800 }}
                   className={isVolunteer ? 'text-emerald-700' : 'text-primary'}
