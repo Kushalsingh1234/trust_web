@@ -695,6 +695,8 @@ export const createAnnouncement = async (data, adminUid, authorName = 'Trust Exe
     title: data.title.trim(),
     content: data.content.trim(),
     category: data.category || 'general',
+    targetAudience: data.targetAudience || 'both', // 'both' | 'members' | 'volunteers'
+    imageUrl: data.imageUrl || '',
     isPublished: data.isPublished !== undefined ? data.isPublished : true,
     isFeatured: data.isFeatured || false,
     authorName: authorName,

@@ -51,7 +51,11 @@ import {
   Send,
   Building,
   Copy,
-  Check
+  Check,
+  MessageSquare,
+  Share2,
+  Image as ImageIcon,
+  Eye
 } from 'lucide-react';
 
 export const UserDashboardPage = () => {
@@ -80,6 +84,7 @@ export const UserDashboardPage = () => {
   const [donateModalOpen, setDonateModalOpen] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(null);
   const [viewingCard, setViewingCard] = useState(null); // DigitalIdCard data
+  const [selectedNoticeModal, setSelectedNoticeModal] = useState(null);
 
   const handleOpenJoinModal = (type = 'member') => {
     setJoinModalType(type);
@@ -408,6 +413,26 @@ export const UserDashboardPage = () => {
   const hasMemberApplication = Boolean(effectiveMemberships.length > 0 || isMember);
   const hasVolunteerApplication = Boolean(effectiveVolunteers.length > 0 || approvedVolunteer || userProfile?.hasAppliedVolunteer);
 
+  // Filter notices for current user role
+  const visibleNotices = React.useMemo(() => {
+    return (announcements || []).filter((notice) => {
+      const audience = notice.targetAudience || 'both';
+      if (audience === 'both') return true;
+      if (audience === 'members' && (isMember || hasMemberApplication)) return true;
+      if (audience === 'volunteers' && (isVolunteer || hasVolunteerApplication)) return true;
+      return false;
+    });
+  }, [announcements, isMember, isVolunteer, hasMemberApplication, hasVolunteerApplication]);
+
+  const handleShareNoticeOnWhatsApp = (notice) => {
+    const title = notice.title || 'आधिकारिक सूचना';
+    const content = notice.content || '';
+    const imgPart = notice.imageUrl ? `\n\n🖼️ पोस्टर देखें:\n${notice.imageUrl}` : '';
+    const text = `📢 *राष्ट्रीय सनातन संस्कार सेवा संस्थान*\n📌 *${title}*\n\n${content}${imgPart}\n\n🌐 आधिकारिक वेबसाइट:\nhttps://rashtriyasanatantrust.in\n#SanatanTrust #OfficialNotice`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   // Status Badge Component
   const renderStatusBadge = (status) => {
     const s = (status || 'pending').toLowerCase();
@@ -720,42 +745,128 @@ export const UserDashboardPage = () => {
         </div>
 
         {/* Notices & Announcements Feed from Trust Admin */}
-        {announcements.length > 0 && (
-          <div className="rounded-2xl bg-white border border-[#E9B44C]/35 p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-[#E9B44C]/30 pb-2">
+        {visibleNotices.length > 0 && (
+          <div className="rounded-2xl bg-white border border-[#E9B44C]/35 p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E9B44C]/30 pb-2.5">
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-primary animate-bounce-subtle" />
-                <h3 className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading">
-                  {lang === 'hi' ? 'ट्रस्ट की आधिकारिक सूचनाएं एवं महत्वपूर्ण संदेश' : 'Official Trust Notices & Updates'}
-                </h3>
+                <div>
+                  <h3 className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading">
+                    {lang === 'hi' ? 'ट्रस्ट की आधिकारिक सूचनाएं एवं महत्वपूर्ण संदेश' : 'Official Trust Notices & Updates'}
+                  </h3>
+                  <p className="text-[11px] text-[#777777]">
+                    {lang === 'hi' ? 'व्यवस्थापक द्वारा सदस्यों एवं स्वयंसेवकों के लिए जारी नवीनतम अपडेट' : 'Latest updates from Trust Admin for members & volunteers'}
+                  </p>
+                </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
-                {announcements.length} {lang === 'hi' ? 'सूचनाएं' : 'Notices'}
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary border border-primary/20">
+                {visibleNotices.length} {lang === 'hi' ? 'सूचनाएं' : 'Notices'}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {announcements.slice(0, 4).map((notice) => (
-                <div
-                  key={notice.id}
-                  className="p-3.5 rounded-xl bg-[#FFF8EF]/50 border border-[#E9B44C]/30 space-y-1.5 hover:bg-[#FFF8EF] transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-primary text-white">
-                      {notice.category === 'urgent' ? 'अति महत्वपूर्ण' : notice.category === 'event' ? 'कार्यक्रम' : 'सामान्य सूचना'}
-                    </span>
-                    <span className="text-[10px] text-[#777777]">
-                      {formatDate(notice.publishedAt || notice.createdAt)}
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {visibleNotices.map((notice) => {
+                const audience = notice.targetAudience || 'both';
+                return (
+                  <div
+                    key={notice.id}
+                    className="p-4 rounded-2xl bg-gradient-to-br from-[#FFFDF9] via-white to-[#FFF8EF]/40 border border-[#E9B44C]/35 space-y-3 shadow-2xs hover:shadow-xs transition-all relative flex flex-col justify-between"
+                  >
+                    <div className="space-y-2.5">
+                      {/* Optional Notice Image Poster */}
+                      {notice.imageUrl && (
+                        <div
+                          onClick={() => setSelectedNoticeModal(notice)}
+                          className="relative rounded-xl overflow-hidden border border-[#E9B44C]/30 bg-black/5 aspect-video max-h-48 cursor-pointer group shadow-2xs"
+                          title={lang === 'hi' ? 'पूर्ण आकार में पोस्टर देखें' : 'Click to view full image'}
+                        >
+                          <img
+                            src={notice.imageUrl}
+                            alt={notice.title}
+                            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-2.5 text-white text-[11px] font-bold">
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{lang === 'hi' ? 'बड़ा देखें' : 'View Full Image'}</span>
+                            </span>
+                            <span className="text-[10px] bg-black/50 px-2 py-0.5 rounded">पोस्टर</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Header tags: Target Audience + Category + Date */}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Audience Badge */}
+                          {audience === 'members' && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                              🛡️ केवल सदस्य
+                            </span>
+                          )}
+                          {audience === 'volunteers' && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                              🤝 केवल स्वयंसेवक
+                            </span>
+                          )}
+                          {audience === 'both' && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                              👥 सभी सदस्य एवं स्वयंसेवक
+                            </span>
+                          )}
+
+                          {/* Category Badge */}
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                            notice.category === 'urgent'
+                              ? 'bg-rose-600 text-white'
+                              : notice.category === 'event'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-primary text-white'
+                          }`}>
+                            {notice.category === 'urgent' ? 'अति महत्वपूर्ण' : notice.category === 'event' ? 'कार्यक्रम' : 'सामान्य सूचना'}
+                          </span>
+                        </div>
+
+                        <span className="text-[10px] text-[#777777] font-medium">
+                          {formatDate(notice.publishedAt || notice.createdAt)}
+                        </span>
+                      </div>
+
+                      {/* Notice Title */}
+                      <h4 className="font-extrabold text-sm sm:text-base text-[#382719] leading-snug font-hindi-heading">
+                        {notice.title}
+                      </h4>
+
+                      {/* Notice Content */}
+                      <p className="text-xs text-[#555555] whitespace-pre-line leading-relaxed line-clamp-3">
+                        {notice.content}
+                      </p>
+                    </div>
+
+                    {/* Action Footer: WhatsApp Share & View Modal */}
+                    <div className="pt-2 border-t border-[#E9B44C]/20 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedNoticeModal(notice)}
+                        className="text-[11px] font-bold text-primary hover:text-secondary flex items-center gap-1 hover:underline cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>{lang === 'hi' ? 'विस्तार से पढ़ें' : 'Read Full Notice'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleShareNoticeOnWhatsApp(notice)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition-all hover:scale-102 cursor-pointer"
+                        title={lang === 'hi' ? 'व्हाट्सएप पर शेयर करें' : 'Share on WhatsApp'}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>{lang === 'hi' ? 'व्हाट्सएप पर शेयर' : 'WhatsApp Share'}</span>
+                      </button>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-xs sm:text-sm text-[#382719] leading-tight">
-                    {notice.title}
-                  </h4>
-                  <p className="text-xs text-[#555555] line-clamp-2 leading-relaxed">
-                    {notice.content}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1746,6 +1857,88 @@ export const UserDashboardPage = () => {
         onClose={() => setViewingReceipt(null)}
         receipt={viewingReceipt}
       />
+
+      {/* Detailed Notice Lightbox / Modal */}
+      {selectedNoticeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#E9B44C]/40 overflow-hidden max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-[#FFF8EF] via-white to-[#FFF8EF] border-b border-[#E9B44C]/30 flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                  selectedNoticeModal.category === 'urgent'
+                    ? 'bg-rose-600 text-white'
+                    : selectedNoticeModal.category === 'event'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-primary text-white'
+                }`}>
+                  {selectedNoticeModal.category === 'urgent' ? 'अति महत्वपूर्ण' : selectedNoticeModal.category === 'event' ? 'कार्यक्रम' : 'आधिकारिक सूचना'}
+                </span>
+                <span className="text-[10px] font-bold text-[#666666]">
+                  {formatDate(selectedNoticeModal.publishedAt || selectedNoticeModal.createdAt)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedNoticeModal(null)}
+                className="p-1 rounded-full text-[#666666] hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-4">
+              {/* Image Banner */}
+              {selectedNoticeModal.imageUrl && (
+                <div className="rounded-2xl overflow-hidden border border-[#E9B44C]/30 bg-black/5 max-h-80 shadow-xs">
+                  <img
+                    src={selectedNoticeModal.imageUrl}
+                    alt={selectedNoticeModal.title}
+                    className="w-full h-auto max-h-80 object-contain mx-auto"
+                  />
+                </div>
+              )}
+
+              {/* Title */}
+              <h2 className="text-lg sm:text-xl font-black text-[#382719] font-hindi-heading leading-snug">
+                {selectedNoticeModal.title}
+              </h2>
+
+              {/* Detailed Content */}
+              <div className="p-4 rounded-2xl bg-[#FFF8EF]/50 border border-[#E9B44C]/25 text-sm sm:text-base text-[#382719] leading-relaxed whitespace-pre-wrap font-serif">
+                {selectedNoticeModal.content}
+              </div>
+
+              {/* Trust Footer Note */}
+              <div className="pt-2 text-xs text-[#777777] border-t border-[#E9B44C]/20 flex items-center justify-between">
+                <span>राष्ट्रीय सनातन संस्कार सेवा संस्थान</span>
+                <span>गोरखपुर (उ.प्र.)</span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-5 py-3.5 bg-[#FFF8EF] border-t border-[#E9B44C]/30 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => handleShareNoticeOnWhatsApp(selectedNoticeModal)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all hover:scale-102 cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>{lang === 'hi' ? 'व्हाट्सएप पर शेयर करें' : 'Share on WhatsApp'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedNoticeModal(null)}
+                className="px-4 py-2 rounded-xl border border-[#E9B44C]/50 text-[#382719] font-bold text-xs hover:bg-white transition-all cursor-pointer"
+              >
+                {lang === 'hi' ? 'बंद करें' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

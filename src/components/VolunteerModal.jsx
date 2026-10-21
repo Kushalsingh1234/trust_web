@@ -43,6 +43,7 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
     password: '',
     confirmPassword: '',
     mobile: userProfile?.phone || userProfile?.mobile || '',
+    whatsapp: userProfile?.phone || userProfile?.mobile || '',
     email: userProfile?.email || '',
     cityOrDistrict: 'गोरखपुर (Gorakhpur)',
     availability: 'weekends', // 'weekends' | 'full_time' | 'few_hours_daily'
@@ -66,6 +67,7 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
         ...prev,
         fullName: prev.fullName || userProfile.fullName || userProfile.displayName || '',
         mobile: prev.mobile || userProfile.phone || userProfile.mobile || '',
+        whatsapp: prev.whatsapp || userProfile.phone || userProfile.mobile || '',
         email: prev.email || userProfile.email || ''
       }));
     }
@@ -103,6 +105,10 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
     if (!formData.fullName.trim()) errs.fullName = lang === 'hi' ? 'कृपया पूरा नाम दर्ज करें' : 'Enter full name';
     if (!formData.mobile.trim() || !/^[6-9]\d{9}$/.test(formData.mobile.replace(/\D/g, ''))) {
       errs.mobile = lang === 'hi' ? 'मान्य 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Enter valid 10-digit mobile';
+    }
+    const cleanWhatsapp = (formData.whatsapp || '').replace(/\D/g, '');
+    if (!cleanWhatsapp || cleanWhatsapp.length !== 10) {
+      errs.whatsapp = lang === 'hi' ? 'मान्य 10-अंकीय व्हाट्सएप नंबर अनिवार्य है (सूचनाओं हेतु)' : 'Valid 10-digit WhatsApp number required for notices';
     }
     if (!formData.cityOrDistrict.trim()) errs.cityOrDistrict = lang === 'hi' ? 'स्थान / ज़िला दर्ज करें' : 'Enter city/district';
 
@@ -327,6 +333,36 @@ export const VolunteerModal = ({ isOpen, onClose }) => {
                   className={`w-full px-3 py-2 rounded-xl border ${errors.mobile ? 'border-red-500' : 'border-gray-300'} text-xs font-mono focus:outline-none focus:border-primary`}
                 />
                 {errors.mobile && <p className="text-[10px] text-red-500 mt-0.5">{errors.mobile}</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-[#382719]">
+                    {lang === 'hi' ? 'व्हाट्सएप नंबर (सूचनाओं हेतु अनिवार्य) *' : 'WhatsApp Number (Required for Notices) *'}
+                  </label>
+                  {formData.mobile && formData.whatsapp !== formData.mobile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, whatsapp: prev.mobile }));
+                        if (errors.whatsapp) setErrors(prev => ({ ...prev, whatsapp: null }));
+                      }}
+                      className="text-[10px] text-emerald-700 hover:underline font-bold"
+                    >
+                      {lang === 'hi' ? 'मोबाइल नंबर जैसा' : 'Same as Mobile'}
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="tel"
+                  name="whatsapp"
+                  maxLength={10}
+                  value={formData.whatsapp}
+                  onChange={handleInputChange}
+                  placeholder="9876543210"
+                  className={`w-full px-3 py-2 rounded-xl border ${errors.whatsapp ? 'border-red-500 bg-red-50/30' : 'border-gray-300'} text-xs font-mono focus:outline-none focus:border-primary`}
+                />
+                {errors.whatsapp && <p className="text-[10px] text-red-500 mt-0.5">{errors.whatsapp}</p>}
               </div>
 
               <div>
