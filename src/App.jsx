@@ -33,7 +33,6 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import AdminDashboard from './pages/AdminDashboard';
-import DigitalIdCard from './components/DigitalIdCard';
 
 function AppContent() {
   const navigate = useNavigate();
@@ -87,35 +86,6 @@ function AppContent() {
       <ProtectedRoute>
         <UserDashboardPage onNavigateHome={() => navigate('/about')} />
       </ProtectedRoute>
-    );
-  }
-
-  if (location.pathname.startsWith('/id-card-preview')) {
-    return (
-      <div className="min-h-screen bg-neutral-100 p-2 flex flex-col items-center">
-        <div style={{ width: '100%', maxWidth: '360px' }}>
-          <DigitalIdCard
-            member={{
-              fullName: 'Kranti Mishra',
-              volunteerId: '001',
-              category: 'catC',
-              memberType: 'volunteer',
-              role: 'volunteer',
-              cardType: 'volunteer',
-              status: 'approved',
-              approvedAt: { toDate: () => new Date('2026-10-21') }
-            }}
-          />
-        </div>
-        <div className="mt-4 p-4 bg-white rounded-xl shadow w-full max-w-lg text-center">
-          <p className="text-xs font-bold text-gray-500 mb-2">Downloaded Image Result:</p>
-          <img
-            id="exported-img-preview"
-            alt="Export Result"
-            style={{ maxWidth: '100%', margin: '0 auto', display: 'none', borderRadius: '18px', border: '1px solid #ddd' }}
-          />
-        </div>
-      </div>
     );
   }
 
