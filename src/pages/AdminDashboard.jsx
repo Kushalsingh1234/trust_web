@@ -37,9 +37,7 @@ import {
   formatNoticeForWhatsApp,
   checkBaileysServerStatus,
   broadcastNoticeViaBaileys,
-  sendPersonalMessageViaBaileys,
-  getWhatsAppApiBaseUrl,
-  setWhatsAppApiBaseUrl
+  sendPersonalMessageViaBaileys
 } from '../firebase/whatsappService';
 import { uploadImageToCloudinary } from '../utils/cloudinaryService';
 import WhatsAppBroadcastModal from '../components/WhatsAppBroadcastModal';
@@ -169,8 +167,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   const [whatsappApiTokenInput, setWhatsappApiTokenInput] = useState('');
   const [whatsappApiEndpointInput, setWhatsappApiEndpointInput] = useState('');
   const [isSavingWhatsAppSettings, setIsSavingWhatsAppSettings] = useState(false);
-  const [showAdvancedWhatsApp, setShowAdvancedWhatsApp] = useState(false);
-
   // Modals for WhatsApp Broadcast & Personal Messages
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [currentBroadcastNotice, setCurrentBroadcastNotice] = useState(null);
@@ -182,13 +178,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   // Baileys WhatsApp Engine Device Modal & Server Status
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [baileysServerState, setBaileysServerState] = useState({ online: false, connected: false, phoneNumber: null });
-  const [serverUrlSetting, setServerUrlSetting] = useState(() => getWhatsAppApiBaseUrl());
-
-  const handleSaveServerUrlSetting = () => {
-    setWhatsAppApiBaseUrl(serverUrlSetting);
-    toast.success(lang === 'hi' ? 'WhatsApp बैकएंड सर्वर URL सफलतापूर्वक सेव हुआ!' : 'WhatsApp backend URL saved successfully!');
-    checkBaileysServerStatus().then(setBaileysServerState);
-  };
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -1005,55 +994,23 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   </p>
                 </div>
 
-                {/* Server Status & URL Config Toggle */}
+                {/* Server Status Indicator */}
                 <div className="pt-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${baileysServerState?.online ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                      <span className="font-bold text-gray-700">
+                  <div className="flex items-center justify-between text-xs bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${baileysServerState?.online ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                      <span className="font-bold text-gray-800">
                         {baileysServerState?.online
-                          ? (lang === 'hi' ? 'व्हाट्सएप सर्वर: सक्रिय (Online)' : 'WhatsApp Server: Online')
-                          : (lang === 'hi' ? 'व्हाट्सएप सर्वर: ऑफ़लाइन (Offline)' : 'WhatsApp Server: Offline')}
+                          ? (lang === 'hi' ? 'व्हाट्सएप ऑटोमेशन सर्वर: ऑनलाइन (सक्रिय)' : 'WhatsApp Automation Server: Online')
+                          : (lang === 'hi' ? 'व्हाट्सएप ऑटोमेशन सर्वर: कनेक्ट हो रहा है...' : 'WhatsApp Automation Server: Connecting...')}
                       </span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedWhatsApp(!showAdvancedWhatsApp)}
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
-                    >
-                      <span>{showAdvancedWhatsApp ? '▲ सर्वर URL सेटिंग्स छुपाएं' : '⚙️ सर्वर URL कॉन्फ़िगर करें'}</span>
-                    </button>
+                    {baileysServerState?.phoneNumber && (
+                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-lg">
+                        +{baileysServerState.phoneNumber}
+                      </span>
+                    )}
                   </div>
-
-                  {showAdvancedWhatsApp && (
-                    <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-300 space-y-3 animate-fadeIn text-xs">
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                          सर्वर API URL (Server API URL)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="url"
-                            value={serverUrlSetting}
-                            onChange={(e) => setServerUrlSetting(e.target.value)}
-                            placeholder="e.g. https://your-server-domain.com"
-                            className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40 focus:outline-none bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleSaveServerUrlSetting}
-                            className="px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all flex-shrink-0"
-                          >
-                            URL सेव करें
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-gray-500 leading-normal">
-                        * यदि आप लाइव वेबसाइट पर हैं, तो बैकएंड सर्वर का सुरक्षित URL दर्ज करें। लोकल पर यह स्वतः बैकएंड से कनेक्ट होता है।
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

@@ -13,7 +13,7 @@ import {
   Info
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { getWhatsAppApiBaseUrl, setWhatsAppApiBaseUrl } from '../firebase/whatsappService';
+import { getWhatsAppApiBaseUrl } from '../firebase/whatsappService';
 
 export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   const toast = useToast();
@@ -24,12 +24,6 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   const [testPhone, setTestPhone] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [serverOnline, setServerOnline] = useState(true);
-  const [serverUrlInput, setServerUrlInput] = useState('');
-  const [showServerConfig, setShowServerConfig] = useState(false);
-
-  useEffect(() => {
-    setServerUrlInput(getWhatsAppApiBaseUrl());
-  }, [isOpen]);
 
   const fetchStatus = async () => {
     try {
@@ -122,11 +116,6 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
     }
   };
 
-  const handleSaveServerUrl = () => {
-    setWhatsAppApiBaseUrl(serverUrlInput);
-    toast.success('सर्वर URL सफलतापूर्वक सेव किया गया!');
-    fetchStatus();
-  };
 
   const handleSendTest = async (e) => {
     e.preventDefault();
@@ -308,45 +297,14 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
               </div>
 
               {!serverOnline && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-left text-xs space-y-2">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-left text-xs space-y-1.5">
                   <div className="flex items-center gap-2 text-amber-900 font-bold">
-                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span>व्हाट्सएप सर्वर कनेक्ट नहीं है (Server Offline)</span>
+                    <Loader2 className="w-4 h-4 text-amber-600 animate-spin flex-shrink-0" />
+                    <span>क्लाउड सर्वर से संपर्क हो रहा है...</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-normal">
-                    सर्वर से कनेक्शन नहीं हो पा रहा है। कृपया बैकएंड सर्वर सक्रिय होने की जांच करें या नीचे नया सर्वर URL दर्ज करें।
+                    सर्वर सक्रिय हो रहा है, कृपया कुछ सेकंड प्रतीक्षा करें। इसके बाद QR कोड अपने आप दिखाई देगा।
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowServerConfig(!showServerConfig)}
-                    className="text-[11px] font-bold text-emerald-800 underline hover:text-emerald-950 block"
-                  >
-                    {showServerConfig ? '▲ सर्वर URL सेटिंग छुपाएं' : '⚙️ बैकएंड सर्ver URL दर्ज करें'}
-                  </button>
-                </div>
-              )}
-
-              {showServerConfig && (
-                <div className="p-3 bg-gray-50 border border-gray-300 rounded-2xl text-left space-y-2 text-xs animate-fadeIn">
-                  <label className="block text-[11px] font-bold text-gray-700">
-                    बैकएंड सर्वर URL (Backend Server URL)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      value={serverUrlInput}
-                      onChange={(e) => setServerUrlInput(e.target.value)}
-                      placeholder="e.g. https://your-server-domain.com"
-                      className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40 focus:outline-none bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveServerUrl}
-                      className="px-3.5 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all flex-shrink-0"
-                    >
-                      सेव करें
-                    </button>
-                  </div>
                 </div>
               )}
 

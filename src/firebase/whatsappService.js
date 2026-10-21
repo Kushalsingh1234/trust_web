@@ -335,39 +335,17 @@ export const sendViaWhatsAppApi = async (toPhone, text, imageUrl, settings) => {
   throw new Error(`Provider ${settings.provider} is not an automated API. Use Direct dispatch.`);
 };
 
-const WHATSAPP_SERVER_URL_KEY = 'rsssst_whatsapp_server_url';
+export const DEFAULT_WHATSAPP_SERVER_URL = 'https://trust-ykvi.onrender.com';
 
 /**
- * Get the configured WhatsApp backend API base URL
+ * Get the hardcoded WhatsApp backend API base URL
  */
 export const getWhatsAppApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(WHATSAPP_SERVER_URL_KEY);
-    if (saved && saved.trim()) {
-      return saved.trim().replace(/\/+$/, '');
-    }
-  }
-  if (import.meta.env.VITE_WHATSAPP_SERVER_URL) {
-    return import.meta.env.VITE_WHATSAPP_SERVER_URL.replace(/\/+$/, '');
-  }
-  // When running locally, Vite proxies /api to port 5002
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return '';
-  }
-  // Fallback for deployed site: try http://localhost:5002 if testing from admin machine or relative
-  return '';
+  return import.meta.env.VITE_WHATSAPP_SERVER_URL || DEFAULT_WHATSAPP_SERVER_URL;
 };
 
-/**
- * Set the WhatsApp backend API base URL in localStorage
- */
-export const setWhatsAppApiBaseUrl = (url) => {
-  if (typeof window === 'undefined') return;
-  if (!url || !url.trim()) {
-    localStorage.removeItem(WHATSAPP_SERVER_URL_KEY);
-  } else {
-    localStorage.setItem(WHATSAPP_SERVER_URL_KEY, url.trim().replace(/\/+$/, ''));
-  }
+export const setWhatsAppApiBaseUrl = (_url) => {
+  // No-op: hardcoded to live Render backend for client deployment simplicity
 };
 
 /**
@@ -413,18 +391,18 @@ export const broadcastNoticeViaBaileys = async (recipients, message, imageUrl = 
 
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
-    throw new Error('व्हाट्सएप सर्वर उपलब्ध नहीं है। कृपया व्यवस्थापक सेटिंग्स में जाकर सर्वर URL जांचें।');
+    throw new Error('व्हाट्सएप ऑटोमेशन सेवा से संपर्क नहीं हो पा रहा है। कृपया कुछ क्षण बाद पुनः प्रयास करें।');
   }
 
   const json = await res.json();
   if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to broadcast via Baileys engine.');
+    throw new Error(json.message || 'Failed to broadcast via WhatsApp automation engine.');
   }
   return json;
 };
 
 /**
- * Send personal message via Baileys automated socket
+ * Send personal message via automated socket
  */
 export const sendPersonalMessageViaBaileys = async (phone, message, imageUrl = null) => {
   const baseUrl = getWhatsAppApiBaseUrl();
@@ -440,12 +418,12 @@ export const sendPersonalMessageViaBaileys = async (phone, message, imageUrl = n
 
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
-    throw new Error('व्हाट्सएप सर्वर उपलब्ध नहीं है। कृपया व्यवस्थापक सेटिंग्स में जाकर सर्वर URL जांचें।');
+    throw new Error('व्हाट्सएप ऑटोमेशन सेवा से संपर्क नहीं हो पा रहा है। कृपया कुछ क्षण बाद पुनः प्रयास करें।');
   }
 
   const json = await res.json();
   if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to send personal message via Baileys.');
+    throw new Error(json.message || 'Failed to send personal message via WhatsApp automation engine.');
   }
   return json;
 };
