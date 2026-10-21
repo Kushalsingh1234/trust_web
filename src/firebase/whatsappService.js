@@ -335,13 +335,54 @@ export const sendViaWhatsAppApi = async (toPhone, text, imageUrl, settings) => {
   throw new Error(`Provider ${settings.provider} is not an automated API. Use Direct dispatch.`);
 };
 
+const WHATSAPP_SERVER_URL_KEY = 'rsssst_whatsapp_server_url';
+
+/**
+ * Get the configured WhatsApp backend API base URL
+ */
+export const getWhatsAppApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(WHATSAPP_SERVER_URL_KEY);
+    if (saved && saved.trim()) {
+      return saved.trim().replace(/\/+$/, '');
+    }
+  }
+  if (import.meta.env.VITE_WHATSAPP_SERVER_URL) {
+    return import.meta.env.VITE_WHATSAPP_SERVER_URL.replace(/\/+$/, '');
+  }
+  // When running locally, Vite proxies /api to port 5002
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '';
+  }
+  // Fallback for deployed site: try http://localhost:5002 if testing from admin machine or relative
+  return '';
+};
+
+/**
+ * Set the WhatsApp backend API base URL in localStorage
+ */
+export const setWhatsAppApiBaseUrl = (url) => {
+  if (typeof window === 'undefined') return;
+  if (!url || !url.trim()) {
+    localStorage.removeItem(WHATSAPP_SERVER_URL_KEY);
+  } else {
+    localStorage.setItem(WHATSAPP_SERVER_URL_KEY, url.trim().replace(/\/+$/, ''));
+  }
+};
+
 /**
  * Check if the automated Baileys WhatsApp server is active & connected
  */
 export const checkBaileysServerStatus = async () => {
   try {
-    const res = await fetch('/api/whatsapp/status');
-    if (!res.ok) return { online: false, connected: false };
+    const baseUrl = getWhatsAppApiBaseUrl();
+    const res = await fetch(`${baseUrl}/api/whatsapp/status`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok || !contentType.includes('application/json')) {
+      return { online: false, connected: false, status: 'OFFLINE' };
+    }
     const json = await res.json();
     return {
       online: true,
@@ -350,7 +391,7 @@ export const checkBaileysServerStatus = async () => {
       phoneNumber: json?.data?.phoneNumber
     };
   } catch (err) {
-    return { online: false, connected: false, status: 'OFFLINE' };
+    return { online: false, connected: false, status: 'OFFLINE', error: err.message };
   }
 };
 
@@ -358,9 +399,10 @@ export const checkBaileysServerStatus = async () => {
  * Broadcast notice to all members and volunteers directly via Baileys automated engine
  */
 export const broadcastNoticeViaBaileys = async (recipients, message, imageUrl = null, title = '') => {
-  const res = await fetch('/api/whatsapp/broadcast', {
+  const baseUrl = getWhatsAppApiBaseUrl();
+  const res = await fetch(`${baseUrl}/api/whatsapp/broadcast`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify({
       recipients,
       message,
@@ -368,6 +410,11 @@ export const broadcastNoticeViaBaileys = async (recipients, message, imageUrl = 
       title
     })
   });
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('व्हाट्सएप सर्वर उपलब्ध नहीं है। कृपया व्यवस्थापक सेटिंग्स में जाकर सर्वर URL जांचें।');
+  }
 
   const json = await res.json();
   if (!res.ok || !json.success) {
@@ -380,9 +427,10 @@ export const broadcastNoticeViaBaileys = async (recipients, message, imageUrl = 
  * Send personal message via Baileys automated socket
  */
 export const sendPersonalMessageViaBaileys = async (phone, message, imageUrl = null) => {
-  const res = await fetch('/api/whatsapp/send-personal', {
+  const baseUrl = getWhatsAppApiBaseUrl();
+  const res = await fetch(`${baseUrl}/api/whatsapp/send-personal`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify({
       phone,
       message,
@@ -390,10 +438,16 @@ export const sendPersonalMessageViaBaileys = async (phone, message, imageUrl = n
     })
   });
 
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('व्हाट्सएप सर्वर उपलब्ध नहीं है। कृपया व्यवस्थापक सेटिंग्स में जाकर सर्वर URL जांचें।');
+  }
+
   const json = await res.json();
   if (!res.ok || !json.success) {
     throw new Error(json.message || 'Failed to send personal message via Baileys.');
   }
   return json;
 };
+
 

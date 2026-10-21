@@ -4,7 +4,8 @@ import { useToast } from '../context/ToastContext';
 import {
   getPersonalMessageTemplates,
   buildWhatsAppUrl,
-  sendViaWhatsAppApi
+  sendViaWhatsAppApi,
+  sendPersonalMessageViaBaileys
 } from '../firebase/whatsappService';
 import {
   X,
@@ -216,20 +217,11 @@ export const WhatsAppPersonalModal = ({
                 }
                 setIsSendingApi(true);
                 try {
-                  const res = await fetch('/api/whatsapp/send-personal', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, message: messageText })
-                  });
-                  const json = await res.json();
-                  if (json.success) {
-                    toast.success(lang === 'hi' ? 'व्हाट्सएप संदेश तुरंत भेजा गया!' : 'WhatsApp message sent instantly via linked device!');
-                    onClose();
-                  } else {
-                    toast.error(json.message || 'त्रुटि: सीधे चैट खोलें');
-                    handleSendDirect();
-                  }
+                  await sendPersonalMessageViaBaileys(phone, messageText);
+                  toast.success(lang === 'hi' ? 'व्हाट्सएप संदेश तुरंत भेजा गया!' : 'WhatsApp message sent instantly via linked device!');
+                  onClose();
                 } catch (err) {
+                  toast.error(err.message || 'त्रुटि: सीधे चैट खोलें');
                   handleSendDirect();
                 } finally {
                   setIsSendingApi(false);

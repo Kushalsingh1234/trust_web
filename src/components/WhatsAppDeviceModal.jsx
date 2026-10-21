@@ -13,6 +13,7 @@ import {
   Info
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { getWhatsAppApiBaseUrl, setWhatsAppApiBaseUrl } from '../firebase/whatsappService';
 
 export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   const toast = useToast();
@@ -22,12 +23,24 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [serverOnline, setServerOnline] = useState(true);
+  const [serverUrlInput, setServerUrlInput] = useState('');
+  const [showServerConfig, setShowServerConfig] = useState(false);
+
+  useEffect(() => {
+    setServerUrlInput(getWhatsAppApiBaseUrl());
+  }, [isOpen]);
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/whatsapp/status');
-      if (res.ok) {
+      const baseUrl = getWhatsAppApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/whatsapp/status`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
+        setServerOnline(true);
         if (json.success && json.data) {
           setStatus(json.data.status);
           if (json.data.phoneNumber) setPhoneNumber(json.data.phoneNumber);
@@ -36,8 +49,11 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
             onStatusChange(json.data.status === 'CONNECTED', json.data.phoneNumber);
           }
         }
+      } else {
+        setServerOnline(false);
       }
     } catch (err) {
+      setServerOnline(false);
       console.warn('WhatsApp status check:', err.message);
     }
   };
@@ -53,7 +69,15 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/whatsapp/connect', { method: 'POST' });
+      const baseUrl = getWhatsAppApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/whatsapp/connect`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('WhatsApp ऑटोमेशन सर्वर कनेक्ट नहीं हो सका। कृपया जांचें कि Node.js सर्वर सक्रिय है और सर्वर URL सही है।');
+      }
       const json = await res.json();
       if (json.success && json.data) {
         setStatus(json.data.status);
@@ -74,7 +98,15 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
     }
     setIsLoading(true);
     try {
-      const res = await fetch('/api/whatsapp/disconnect', { method: 'POST' });
+      const baseUrl = getWhatsAppApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/whatsapp/disconnect`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('सर्वर उपलब्ध नहीं है।');
+      }
       const json = await res.json();
       if (json.success) {
         setStatus('DISCONNECTED');
@@ -90,6 +122,12 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
     }
   };
 
+  const handleSaveServerUrl = () => {
+    setWhatsAppApiBaseUrl(serverUrlInput);
+    toast.success('सर्वर URL सफलतापूर्वक सेव किया गया!');
+    fetchStatus();
+  };
+
   const handleSendTest = async (e) => {
     e.preventDefault();
     if (!testPhone.trim() || testPhone.replace(/\D/g, '').length < 10) {
@@ -99,11 +137,16 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
 
     setIsSendingTest(true);
     try {
-      const res = await fetch('/api/whatsapp/test-send', {
+      const baseUrl = getWhatsAppApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/whatsapp/test-send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ targetPhone: testPhone })
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('सर्वर उपलब्ध नहीं है।');
+      }
       const json = await res.json();
       if (json.success) {
         toast.success(`परीक्षण संदेश ${testPhone} पर सफलतापूर्वक भेजा गया!`);
@@ -263,6 +306,49 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
                   QR कोड उत्पन्न करने के लिए नीचे दिए बटन पर क्लिक करें। एक बार स्कैन करने के बाद आपके व्यवस्थापक व्हाट्सएप नंबर से सभी नोटिस व संदेश तुरंत स्वचालित रूप से जाएंगे।
                 </p>
               </div>
+
+              {!serverOnline && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-left text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span>व्हाट्सएप बैकग्राउंड सर्वर (Node.js Engine) कनेक्ट नहीं है</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-normal">
+                    डेप्लॉयड वेबसाइट (Vercel) से ऑटोमेशन चलाने के लिए बैकग्राउंड Node.js सर्वर (Render / Railway / ngrok) का URL आवश्यक है। यदि आप लोकल कंप्यूटर पर हैं, तो <code>http://localhost:5002</code> दर्ज करें।
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowServerConfig(!showServerConfig)}
+                    className="text-[11px] font-bold text-emerald-800 underline hover:text-emerald-950 block"
+                  >
+                    {showServerConfig ? '▲ सर्वर URL सेटिंग छुपाएं' : '⚙️ बैकएंड सर्वर URL दर्ज करें'}
+                  </button>
+                </div>
+              )}
+
+              {showServerConfig && (
+                <div className="p-3 bg-gray-50 border border-gray-300 rounded-2xl text-left space-y-2 text-xs animate-fadeIn">
+                  <label className="block text-[11px] font-bold text-gray-700">
+                    व्हाट्सएप बैकएंड API URL (e.g. Render / Railway / Localhost)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={serverUrlInput}
+                      onChange={(e) => setServerUrlInput(e.target.value)}
+                      placeholder="e.g. https://your-server.onrender.com या http://localhost:5002"
+                      className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40 focus:outline-none bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveServerUrl}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all flex-shrink-0"
+                    >
+                      सेव करें
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-2">
                 <button

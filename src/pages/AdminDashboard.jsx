@@ -37,7 +37,9 @@ import {
   formatNoticeForWhatsApp,
   checkBaileysServerStatus,
   broadcastNoticeViaBaileys,
-  sendPersonalMessageViaBaileys
+  sendPersonalMessageViaBaileys,
+  getWhatsAppApiBaseUrl,
+  setWhatsAppApiBaseUrl
 } from '../firebase/whatsappService';
 import { uploadImageToCloudinary } from '../utils/cloudinaryService';
 import WhatsAppBroadcastModal from '../components/WhatsAppBroadcastModal';
@@ -179,6 +181,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   // Baileys WhatsApp Engine Device Modal & Server Status
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [baileysServerState, setBaileysServerState] = useState({ online: false, connected: false, phoneNumber: null });
+  const [serverUrlSetting, setServerUrlSetting] = useState(() => getWhatsAppApiBaseUrl());
+
+  const handleSaveServerUrlSetting = () => {
+    setWhatsAppApiBaseUrl(serverUrlSetting);
+    toast.success(lang === 'hi' ? 'WhatsApp बैकएंड सर्वर URL सफलतापूर्वक सेव हुआ!' : 'WhatsApp backend URL saved successfully!');
+    checkBaileysServerStatus().then(setBaileysServerState);
+  };
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -966,139 +975,85 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </div>
               </div>
 
-              <form onSubmit={handleConnectWhatsApp} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[#382719] mb-1">
-                      {lang === 'hi' ? 'व्यवस्थापक व्हाट्सएप नंबर (10 अंक) *' : 'Admin WhatsApp Mobile (10 Digits) *'}
-                    </label>
-                    <div className="flex items-center">
-                      <span className="px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-xs font-mono font-bold text-gray-600">
-                        +91
-                      </span>
-                      <input
-                        type="tel"
-                        maxLength={10}
-                        value={whatsappAdminPhoneInput}
-                        onChange={(e) => setWhatsappAdminPhoneInput(e.target.value.replace(/\D/g, ''))}
-                        placeholder="9794590044"
-                        className="w-full px-3 py-2.5 rounded-r-xl border border-gray-300 text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500/40 focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <span className="text-[10px] text-gray-500 mt-1 block">
-                      {lang === 'hi' ? 'इसी नंबर से सदस्यों को नोटिस व संदेश प्रेषित होंगे।' : 'Notices & messages will be dispatched from this number.'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#382719] mb-1">
-                      {lang === 'hi' ? 'व्यवस्थापक का नाम / पदवी *' : 'Admin Name / Designation *'}
-                    </label>
-                    <input
-                      type="text"
-                      value={whatsappAdminNameInput}
-                      onChange={(e) => setWhatsappAdminNameInput(e.target.value)}
-                      placeholder="e.g. Bajrangi Dubey (Trust Executive)"
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:ring-2 focus:ring-emerald-500/40 focus:outline-none"
-                      required
-                    />
-                    <span className="text-[10px] text-gray-500 mt-1 block">
-                      {lang === 'hi' ? 'व्हाट्सएप संदेशों के अंत में प्रेषक के रूप में प्रदर्शित होगा।' : 'Displayed at the end of notices and personal messages.'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Automation Provider Accordion Toggle */}
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvancedWhatsApp(!showAdvancedWhatsApp)}
-                    className="text-xs text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1.5"
-                  >
-                    <span>{showAdvancedWhatsApp ? '▼' : '▶'}</span>
-                    <span>{lang === 'hi' ? 'स्वचालित बैकग्राउंड API सेटिंग्स (वैकल्पिक / Advanced)' : 'Automated Background API Settings (Optional)'}</span>
-                  </button>
-
-                  {showAdvancedWhatsApp && (
-                    <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3 animate-fadeIn">
-                      <p className="text-[11px] text-gray-600">
-                        {lang === 'hi'
-                          ? 'डिफ़ॉल्ट रूप से "Direct WhatsApp" सक्रिय है जो बिना किसी शुल्क या API कुंजी के सीधे व्हाट्सएप चैट खोलता है। यदि आप स्वचालित रूप से पृष्ठभूमि में सभी को एक साथ भेजना चाहते हैं, तो UltraMsg या Green API क्रेडेंशियल दर्ज करें।'
-                          : 'Default "Direct WhatsApp" dispatches instantly without API keys. For silent background delivery, provide UltraMsg or Green API keys.'}
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Provider</label>
-                          <select
-                            value={whatsappProviderInput}
-                            onChange={(e) => setWhatsappProviderInput(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs bg-white focus:outline-none"
-                          >
-                            <option value="direct">Direct WhatsApp (No Key Needed)</option>
-                            <option value="ultramsg">UltraMsg API</option>
-                            <option value="greenapi">Green API</option>
-                            <option value="custom">Custom Webhook</option>
-                          </select>
-                        </div>
-
-                        {whatsappProviderInput !== 'direct' && (
-                          <>
-                            <div>
-                              <label className="block text-[11px] font-bold text-gray-700 mb-1">Instance ID</label>
-                              <input
-                                type="text"
-                                value={whatsappInstanceIdInput}
-                                onChange={(e) => setWhatsappInstanceIdInput(e.target.value)}
-                                placeholder="instance12345"
-                                className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[11px] font-bold text-gray-700 mb-1">API Token</label>
-                              <input
-                                type="password"
-                                value={whatsappApiTokenInput}
-                                onChange={(e) => setWhatsappApiTokenInput(e.target.value)}
-                                placeholder="token..."
-                                className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:outline-none"
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-[11px] text-gray-500">
-                    {whatsappSettings?.connectedAt
-                      ? (lang === 'hi' ? `सत्र सक्रिय दिनांक: ${new Date(whatsappSettings.connectedAt).toLocaleDateString('hi-IN')}` : `Connected on: ${new Date(whatsappSettings.connectedAt).toLocaleDateString()}`)
-                      : (lang === 'hi' ? 'व्हाट्सएप कनेक्ट करने हेतु नीचे क्लिक करें।' : 'Click below to connect your WhatsApp number.')}
-                  </span>
-
-                  <button
-                    type="submit"
-                    disabled={isSavingWhatsAppSettings}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-xs transition-all flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isSavingWhatsAppSettings ? (
+              {/* Clean Baileys Automation Overview & Server Settings */}
+              <div className="space-y-4 pt-1">
+                {/* Status Box */}
+                <div className={`p-4 rounded-2xl border text-xs ${
+                  baileysServerState.connected
+                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                    : 'bg-amber-50/70 border-amber-200 text-amber-950'
+                }`}>
+                  <div className="flex items-center gap-2 font-bold mb-1">
+                    {baileysServerState.connected ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>{lang === 'hi' ? 'कनेक्ट हो रहा है...' : 'Connecting...'}</span>
+                        <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                        <span>स्वचालित व्हाट्सएप प्रसारण प्रणाली सक्रिय है</span>
                       </>
                     ) : (
                       <>
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{lang === 'hi' ? 'व्हाट्सएप कनेक्ट करें व सेव करें' : 'Connect & Save WhatsApp'}</span>
+                        <Smartphone className="w-4 h-4 text-amber-700" />
+                        <span>व्हाट्सएप डिवाइस अभी लिंक नहीं है</span>
                       </>
                     )}
-                  </button>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-gray-700">
+                    {baileysServerState.connected
+                      ? `आपके नंबर (+91 ${baileysServerState.phoneNumber || ''}) से व्हाट्सएप जुड़ा हुआ है। जब भी आप नोटिस बोर्ड पर कोई सूचना या व्यक्तिगत संदेश पोस्ट करेंगे, वह सीधे बिना कोई विंडो खोले पृष्ठभूमि में स्वतः भेजा जाएगा।`
+                      : 'उपरोक्त "QR कोड स्कैन कर लिंक करें" बटन पर क्लिक करके अपने व्हाट्सएप से QR कोड स्कैन करें। एक बार स्कैन करने के बाद आपको दोबारा लॉगिन नहीं करना पड़ेगा।'}
+                  </p>
                 </div>
-              </form>
+
+                {/* Backend Engine Server Status & URL Config Toggle */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${baileysServerState.online ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <span className="font-bold text-gray-700">
+                        {baileysServerState.online
+                          ? (lang === 'hi' ? 'व्हाट्सएप बैकग्राउंड सर्वर: चालू (Online)' : 'WhatsApp Background Server: Online')
+                          : (lang === 'hi' ? 'व्हाट्सएप बैकग्राउंड सर्वर: ऑफ़लाइन / अनुपलब्ध' : 'WhatsApp Background Server: Offline / Unreachable')}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedWhatsApp(!showAdvancedWhatsApp)}
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <span>{showAdvancedWhatsApp ? '▲ सर्वर URL सेटिंग्स छुपाएं' : '⚙️ बैकएंड सर्वर URL कॉन्फ़िगर करें'}</span>
+                    </button>
+                  </div>
+
+                  {showAdvancedWhatsApp && (
+                    <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-300 space-y-3 animate-fadeIn text-xs">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          व्हाट्सएप बैकएंड API URL (Backend Server URL)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            value={serverUrlSetting}
+                            onChange={(e) => setServerUrlSetting(e.target.value)}
+                            placeholder="e.g. https://your-server.onrender.com या http://localhost:5002"
+                            className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40 focus:outline-none bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveServerUrlSetting}
+                            className="px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all flex-shrink-0"
+                          >
+                            URL सेव करें
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500 leading-normal">
+                        * यदि आप अपनी वेबसाइट Vercel पर चला रहे हैं और बैकग्राउंड व्हाट्सएप सर्वर को Render या Railway पर होस्ट किया है, तो उस सर्वर का HTTPS URL यहाँ दर्ज करें। लोकल पर यह स्वतः <code>http://localhost:5002</code> से कनेक्ट होता है।
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Card 2: Payment & QR Settings */}
