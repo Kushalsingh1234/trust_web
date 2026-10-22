@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { X, CheckCircle2, Shield, Download, Image as ImageIcon, HeartHandshake, UserPlus, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -31,6 +32,7 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
   });
 
   const receiptRef = useRef(null);
+  const exportReceiptRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
 
   if (!isOpen) return null;
@@ -77,55 +79,131 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleDownloadImage = async () => {
-    if (!receiptRef.current) return;
-    setIsExporting(true);
+  // Helper: Capture canonical 800px landscape voucher image (never clipped by mobile viewport)
+  const getCanonicalReceiptImage = async () => {
+    const targetEl = exportReceiptRef.current || receiptRef.current;
+    if (!targetEl) return null;
+
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
+
+    const imgElements = targetEl.querySelectorAll('img');
+    await Promise.all(
+      Array.from(imgElements).map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+
+    const width = 800;
+    const height = targetEl.offsetHeight || 520;
+
+    let image;
     try {
-      const canvas = await html2canvas(receiptRef.current, {
+      image = await toPng(targetEl, {
+        width,
+        height,
+        pixelRatio: 2.5,
+        quality: 1.0,
+        cacheBust: false,
+      });
+    } catch (toPngErr) {
+      console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
+      const canvas = await html2canvas(targetEl, {
         scale: 2.5,
+        width: 800,
+        height,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 800,
+        windowHeight: height,
         useCORS: true,
         backgroundColor: '#FFF8EF',
-        logging: false
+        logging: false,
       });
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `${receiptNo}.jpg`;
-      link.click();
+      image = canvas.toDataURL('image/jpeg', 0.95);
+    }
+    return image;
+  };
+
+  const handleDownloadImage = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const image = await getCanonicalReceiptImage();
+      if (!image) return;
+
+      const filename = `${receiptNo}.png`;
+
+      try {
+        const res = await fetch(image);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1500);
+      } catch (blobErr) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = image;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+        }, 1500);
+      }
     } catch (err) {
       console.error('Image download failed:', err);
+      alert(lang === 'hi' ? 'रसीद छवि तैयार करने में समस्या आई।' : 'Image download failed.');
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleDownloadPDF = async () => {
-    if (!receiptRef.current) return;
+    if (isExporting) return;
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        backgroundColor: '#FFF8EF',
-        logging: false
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const image = await getCanonicalReceiptImage();
+      if (!image) return;
+
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
       });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
       const imgWidth = pdfWidth - margin * 2;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const img = new Image();
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = image;
+      });
+
+      const imgHeight = (img.height * imgWidth) / img.width;
       const yOffset = Math.max(margin, (pdfHeight - imgHeight) / 2);
 
-      pdf.addImage(imgData, 'JPEG', margin, yOffset, imgWidth, imgHeight);
+      pdf.addImage(image, 'PNG', margin, yOffset, imgWidth, imgHeight);
       pdf.save(`${receiptNo}.pdf`);
     } catch (err) {
       console.error('PDF generation failed:', err);
+      alert(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
     } finally {
       setIsExporting(false);
     }
@@ -635,6 +713,181 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Off-screen Canonical 800px Export Receipt (prevents mobile viewport cropping) */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '0',
+          width: '800px',
+          zIndex: -9999,
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
+      >
+        <div
+          ref={exportReceiptRef}
+          id="printable-receipt-canonical"
+          style={{
+            width: '800px',
+            minWidth: '800px',
+            maxWidth: '800px',
+            boxSizing: 'border-box',
+            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+            backgroundImage: 'radial-gradient(#E9B44C 0.6px, transparent 0.6px)',
+            backgroundSize: '24px 24px',
+          }}
+          className="relative bg-[#FFF8EF] border-4 border-[#C65D13] rounded-xl p-7 shadow-none overflow-hidden text-[#382719]"
+        >
+          {/* Subtle India Map Watermark in Background */}
+          <div 
+            className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center"
+            style={{
+              backgroundImage: 'url(/images/gallery/receipt_samarpan_nidhi.jpg)',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover'
+            }}
+          />
+
+          {/* Trust Name Header */}
+          <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
+            <div className="w-12 h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-2xl drop-shadow">
+              ॐ
+            </div>
+            <div className="text-center flex-1 px-1 min-w-0">
+              <h2 className="text-2xl font-extrabold text-[#C65D13] font-hindi-heading leading-tight tracking-tight">
+                राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
+              </h2>
+              <p className="text-xs text-[#454545] font-medium">
+                मुख्य कार्यालय: शिवाजीनगर सेक्टर-2 (बागरानी) रूस्तमपुर, गोरखपुर, उ.प्र. - 273016
+              </p>
+              <p className="text-[11px] text-[#454545]">
+                सम्पर्क एवं सहयोग कार्यस्थल: साकेतनगर (मधुर शहनाई लान के सामने) रूस्तमपुर, गोरखपुर
+              </p>
+            </div>
+            <div className="w-12 h-12 flex-shrink-0 bg-[#C65D13] rounded-lg p-1 text-white flex items-center justify-center font-bold text-2xl drop-shadow">
+              ॐ
+            </div>
+          </div>
+
+          {/* Motto Deep Saffron Strip */}
+          <div className="bg-[#C65D13] text-white text-center py-1.5 px-2 rounded-md font-bold text-sm mb-4 relative z-10">
+            हमारा लक्ष्य — वैदिक 16 संस्कारों का संरक्षण एवं जनकल्याणकारी सेवा कार्य
+          </div>
+
+          {/* Receipt Title & Meta */}
+          <div className="flex items-center justify-between border-b border-[#E9B44C]/40 pb-2 mb-4 gap-2 relative z-10">
+            <div>
+              <span className="text-xs text-[#454545] block">क्र.म. / Receipt No:</span>
+              <span className="font-mono font-bold text-sm text-[#C65D13]">{receiptNo}</span>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-black text-[#382719] underline decoration-[#C65D13] decoration-2 underline-offset-4">
+                {receiptType === 'samarpan' ? 'सनातन संरक्षण — समर्पण निधि' : 'सनातन संस्थान — सदस्यता निधि'}
+              </h3>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-[#454545] block">दिनांक / Date:</span>
+              <span className="font-semibold text-sm">{currentDate}</span>
+            </div>
+          </div>
+
+          {/* Receipt Body Fields */}
+          <div className="space-y-3 text-sm text-[#454545] leading-relaxed relative z-10">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">नाम / Name: </span>
+                <span className="font-bold text-[#382719]">{formData.name}</span>
+              </div>
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">मो० न० / Mobile: </span>
+                <span className="font-bold text-[#382719]">{formData.mobile}</span>
+              </div>
+            </div>
+
+            <div className="border-b border-dotted border-gray-400 pb-1">
+              <span className="font-semibold text-[#382719]">पिता / पति का नाम / Father's Name: </span>
+              <span className="font-bold text-[#382719]">{formData.fatherHusbandName}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">पता / ग्राम / मोहल्ला: </span>
+                <span>{formData.address}</span>
+              </div>
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">विकास खण्ड / Block: </span>
+                <span>{formData.block || 'सदर'}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">जिला / District: </span>
+                <span>{formData.district}</span>
+              </div>
+              <div className="border-b border-dotted border-gray-400 pb-1">
+                <span className="font-semibold text-[#382719]">प्रदेश / State: </span>
+                <span>{formData.state}</span>
+              </div>
+            </div>
+
+            <div className="border-b border-dotted border-gray-400 pb-1">
+              <span className="font-semibold text-[#382719]">
+                {receiptType === 'samarpan' ? 'से समर्पण निधि' : 'से सदस्यता निधि'} (रूपया शब्दों में):{' '}
+              </span>
+              <span className="font-bold text-[#C65D13]">{formData.amountWords}</span>
+              <span className="text-[#454545]"> {receiptType === 'samarpan' ? 'सहर्ष प्राप्त किया।' : 'सह धन्यवाद प्राप्त किया।'}</span>
+            </div>
+          </div>
+
+          {/* Amount Box, Bank Info & Signatures Footer */}
+          <div className="mt-6 pt-4 border-t-2 border-[#E9B44C]/40 flex items-center justify-between gap-4 relative z-10">
+            {/* Amount Box */}
+            <div className="flex items-center gap-2">
+              <div className="bg-[#C65D13] text-white px-3 py-2 rounded font-bold text-lg">
+                ₹
+              </div>
+              <div className="border-2 border-[#C65D13] bg-white px-4 py-2 rounded font-extrabold text-xl text-[#C65D13] tracking-wide">
+                {formData.amount}/-
+              </div>
+            </div>
+
+            {/* Bank of India Account Info */}
+            <div className="text-left">
+              <p className="font-bold text-xs text-secondary">
+                बैंक ऑफ़ इण्डिया (Bank of India)
+              </p>
+              <p className="font-mono text-xs font-bold text-[#382719]">
+                खाता सं.: 135820110000012
+              </p>
+              <p className="text-[10px] text-[#454545] break-all">
+                UPI: boim-135883270012@boi
+              </p>
+            </div>
+
+            {/* Signatures & Seal */}
+            <div className="text-right">
+              <div className="font-serif italic font-bold text-sm text-secondary">
+                बजरंगी दूबे
+              </div>
+              <div className="text-[11px] font-bold text-[#382719] border-t border-gray-400 pt-0.5 mt-0.5">
+                राष्ट्रीय महामंत्री / प्रबन्धक
+              </div>
+              <div className="text-[10px] text-[#454545]">
+                हस्ताक्षर प्राप्तकर्ता (Authorized Signatory)
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Disclaimer */}
+          <div className="mt-4 pt-2 border-t border-gray-200 text-center text-[10px] text-[#454545] relative z-10">
+            {t.receiptModal.downloadNotice} • संपर्क: 9794590044, 9026734887
+          </div>
         </div>
       </div>
     </div>
