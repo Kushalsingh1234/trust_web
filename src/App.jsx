@@ -82,17 +82,13 @@ function AppContent() {
   };
 
   // Dedicated Trust Admin Mobile App / Native Capacitor App
+  // Directly loads Admin Panel protected exclusively by Admin PIN (No username/password login needed)
   if (Capacitor.isNativePlatform()) {
-    if (!currentUser) {
-      return <LoginPage />;
-    }
-    if (isAdmin) {
-      return (
-        <AdminRoute>
-          <AdminDashboard onNavigateHome={() => navigate('/admin')} />
-        </AdminRoute>
-      );
-    }
+    return (
+      <AdminRoute>
+        <AdminDashboard onNavigateHome={() => navigate('/admin')} />
+      </AdminRoute>
+    );
   }
 
   // If logged in as admin and visits root '/', show AdminDashboard directly

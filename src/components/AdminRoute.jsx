@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth, TRUST_ADMIN_PIN } from '../context/AuthContext';
 import TrustLogo from './TrustLogo';
 import { KeyRound, Eye, EyeOff, ArrowRight, Home, ShieldCheck } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+
 
 export const AdminRoute = ({ children }) => {
   const { currentUser, userProfile, isAdmin, adminPinVerified, verifyPinForSession, loading } = useAuth();
@@ -147,23 +149,30 @@ export const AdminRoute = ({ children }) => {
             </button>
           </form>
 
-          <div className="pt-3 border-t border-[#E9B44C]/20 flex items-center justify-between text-xs">
-            <Link
-              to="/"
-              className="text-[#666666] hover:text-primary font-bold flex items-center gap-1"
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span>मुख्य पृष्ठ (Home)</span>
-            </Link>
+          {Capacitor.isNativePlatform() ? (
+            <div className="pt-3 border-t border-[#E9B44C]/20 text-center text-[11px] text-[#A88B72] font-mono">
+              राष्ट्रीय सनातन ट्रस्ट एडमिन मोबाइल ऐप • सुरक्षित पोर्टल
+            </div>
+          ) : (
+            <div className="pt-3 border-t border-[#E9B44C]/20 flex items-center justify-between text-xs">
+              <Link
+                to="/"
+                className="text-[#666666] hover:text-primary font-bold flex items-center gap-1"
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span>मुख्य पृष्ठ (Home)</span>
+              </Link>
 
-            <Link
-              to="/login"
-              className="text-primary hover:underline font-bold"
-            >
-              सदस्य लॉगिन (Member Login) →
-            </Link>
-          </div>
+              <Link
+                to="/login"
+                className="text-primary hover:underline font-bold"
+              >
+                सदस्य लॉगिन (Member Login) →
+              </Link>
+            </div>
+          )}
         </div>
+
 
       </div>
     </div>

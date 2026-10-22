@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
     if (pin && pin.trim() === TRUST_ADMIN_PIN) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('rsssst_admin_pin_verified', 'true');
-        localStorage.removeItem('rsssst_admin_pin_verified');
+        localStorage.setItem('rsssst_admin_pin_verified', 'true');
       }
       setAdminPinVerified(true);
       return true;
