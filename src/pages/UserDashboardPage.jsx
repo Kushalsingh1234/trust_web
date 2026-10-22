@@ -1436,7 +1436,12 @@ export const UserDashboardPage = () => {
               effectiveDonations.map((item) => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
-                const canDownloadReceipt = Boolean(item.receiptSent);
+                const canDownloadReceipt = Boolean(
+                  item.receiptSent ||
+                  userProfile?.feeReceiptSent ||
+                  (item.receiptNumber && userProfile?.feeReceiptSent) ||
+                  (item.receiptNumber && userProfile?.receiptNumber && item.receiptNumber === userProfile?.receiptNumber)
+                );
 
                 return (
                   <div
@@ -1454,9 +1459,9 @@ export const UserDashboardPage = () => {
                           <span className="font-mono font-black text-primary text-base">
                             ₹{Number(item.verifiedAmount || item.claimedAmount || item.amount || 0).toLocaleString('en-IN')}
                           </span>
-                          {isApproved && item.receiptNumber && (
+                          {isApproved && (item.receiptNumber || userProfile?.receiptNumber) && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {item.receiptNumber}
+                              {item.receiptNumber || userProfile?.receiptNumber}
                             </span>
                           )}
                         </div>
@@ -1517,16 +1522,18 @@ export const UserDashboardPage = () => {
                             type="button"
                             onClick={() => {
                               setViewingReceipt({
-                                receiptNumber: item.receiptNumber || 'RSSSST-2026-DONATION',
+                                receiptNumber: item.receiptNumber || userProfile?.receiptNumber || 'RSSSST-2026-DONATION',
                                 donorName: item.donorName || item.fullName || userProfile?.fullName,
+                                username: item.username || userProfile?.username,
+                                memberId: item.memberId || userProfile?.memberId,
                                 phone: item.donorPhone || item.phone || userProfile?.phone,
-                                purpose: item.purpose || 'samarpan',
+                                purpose: item.purpose || 'membership_fee',
                                 verifiedAmount: item.verifiedAmount || item.amount || 200,
                                 paymentId: item.paymentId || item.utrNumber,
                                 approvedAt: item.approvedAt || item.createdAt
                               });
                             }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>{lang === 'hi' ? 'आधिकारिक रसीद डाउनलोड करें' : 'Download Receipt'}</span>

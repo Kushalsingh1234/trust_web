@@ -1112,6 +1112,31 @@ export const markReceiptSent = async (collectionName, docId, adminUid) => {
         updatedAt: serverTimestamp()
       }, { merge: true });
     } catch (e) {}
+
+    // Also update any linked payment documents for this user / membership in payments collection
+    try {
+      const qUserPay = query(collection(db, 'payments'), where('payerUid', '==', targetUid));
+      const sUserPay = await getDocs(qUserPay);
+      for (const pd of sUserPay.docs) {
+        await updateDoc(pd.ref, payload);
+      }
+    } catch (e) {}
+  }
+
+  // Also update direct payment document if keyed by membershipId
+  if (docId) {
+    try {
+      const qPay = query(collection(db, 'payments'), where('membershipId', '==', docId));
+      const sPay = await getDocs(qPay);
+      for (const pd of sPay.docs) {
+        await updateDoc(pd.ref, payload);
+      }
+      const directPayRef = doc(db, 'payments', `mem_pay_${docId}`);
+      const directPaySnap = await getDoc(directPayRef);
+      if (directPaySnap.exists()) {
+        await updateDoc(directPayRef, payload);
+      }
+    } catch (e) {}
   }
 
   // Also update browser localStorage if current user or applicant matches
