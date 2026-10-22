@@ -179,6 +179,17 @@ class WhatsAppService {
               lastError: statusCode === DisconnectReason.loggedOut ? 'Logged out from phone' : 'Disconnected'
             };
             this.sock = null;
+            if (statusCode === DisconnectReason.loggedOut) {
+              try {
+                const sessionDir = this.getSessionDir();
+                if (fs.existsSync(sessionDir)) {
+                  fs.rmSync(sessionDir, { recursive: true, force: true });
+                  console.log('[WhatsApp] Cleared expired credentials from disk.');
+                }
+              } catch (e) {
+                console.error('[WhatsApp] Failed to clear expired session:', e);
+              }
+            }
           }
         }
       });

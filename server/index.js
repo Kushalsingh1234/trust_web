@@ -188,8 +188,17 @@ app.post('/api/whatsapp/test-send', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[Trust WhatsApp Server] Running on http://localhost:${PORT}`);
   // Auto-resume previously authenticated session from disk
   WhatsAppService.autoResumeSession();
 });
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.warn(`[Trust WhatsApp Server] Port ${PORT} is already in use by another instance. WhatsApp server continues.`);
+  } else {
+    console.error('[Trust WhatsApp Server] Server error:', err);
+  }
+});
+
