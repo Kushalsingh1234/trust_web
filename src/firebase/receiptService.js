@@ -95,12 +95,12 @@ export const numberToHindiWords = (amount) => {
 export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
   const data = receiptData || {};
   const receiptNumber = data.receiptNumber || data.receiptNo || (data.id ? `RSSSST-2026-${data.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-2864');
-  const name = data.donorName || data.fullName || data.name || data.payerName || 'रमेश कुमार शर्मा';
-  const mobile = data.phone || data.donorPhone || data.mobile || data.payerMobile || '9876543210';
-  const fatherHusbandName = data.fatherHusbandName || data.fatherName || 'श्री दीनदयाल शर्मा';
-  const address = data.address || data.location || data.cityDistrict || 'वार्ड नं 12, साकेत नगर';
+  const name = data.donorName || data.fullName || data.name || data.payerName || '';
+  const mobile = data.phone || data.donorPhone || data.mobile || data.payerMobile || data.whatsapp || '';
+  const fatherHusbandName = data.fatherHusbandName || data.fatherName || '';
+  const address = data.address || data.location || data.cityDistrict || '';
   const block = data.block || 'सदर';
-  const district = data.district || 'गोरखपुर';
+  const district = data.district || data.cityDistrict || 'गोरखपुर';
   const state = data.state || 'उत्तर प्रदेश';
   const amount = Number(data.verifiedAmount || data.amount || data.claimedAmount || 200);
   const amountWords = data.amountWords || numberToHindiWords(amount);

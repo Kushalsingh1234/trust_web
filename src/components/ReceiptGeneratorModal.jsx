@@ -11,14 +11,14 @@ export const ReceiptGeneratorModal = ({ isOpen, onClose }) => {
 
   const [receiptType, setReceiptType] = useState('samarpan'); // 'samarpan' or 'sadasyata'
   const [formData, setFormData] = useState({
-    name: 'रमेश कुमार शर्मा',
-    fatherHusbandName: 'श्री दीनदयाल शर्मा',
-    address: 'वार्ड नं 12, साकेत नगर',
-    postOffice: 'रूस्तमपुर',
+    name: '',
+    fatherHusbandName: '',
+    address: '',
+    postOffice: '',
     block: 'सदर',
     district: 'गोरखपुर',
     state: 'उत्तर प्रदेश',
-    mobile: '9876543210',
+    mobile: '',
     amount: '200',
     amountWords: 'दो सौ रुपये मात्र',
     category: 'catB'

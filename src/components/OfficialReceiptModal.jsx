@@ -4,6 +4,10 @@ import { X, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 
 // Helper: Convert numeric amount into formal Hindi words
 export const numberToHindiWords = (amount) => {
@@ -52,10 +56,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
   // Extract fields with robust fallbacks
   const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-2864');
-  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || 'रमेश कुमार शर्मा';
-  const mobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || '9876543210';
-  const fatherHusbandName = receipt.fatherHusbandName || receipt.fatherName || 'श्री दीनदयाल शर्मा';
-  const address = receipt.address || receipt.location || receipt.cityDistrict || 'वार्ड नं 12, साकेत नगर';
+  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || '—';
+  const mobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || receipt.whatsapp || '—';
+  const fatherHusbandName = receipt.fatherHusbandName || receipt.fatherName || '—';
+  const address = receipt.address || receipt.location || receipt.cityDistrict || '—';
   const block = receipt.block || 'सदर';
   const district = receipt.district || receipt.cityDistrict || 'गोरखपुर';
   const state = receipt.state || 'उत्तर प्रदेश';
@@ -173,7 +177,26 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       const yOffset = Math.max(margin, (pdfHeight - imgHeight) / 2);
 
       pdf.addImage(image, 'PNG', margin, yOffset, imgWidth, imgHeight);
-      pdf.save(`${receiptNumber}.pdf`);
+
+      if (Capacitor.isNativePlatform()) {
+        const fileName = `${receiptNumber}.pdf`;
+        const dataUri = pdf.output('datauristring');
+        const base64Data = dataUri.split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true
+        });
+        await Share.share({
+          title: `Receipt - ${receiptNumber}`,
+          text: `Trust Receipt: ${receiptNumber}`,
+          url: result.uri,
+          dialogTitle: 'Download / Share Receipt PDF'
+        });
+      } else {
+        pdf.save(`${receiptNumber}.pdf`);
+      }
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
@@ -192,31 +215,47 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
       const filename = `${receiptNumber}.png`;
 
-      // Convert to Blob URL for rock-solid mobile browser download compatibility
-      try {
-        const res = await fetch(image);
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = image.includes(',') ? image.split(',')[1] : image;
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true
+        });
+        await Share.share({
+          title: `Receipt Image - ${receiptNumber}`,
+          text: `Trust Receipt Image: ${receiptNumber}`,
+          url: result.uri,
+          dialogTitle: 'Download / Share Receipt PNG'
+        });
+      } else {
+        // Convert to Blob URL for rock-solid mobile browser download compatibility
+        try {
+          const res = await fetch(image);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
 
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = blobUrl;
-        document.body.appendChild(link);
-        link.click();
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = blobUrl;
+          document.body.appendChild(link);
+          link.click();
 
-        setTimeout(() => {
-          if (link.parentNode) link.parentNode.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 1500);
-      } catch (blobErr) {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = image;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          if (link.parentNode) link.parentNode.removeChild(link);
-        }, 1500);
+          setTimeout(() => {
+            if (link.parentNode) link.parentNode.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+          }, 1500);
+        } catch (blobErr) {
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = image;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            if (link.parentNode) link.parentNode.removeChild(link);
+          }, 1500);
+        }
       }
     } catch (err) {
       console.error("Image generation failed:", err);
