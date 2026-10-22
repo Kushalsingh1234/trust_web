@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "158554104499",
+    "project_id": "trust-77f44",
+    "storage_bucket": "trust-77f44.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:158554104499:android:in.rashtriyasanatantrust.admin",
+        "android_client_info": {
+          "package_name": "in.rashtriyasanatantrust.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD770YCyZ4ZokrlYJnlJ8agqOdaSzoGvTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

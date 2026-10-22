@@ -86,8 +86,14 @@ import {
   Radio,
   Loader2,
   Smartphone,
-  MapPin
+  MapPin,
+  SlidersHorizontal,
+  MoreHorizontal
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import PushNotificationService from '../services/pushNotificationService';
+import { getWhatsAppApiBaseUrl } from '../firebase/whatsappService';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
   const { lang, toggleLanguage } = useLanguage();
@@ -181,6 +187,48 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [baileysServerState, setBaileysServerState] = useState({ online: false, connected: false, phoneNumber: null });
 
+  // Mobile bottom bar & extra options state
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [isSendingTestPush, setIsSendingTestPush] = useState(false);
+
+  const triggerHaptic = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await Haptics.impact({ style: ImpactStyle.Light });
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    // 1. Initialize Capacitor Push Notifications for Admin
+    PushNotificationService.init(currentUser, (action) => {
+      const targetTab = action?.notification?.data?.tab;
+      if (targetTab) {
+        setActiveTab(targetTab);
+      }
+    });
+
+    const handleSwitchTab = (e) => {
+      if (e.detail) {
+        setActiveTab(e.detail);
+      }
+    };
+    window.addEventListener('admin_switch_tab', handleSwitchTab);
+
+    const handlePushReceived = (e) => {
+      const notif = e.detail;
+      if (notif?.title) {
+        toast.info(`${notif.title}: ${notif.body || ''}`);
+      }
+    };
+    window.addEventListener('admin_push_received', handlePushReceived);
+
+    return () => {
+      window.removeEventListener('admin_switch_tab', handleSwitchTab);
+      window.removeEventListener('admin_push_received', handlePushReceived);
+    };
+  }, [currentUser]);
+
   useEffect(() => {
     const checkStatus = async () => {
       const s = await checkBaileysServerStatus();
@@ -190,6 +238,38 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Handler to send a real test push notification from mobile admin app
+  const handleSendTestPush = async () => {
+    try {
+      setIsSendingTestPush(true);
+      const baseUrl = getWhatsAppApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/admin/send-test-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: lang === 'hi' ? '🔔 सनातन ट्रस्ट व्यवस्थापक सूचना' : '🔔 Trust Admin Push Notification',
+          body: lang === 'hi'
+            ? 'पुश नोटिफिकेशन सफलतापूर्वक सक्रिय हो गया है! नए आवेदन व समर्पण की तत्काल सूचनाएं प्राप्त होंगी।'
+            : 'Push notifications are fully active! You will receive real-time alerts for new applications & donations.'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(
+          lang === 'hi'
+            ? `टेस्ट नोटिफिकेशन प्रेषित किया गया! (सफल: ${data.result?.successCount || 1})`
+            : `Test push sent successfully! (Delivered: ${data.result?.successCount || 1})`
+        );
+      } else {
+        toast.info(lang === 'hi' ? 'डिवाइस टोकन पंजीकृत है। बैकग्राउंड अलर्ट सक्रिय।' : 'Device token registered. Background alerts active.');
+      }
+    } catch (err) {
+      toast.info(lang === 'hi' ? 'डिवाइस टोकन स्थानीय रूप से सक्रिय है।' : 'Device registered for alerts.');
+    } finally {
+      setIsSendingTestPush(false);
+    }
+  };
 
   // Payment Settings Form State
   const [settingsForm, setSettingsForm] = useState(DEFAULT_PAYMENT_SETTINGS);
@@ -765,7 +845,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       </header>
 
       {/* Main Admin Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 w-full space-y-5 sm:space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-28 sm:py-6 flex-1 w-full space-y-5 sm:space-y-6">
         
         {/* Metric Badges Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -3180,6 +3260,302 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           });
         }}
       />
+
+
+      {/* ========================================================
+          NATIVE MOBILE BOTTOM NAVIGATION BAR (for Trust Admin App)
+          ======================================================== */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#2D1F14] text-white border-t border-[#E9B44C]/30 shadow-[0_-4px_24px_rgba(0,0,0,0.3)] pb-[max(env(safe-area-inset-bottom),10px)] pt-2 px-1 flex items-center justify-around sm:hidden">
+        {/* Tab 1: Applications (सदस्यता आवेदन) */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            setActiveTab('memberships');
+            setSearchQuery('');
+            setStatusFilter('all');
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'memberships'
+              ? 'text-[#E9B44C] font-black'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <div className="relative">
+            <UserPlus className="w-5 h-5" />
+            {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-black text-[9px] font-black flex items-center justify-center font-mono animate-pulse">
+                {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-1 tracking-tight">
+            {lang === 'hi' ? 'आवेदन' : 'Applications'}
+          </span>
+          {activeTab === 'memberships' && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
+          )}
+        </button>
+
+        {/* Tab 2: Donations (समर्पण / दान) */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            setActiveTab('donations');
+            setSearchQuery('');
+            setStatusFilter('all');
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'donations'
+              ? 'text-[#E9B44C] font-black'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <div className="relative">
+            <Heart className="w-5 h-5" />
+            {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center font-mono">
+                {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-1 tracking-tight">
+            {lang === 'hi' ? 'दान' : 'Donations'}
+          </span>
+          {activeTab === 'donations' && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
+          )}
+        </button>
+
+        {/* Tab 3: Members (सत्यापित सदस्य) */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            setActiveTab('members');
+            setSearchQuery('');
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'members'
+              ? 'text-[#E9B44C] font-black'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <ShieldCheck className="w-5 h-5" />
+          <span className="text-[10px] mt-1 tracking-tight">
+            {lang === 'hi' ? 'सदस्य' : 'Members'}
+          </span>
+          {activeTab === 'members' && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
+          )}
+        </button>
+
+        {/* Tab 4: Help Requests (सहायता) */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            setActiveTab('helpRequests');
+            setSearchQuery('');
+            setStatusFilter('all');
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'helpRequests'
+              ? 'text-[#E9B44C] font-black'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <div className="relative">
+            <HandHeart className="w-5 h-5" />
+            {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center font-mono">
+                {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-1 tracking-tight">
+            {lang === 'hi' ? 'सहायता' : 'Help'}
+          </span>
+          {activeTab === 'helpRequests' && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
+          )}
+        </button>
+
+        {/* Tab 5: More (अधिक विकल्प - WhatsApp, Volunteers, Settings, Push Test) */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            setMobileMoreOpen(true);
+          }}
+          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'paymentSettings' || activeTab === 'volunteers' || mobileMoreOpen
+              ? 'text-[#E9B44C] font-black'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          <SlidersHorizontal className="w-5 h-5" />
+          <span className="text-[10px] mt-1 tracking-tight">
+            {lang === 'hi' ? 'अधिक' : 'More'}
+          </span>
+          {(activeTab === 'paymentSettings' || activeTab === 'volunteers') && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
+          )}
+        </button>
+      </nav>
+
+      {/* ========================================================
+          MOBILE "MORE" BOTTOM DRAWER / SHEET
+          ======================================================== */}
+      {mobileMoreOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end sm:hidden">
+          <div
+            className="fixed inset-0"
+            onClick={() => setMobileMoreOpen(false)}
+          />
+          <div className="relative bg-white rounded-t-3xl border-t border-[#E9B44C]/40 p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),20px)]">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-primary" />
+                <h3 className="font-hindi-heading font-black text-base text-[#382719]">
+                  {lang === 'hi' ? 'व्यवस्थापक अधिक विकल्प' : 'Admin More Options'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMoreOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Volunteers List */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  setActiveTab('volunteers');
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setMobileMoreOpen(false);
+                }}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
+                  activeTab === 'volunteers'
+                    ? 'bg-primary/10 border-primary text-primary font-bold'
+                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <Users className="w-5 h-5 text-primary" />
+                  <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {volunteers.length}
+                  </span>
+                </div>
+                <span className="text-xs font-black">
+                  {lang === 'hi' ? 'स्वयंसेवक सूची' : 'Volunteers List'}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {lang === 'hi' ? 'स्वयंसेवक व संपर्क' : 'Manage volunteers'}
+                </span>
+              </button>
+
+              {/* Payment & Settings */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  setActiveTab('paymentSettings');
+                  setMobileMoreOpen(false);
+                }}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
+                  activeTab === 'paymentSettings'
+                    ? 'bg-primary/10 border-primary text-primary font-bold'
+                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                <QrCode className="w-5 h-5 text-amber-600" />
+                <span className="text-xs font-black">
+                  {lang === 'hi' ? 'भुगतान सेटिंग्स' : 'Payment Settings'}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {lang === 'hi' ? 'UPI, QR व बैंक विवरण' : 'QR code & UPI info'}
+                </span>
+              </button>
+
+              {/* WhatsApp Bot Connection */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  setDeviceModalOpen(true);
+                  setMobileMoreOpen(false);
+                }}
+                className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 text-left transition-all flex flex-col gap-1.5 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <Smartphone className="w-5 h-5 text-emerald-600" />
+                  <span className={`w-2 h-2 rounded-full ${baileysServerState.connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                </div>
+                <span className="text-xs font-black text-emerald-900">
+                  {lang === 'hi' ? 'व्हाट्सएप बॉट' : 'WhatsApp Bot'}
+                </span>
+                <span className="text-[10px] text-emerald-700">
+                  {baileysServerState.connected ? (baileysServerState.phoneNumber || 'सक्रिय (Online)') : (lang === 'hi' ? 'QR स्कैन करें' : 'Pair Device')}
+                </span>
+              </button>
+
+              {/* Test Push Notification */}
+              <button
+                type="button"
+                onClick={handleSendTestPush}
+                disabled={isSendingTestPush}
+                className="p-3 rounded-2xl border border-blue-200 bg-blue-50/70 text-left transition-all flex flex-col gap-1.5 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                  {isSendingTestPush && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />}
+                </div>
+                <span className="text-xs font-black text-blue-900">
+                  {lang === 'hi' ? 'टेस्ट नोटिफिकेशन' : 'Test Push Alert'}
+                </span>
+                <span className="text-[10px] text-blue-700">
+                  {lang === 'hi' ? 'अलर्ट जांचें' : 'Trigger test alert'}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Actions (Language & Logout) */}
+            <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  toggleLanguage();
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Globe className="w-4 h-4 text-primary" />
+                <span>{lang === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  handleExitAdmin();
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{lang === 'hi' ? 'सत्र बंद करें' : 'Exit Admin'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

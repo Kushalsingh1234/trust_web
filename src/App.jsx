@@ -7,6 +7,8 @@ import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './sections/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
+import { Capacitor } from '@capacitor/core';
+
 
 // Guards
 import ProtectedRoute from './components/ProtectedRoute';
@@ -79,6 +81,29 @@ function AppContent() {
     setActiveLightbox(lightboxList[newIdx]);
   };
 
+  // Dedicated Trust Admin Mobile App / Native Capacitor App
+  if (Capacitor.isNativePlatform()) {
+    if (!currentUser) {
+      return <LoginPage />;
+    }
+    if (isAdmin) {
+      return (
+        <AdminRoute>
+          <AdminDashboard onNavigateHome={() => navigate('/admin')} />
+        </AdminRoute>
+      );
+    }
+  }
+
+  // If logged in as admin and visits root '/', show AdminDashboard directly
+  if (currentUser && isAdmin && (location.pathname === '/' || location.pathname.startsWith('/admin'))) {
+    return (
+      <AdminRoute>
+        <AdminDashboard onNavigateHome={() => navigate('/admin')} />
+      </AdminRoute>
+    );
+  }
+
   // If a member, help seeker, or user is logged in and visits root '/',
   // they shouldn't see the landing page; show their member dashboard directly.
   if (currentUser && location.pathname === '/') {
@@ -93,7 +118,7 @@ function AppContent() {
   if (location.pathname.startsWith('/admin')) {
     return (
       <AdminRoute>
-        <AdminDashboard onNavigateHome={() => navigate('/about')} />
+        <AdminDashboard onNavigateHome={() => navigate('/admin')} />
       </AdminRoute>
     );
   }

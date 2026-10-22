@@ -13,3 +13,7 @@ dist-ssr
 storage
 storage/
 storage/whatsapp_sessions/
+
+# Android build APKs
+*.apk
+

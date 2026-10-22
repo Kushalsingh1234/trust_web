@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import WhatsAppService from './whatsappService.js';
+import PushService from './pushService.js';
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -188,11 +189,33 @@ app.post('/api/whatsapp/test-send', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/admin/send-test-push
+ * Send test push notification to verify Capacitor app notifications
+ */
+app.post('/api/admin/send-test-push', async (req, res) => {
+  try {
+    const { title, body } = req.body;
+    const result = await PushService.sendAdminNotification({
+      title: title || '🔔 व्यवस्थापक टेस्ट सूचना (Test Push)',
+      body: body || 'पुश नोटिफिकेशन सफलतापूर्वक सक्रिय हो गया है! अब आपको सभी आवेदन व दान की सूचनाएं निरंतर प्राप्त होंगी।',
+      data: { tab: 'memberships', type: 'test' }
+    });
+    return res.json({ success: true, result });
+  } catch (err) {
+    console.error('Test push error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 const server = app.listen(PORT, () => {
   console.log(`[Trust WhatsApp Server] Running on http://localhost:${PORT}`);
   // Auto-resume previously authenticated session from disk
   WhatsAppService.autoResumeSession();
+  // Initialize Push Notification Service
+  PushService.init();
 });
+
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
