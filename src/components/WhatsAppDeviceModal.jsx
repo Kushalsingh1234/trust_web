@@ -119,6 +119,11 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
         body: JSON.stringify({ phone: cleanNum })
       });
 
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('सर्वर पर नया पेयरिंग कोड फीचर सक्रिय हो रहा है। कृपया 30 सेकंड बाद पुनः प्रयास करें।');
+      }
+
       const json = await res.json();
       if (json.success && json.data?.pairingCode) {
         setPairingCode(json.data.pairingCode);
