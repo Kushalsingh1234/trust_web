@@ -125,5 +125,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    // 17. Admin Devices (Push Notifications)
+    match /admin_devices/{deviceId} {
+      allow read, write: if true;
+    }
   }
 }
+
