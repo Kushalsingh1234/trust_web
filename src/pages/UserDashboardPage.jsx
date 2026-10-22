@@ -496,8 +496,8 @@ export const UserDashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FFFDF9] text-[#454545] flex flex-col">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[#FFF8EF]/95 backdrop-blur-md border-b border-[#E9B44C]/30 shadow-xs">
+      {/* Top Navigation Bar - Pinned to Top */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#FFF8EF]/95 backdrop-blur-md border-b border-[#E9B44C]/30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <TrustLogo className="w-9 h-9" showText={false} lang={lang} />
@@ -544,7 +544,7 @@ export const UserDashboardPage = () => {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 sm:pt-24 sm:pb-10 flex-1 w-full space-y-6">
         
         {/* Removed Membership Notification Banner */}
         {removedMembership && !userProfile?.isMember && (

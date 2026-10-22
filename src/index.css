@@ -9,7 +9,7 @@
     -webkit-tap-highlight-color: transparent;
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
   }
@@ -33,7 +33,7 @@
     color: #454545;
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     position: relative;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -44,7 +44,6 @@
   #root {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
     position: relative;
   }
 

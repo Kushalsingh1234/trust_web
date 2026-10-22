@@ -77,8 +77,8 @@ export const MemberDashboard = ({ onNavigateHome }) => {
   return (
     <div className="min-h-screen bg-[#FFFDF9] text-[#454545] flex flex-col">
       
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E9B44C]/30 shadow-sm">
+      {/* Top Navbar - Pinned to Top */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E9B44C]/30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
@@ -144,7 +144,7 @@ export const MemberDashboard = ({ onNavigateHome }) => {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-6 sm:pb-8 flex-1 w-full">
         
         {/* Welcome Strip */}
         <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
