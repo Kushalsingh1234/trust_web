@@ -130,6 +130,7 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validate()) return;
 
     setIsSubmitting(true);

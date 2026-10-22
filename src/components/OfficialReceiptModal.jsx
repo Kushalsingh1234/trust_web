@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { X, Download, Image as ImageIcon, Loader2, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -48,6 +49,7 @@ export const numberToHindiWords = (amount) => {
 
 export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
   const { lang } = useLanguage();
+  const toast = useToast();
   const receiptCardRef = useRef(null);
   const exportReceiptRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -182,24 +184,28 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
         const fileName = `${receiptNumber}.pdf`;
         const dataUri = pdf.output('datauristring');
         const base64Data = dataUri.split(',')[1];
-        const result = await Filesystem.writeFile({
+        await Filesystem.writeFile({
           path: fileName,
           data: base64Data,
           directory: Directory.Documents,
           recursive: true
         });
-        await Share.share({
-          title: `Receipt - ${receiptNumber}`,
-          text: `Trust Receipt: ${receiptNumber}`,
-          url: result.uri,
-          dialogTitle: 'Download / Share Receipt PDF'
-        });
+        toast.success(
+          lang === 'hi'
+            ? `रसीद PDF (${fileName}) सफलतापूर्वक डाउनलोड हो गई है!`
+            : `Receipt PDF (${fileName}) downloaded successfully!`
+        );
       } else {
         pdf.save(`${receiptNumber}.pdf`);
+        toast.success(
+          lang === 'hi'
+            ? `रसीद PDF (${receiptNumber}.pdf) डाउनलोड हो गई है!`
+            : `Receipt PDF (${receiptNumber}.pdf) downloaded successfully!`
+        );
       }
     } catch (err) {
       console.error("PDF generation failed:", err);
-      alert(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
+      toast.error(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
     } finally {
       setIsExporting(false);
     }
@@ -217,18 +223,17 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
       if (Capacitor.isNativePlatform()) {
         const base64Data = image.includes(',') ? image.split(',')[1] : image;
-        const result = await Filesystem.writeFile({
+        await Filesystem.writeFile({
           path: filename,
           data: base64Data,
           directory: Directory.Documents,
           recursive: true
         });
-        await Share.share({
-          title: `Receipt Image - ${receiptNumber}`,
-          text: `Trust Receipt Image: ${receiptNumber}`,
-          url: result.uri,
-          dialogTitle: 'Download / Share Receipt PNG'
-        });
+        toast.success(
+          lang === 'hi'
+            ? `रसीद इमेज (${filename}) सफलतापूर्वक डाउनलोड हो गई है!`
+            : `Receipt image (${filename}) downloaded successfully!`
+        );
       } else {
         // Convert to Blob URL for rock-solid mobile browser download compatibility
         try {
@@ -259,7 +264,50 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       }
     } catch (err) {
       console.error("Image generation failed:", err);
-      alert(lang === 'hi' ? 'रसीद छवि तैयार करने में समस्या आई।' : 'Image generation failed.');
+      toast.error(lang === 'hi' ? 'रसीद छवि तैयार करने में समस्या आई।' : 'Image generation failed.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Dedicated Share Receipt via System Share Sheet
+  const handleShareReceipt = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const image = await getCanonicalReceiptImage();
+      if (!image) return;
+
+      const filename = `${receiptNumber}.png`;
+
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = image.includes(',') ? image.split(',')[1] : image;
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true
+        });
+        await Share.share({
+          title: `Receipt - ${receiptNumber}`,
+          text: `Sanatan Trust Receipt: ${receiptNumber}`,
+          url: result.uri,
+          dialogTitle: lang === 'hi' ? 'रसीद शेयर करें' : 'Share Receipt'
+        });
+      } else if (navigator.share) {
+        const res = await fetch(image);
+        const blob = await res.blob();
+        const file = new File([blob], filename, { type: 'image/png' });
+        await navigator.share({
+          title: `Receipt - ${receiptNumber}`,
+          text: `Sanatan Trust Receipt: ${receiptNumber}`,
+          files: [file]
+        });
+      } else {
+        await handleDownloadPNG();
+      }
+    } catch (err) {
+      console.warn("Share failed or dismissed:", err);
     } finally {
       setIsExporting(false);
     }
@@ -276,7 +324,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               ॐ
             </div>
             <span className="font-extrabold text-sm sm:text-base font-hindi-heading truncate">
-              आधिकारिक समर्पण / सदस्यता रसीद (Official Trust Receipt)
+              {lang === 'hi' ? 'आधिकारिक समर्पण / सदस्यता रसीद' : 'Official Trust Receipt'}
             </span>
           </div>
 
@@ -300,7 +348,18 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               title="Download high-resolution image"
             >
               <ImageIcon className="w-3.5 h-3.5" />
-              <span>इमेज (PNG)</span>
+              <span>इमेज</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleShareReceipt}
+              disabled={isExporting}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              title="Share receipt"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>शेयर</span>
             </button>
 
             <button

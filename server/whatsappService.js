@@ -238,6 +238,37 @@ class WhatsAppService {
     }
   }
 
+  /**
+   * Request 8-digit pairing code for linking device directly with phone number (No camera scan required)
+   */
+  static async requestPairingCode(phoneNumber) {
+    if (!phoneNumber) {
+      throw new Error('Phone number is required for pairing code.');
+    }
+    let clean = phoneNumber.replace(/\D/g, '');
+    if (clean.length === 10) {
+      clean = '91' + clean;
+    }
+
+    if (!this.sock || this.state.status === 'DISCONNECTED') {
+      await this.initSession();
+    }
+
+    // Wait until socket is ready
+    for (let i = 0; i < 10; i++) {
+      if (this.sock && typeof this.sock.requestPairingCode === 'function') break;
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (!this.sock || typeof this.sock.requestPairingCode !== 'function') {
+      throw new Error('WhatsApp engine initializing. Please try again in 2 seconds.');
+    }
+
+    const code = await this.sock.requestPairingCode(clean);
+    console.log(`[WhatsApp] Pairing code generated for ${clean}: ${code}`);
+    return code;
+  }
+
   static formatPhoneToJid(phone) {
     if (!phone) return '';
     let clean = phone.replace(/\D/g, '');

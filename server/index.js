@@ -68,6 +68,31 @@ app.post('/api/whatsapp/connect', async (req, res) => {
 });
 
 /**
+ * POST /api/whatsapp/pairing-code
+ * Request 8-character pairing code using phone number (No camera scan required)
+ */
+app.post('/api/whatsapp/pairing-code', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, message: 'Phone number is required.' });
+    }
+    const code = await WhatsAppService.requestPairingCode(phone);
+    return res.json({
+      success: true,
+      data: {
+        pairingCode: code,
+        phone
+      },
+      message: 'Pairing code generated successfully!'
+    });
+  } catch (err) {
+    console.error('WhatsApp pairing-code error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
  * POST /api/whatsapp/disconnect
  * Disconnect and remove saved session credentials from disk
  */

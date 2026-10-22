@@ -931,24 +931,77 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     if (activeTab === 'helpRequests') {
       list = helpRequests;
     } else if (activeTab === 'memberships') {
-      // Unified Applications tab: Merges both membership and volunteer applications
-      let combined = [];
+      // Unified Applications tab: Merges both membership and volunteer applications with strict deduplication
+      let rawCombined = [];
       if (applicationTypeFilter === 'all' || applicationTypeFilter === 'membership') {
-        combined = combined.concat(memberships.map(m => ({ ...m, appType: 'membership' })));
+        rawCombined = rawCombined.concat(memberships.map(m => ({
+          ...m,
+          appType: m.category === 'catC' || m.memberType === 'volunteer' ? 'volunteer' : 'membership'
+        })));
       }
       if (applicationTypeFilter === 'all' || applicationTypeFilter === 'volunteer') {
-        combined = combined.concat(volunteers.map(v => ({ ...v, appType: 'volunteer' })));
+        rawCombined = rawCombined.concat(volunteers.map(v => ({ ...v, appType: 'volunteer' })));
       }
-      combined.sort((a, b) => {
+
+      // Deduplicate applications by unique ID or membershipApplicationId or (phone + name)
+      const seenAppKeys = new Set();
+      const dedupedApps = [];
+      for (const item of rawCombined) {
+        const cleanId = (item.membershipApplicationId || item.id || '').trim();
+        const cleanPhone = (item.phone || item.mobile || item.donorPhone || '').replace(/\D/g, '');
+        const cleanName = (item.fullName || item.donorName || '').trim().toLowerCase();
+        const fallbackKey = cleanPhone && cleanName ? `${cleanPhone}_${cleanName}` : null;
+        const key = cleanId || fallbackKey;
+
+        if (key && !seenAppKeys.has(key)) {
+          seenAppKeys.add(key);
+          dedupedApps.push(item);
+        } else if (!key) {
+          dedupedApps.push(item);
+        }
+      }
+
+      dedupedApps.sort((a, b) => {
         const tA = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
         const tB = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
         return tB - tA;
       });
-      list = combined;
+      list = dedupedApps;
     } else if (activeTab === 'volunteers') {
       list = volunteers.map(v => ({ ...v, appType: 'volunteer' }));
     } else if (activeTab === 'donations') {
-      list = donations;
+      // Strict deduplication for donations
+      const seenDonKeys = new Set();
+      const dedupedDonations = [];
+      for (const item of donations) {
+        const cleanPid = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
+        const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
+        const isRealPid = cleanPid && !cleanPid.startsWith('UPI-') && !cleanPid.startsWith('PROOF-');
+        const key = cleanReceipt || (isRealPid ? cleanPid : null) || item.id;
+
+        if (key && !seenDonKeys.has(key)) {
+          seenDonKeys.add(key);
+          dedupedDonations.push(item);
+        } else if (key) {
+          const idx = dedupedDonations.findIndex(x => {
+            const xPid = (x.paymentId || x.utrNumber || '').trim().toUpperCase();
+            const xReceipt = (x.receiptNumber || '').trim().toUpperCase();
+            return (cleanReceipt && xReceipt === cleanReceipt) || (isRealPid && xPid === cleanPid) || x.id === item.id;
+          });
+          if (idx !== -1 && (item.status === 'approved' || item.receiptNumber)) {
+            dedupedDonations[idx] = { ...dedupedDonations[idx], ...item };
+          }
+        } else {
+          dedupedDonations.push(item);
+        }
+      }
+
+      dedupedDonations.sort((a, b) => {
+        const tA = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const tB = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        return tB - tA;
+      });
+      list = dedupedDonations;
     }
 
     return list.filter(item => {
@@ -994,14 +1047,14 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-            {/* Custom Receipt Button */}
+            {/* Custom Receipt Button: Hidden on mobile top bar to protect Trust Name */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic();
                 setCustomReceiptModalOpen(true);
               }}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#E87516] hover:from-amber-600 hover:to-[#B84A06] text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="hidden sm:flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#E87516] hover:from-amber-600 hover:to-[#B84A06] text-white text-xs font-black items-center gap-1.5 transition-all shadow-md cursor-pointer"
               title={lang === 'hi' ? 'कस्टम रसीद बनाएं' : 'Generate Custom Receipt'}
             >
               <Receipt className="w-3.5 h-3.5 text-white" />
@@ -3580,25 +3633,32 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           )}
         </button>
 
-        {/* Tab 3: Members (सत्यापित सदस्य) */}
+        {/* Tab 3: Notices & Announcements (सूचना प्रकाशन) */}
         <button
           type="button"
           onClick={() => {
             triggerHaptic();
-            setActiveTab('members');
+            setActiveTab('announcements');
             setSearchQuery('');
           }}
           className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'members'
+            activeTab === 'announcements'
               ? 'text-[#E9B44C] font-black'
               : 'text-white/60 hover:text-white'
           }`}
         >
-          <ShieldCheck className="w-5 h-5" />
+          <div className="relative">
+            <Bell className="w-5 h-5" />
+            {announcements.length > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center font-mono">
+                {announcements.length}
+              </span>
+            )}
+          </div>
           <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'सदस्य' : 'Members'}
+            {lang === 'hi' ? 'सूचनाएं' : 'Notices'}
           </span>
-          {activeTab === 'members' && (
+          {activeTab === 'announcements' && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
           )}
         </button>
@@ -3706,6 +3766,35 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                 </span>
               </button>
 
+              {/* Verified Members List */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic();
+                  setActiveTab('members');
+                  setSearchQuery('');
+                  setMobileMoreOpen(false);
+                }}
+                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
+                  activeTab === 'members'
+                    ? 'bg-primary/10 border-primary text-primary font-bold'
+                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                  <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    {membersList.length}
+                  </span>
+                </div>
+                <span className="text-xs font-black">
+                  {lang === 'hi' ? 'सत्यापित सदस्य' : 'Verified Members'}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {lang === 'hi' ? 'आईडी कार्ड व सूची' : 'Members & ID cards'}
+                </span>
+              </button>
+
               {/* Volunteers List */}
               <button
                 type="button"
@@ -3799,6 +3888,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   {lang === 'hi' ? 'अलर्ट जांचें' : 'Trigger test alert'}
                 </span>
               </button>
+            </div>
+
+            {/* Background 24/7 Notification Helper Note */}
+            <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-950 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <Bell className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <span>24/7 बैकग्राउंड अलर्ट सेटिंग (Keep Alerts Active):</span>
+              </div>
+              <p className="text-[10.5px] text-amber-800 leading-relaxed">
+                फोन बंद होने या ऐप हटने पर भी घंटी बजने के लिए: फोन की <strong>Settings &gt; Apps &gt; Trust Admin &gt; Battery Usage</strong> में <strong>"Allow Background Activity"</strong> व <strong>"Auto-launch"</strong> चालू रखें।
+              </p>
             </div>
 
             {/* Quick Actions (Language & Logout) */}

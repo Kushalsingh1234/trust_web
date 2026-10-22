@@ -230,6 +230,7 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validate()) return;
 
     setIsSubmitting(true);
