@@ -156,39 +156,69 @@ class WhatsAppService {
           };
           this.reconnectAttempts = 0;
           console.log(`[WhatsApp] Admin WhatsApp connected successfully as ${formattedPhone}!`);
+
+          if (this.keepAliveInterval) {
+            clearInterval(this.keepAliveInterval);
+            this.keepAliveInterval = null;
+          }
+
+          // 25-second keepalive ping to prevent socket/router idle drop
+          this.keepAliveInterval = setInterval(() => {
+            try {
+              if (this.sock?.ws && this.sock.ws.readyState === 1) {
+                this.sock.ws.ping();
+              }
+            } catch (e) {}
+          }, 25000);
         }
 
         if (connection === 'close') {
+          if (this.keepAliveInterval) {
+            clearInterval(this.keepAliveInterval);
+            this.keepAliveInterval = null;
+          }
+
           const statusCode = lastDisconnect?.error?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+          const isRestart = statusCode === DisconnectReason.restartRequired;
 
-          console.log(`[WhatsApp] Connection closed. Status code: ${statusCode}, Reconnect: ${shouldReconnect}`);
+          console.log(`[WhatsApp] Connection closed. Status code: ${statusCode}, LoggedOut: ${isLoggedOut}, Restart: ${isRestart}`);
 
-          if (shouldReconnect && this.reconnectAttempts < 10) {
+          if (!isLoggedOut) {
             this.reconnectAttempts++;
-            this.state = { status: 'INITIALIZING', qrCodeDataUrl: null, phoneNumber: null, connectedAt: null, lastError: 'Reconnecting...' };
+            // Reconnect forever - immediate for restartRequired, exponential backoff for network drops up to 30s
+            const delay = isRestart ? 1000 : Math.min(30000, 2000 + (Math.min(this.reconnectAttempts, 10) * 2000));
+            console.log(`[WhatsApp] Auto-reconnecting in ${delay}ms (reconnect cycle #${this.reconnectAttempts})...`);
+
+            this.state = {
+              status: 'INITIALIZING',
+              qrCodeDataUrl: null,
+              phoneNumber: null,
+              connectedAt: null,
+              lastError: `Reconnecting (cycle #${this.reconnectAttempts})...`
+            };
+
             setTimeout(() => {
               this.initSession().catch(console.error);
-            }, 3000);
+            }, delay);
           } else {
+            console.log('[WhatsApp] Phone explicitly disconnected/logged out.');
             this.state = {
               status: 'DISCONNECTED',
               qrCodeDataUrl: null,
               phoneNumber: null,
               connectedAt: null,
-              lastError: statusCode === DisconnectReason.loggedOut ? 'Logged out from phone' : 'Disconnected'
+              lastError: 'Logged out from phone'
             };
             this.sock = null;
-            if (statusCode === DisconnectReason.loggedOut) {
-              try {
-                const sessionDir = this.getSessionDir();
-                if (fs.existsSync(sessionDir)) {
-                  fs.rmSync(sessionDir, { recursive: true, force: true });
-                  console.log('[WhatsApp] Cleared expired credentials from disk.');
-                }
-              } catch (e) {
-                console.error('[WhatsApp] Failed to clear expired session:', e);
+            try {
+              const sessionDir = this.getSessionDir();
+              if (fs.existsSync(sessionDir)) {
+                fs.rmSync(sessionDir, { recursive: true, force: true });
+                console.log('[WhatsApp] Cleared expired credentials from disk.');
               }
+            } catch (e) {
+              console.error('[WhatsApp] Failed to clear expired session:', e);
             }
           }
         }
@@ -206,6 +236,37 @@ class WhatsAppService {
       };
       return this.state;
     }
+  }
+
+  /**
+   * Request 8-digit pairing code for linking device directly with phone number (No camera scan required)
+   */
+  static async requestPairingCode(phoneNumber) {
+    if (!phoneNumber) {
+      throw new Error('Phone number is required for pairing code.');
+    }
+    let clean = phoneNumber.replace(/\D/g, '');
+    if (clean.length === 10) {
+      clean = '91' + clean;
+    }
+
+    if (!this.sock || this.state.status === 'DISCONNECTED') {
+      await this.initSession();
+    }
+
+    // Wait until socket is ready
+    for (let i = 0; i < 10; i++) {
+      if (this.sock && typeof this.sock.requestPairingCode === 'function') break;
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (!this.sock || typeof this.sock.requestPairingCode !== 'function') {
+      throw new Error('WhatsApp engine initializing. Please try again in 2 seconds.');
+    }
+
+    const code = await this.sock.requestPairingCode(clean);
+    console.log(`[WhatsApp] Pairing code generated for ${clean}: ${code}`);
+    return code;
   }
 
   static formatPhoneToJid(phone) {
