@@ -397,6 +397,32 @@ export const UserDashboardPage = () => {
     return [];
   }, [volunteers, memberships, userProfile, currentUser?.uid]);
 
+  // Compute effective donations (strictly deduplicated by canonical transaction/receipt key)
+  const effectiveDonations = React.useMemo(() => {
+    if (!donations || donations.length === 0) return [];
+    const map = new Map();
+    for (const item of donations) {
+      const cleanPaymentId = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
+      const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
+      const memId = (item.membershipId || item.membershipApplicationId || '').trim();
+      const canonKey = cleanReceipt || cleanPaymentId || memId || item.id;
+
+      if (!map.has(canonKey)) {
+        map.set(canonKey, item);
+      } else {
+        const existing = map.get(canonKey);
+        if (item.status === 'approved' && existing.status !== 'approved') {
+          map.set(canonKey, { ...existing, ...item });
+        } else if (item.receiptNumber && !existing.receiptNumber) {
+          map.set(canonKey, { ...existing, ...item });
+        } else {
+          map.set(canonKey, { ...item, ...existing });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [donations]);
+
   // Compute membership status
   const approvedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'approved');
   const removedMembership = effectiveMemberships.find((m) => m.status?.toLowerCase() === 'removed');
@@ -917,7 +943,7 @@ export const UserDashboardPage = () => {
             <Heart className="w-4 h-4" />
             <span>{lang === 'hi' ? 'मेरे दान एवं समर्पण' : 'My Donations'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
-              {donations.length}
+              {effectiveDonations.length}
             </span>
           </button>
 
@@ -1384,7 +1410,7 @@ export const UserDashboardPage = () => {
               </button>
             </div>
 
-            {donations.length === 0 ? (
+            {effectiveDonations.length === 0 ? (
               <div className="text-center py-12 px-4 rounded-3xl bg-white border border-[#E9B44C]/30 shadow-xs">
                 <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
                   <Heart className="w-8 h-8 fill-rose-500 text-rose-500" />
@@ -1407,7 +1433,7 @@ export const UserDashboardPage = () => {
                 </button>
               </div>
             ) : (
-              donations.map((item) => {
+              effectiveDonations.map((item) => {
                 const isApproved = item.status?.toLowerCase() === 'approved';
                 const isRejected = item.status?.toLowerCase() === 'rejected';
                 const canDownloadReceipt = Boolean(item.receiptSent);

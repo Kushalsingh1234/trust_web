@@ -3,6 +3,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -351,7 +352,7 @@ export const submitMembershipWithPaymentId = async ({
 
   // Save payment tracking entry in payments collection
   try {
-    const paymentDocRef = doc(collection(db, 'payments'));
+    const paymentDocRef = doc(db, 'payments', `mem_pay_${newAppRef.id}`);
     await setDoc(paymentDocRef, {
       payerUid: uid || null,
       uid: uid || null,
@@ -739,7 +740,7 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
     console.warn("Could not write to members collection:", e);
   }
 
-  // 6. Create verified payment and receipt record
+  // 6. Create or update verified payment and receipt record
   if (!isCatA && numVerified > 0 && receiptNumber) {
     const paymentRecord = {
       uid: targetUid || null,
@@ -756,18 +757,54 @@ export const approveMembership = async (membershipId, verifiedAmount = 200, admi
       verificationStatus: 'verified',
       receiptNumber,
       memberId,
+      membershipId,
       approvedBy: adminUid,
       approvedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
+      createdAt: memData.createdAt || serverTimestamp(),
       updatedAt: serverTimestamp()
     };
 
     try {
-      await setDoc(doc(collection(db, 'payments')), paymentRecord);
-    } catch (e) {}
-    try {
-      await setDoc(doc(collection(db, 'donations')), paymentRecord);
-    } catch (e) {}
+      const cleanPaymentId = (memData.paymentId || memData.utrNumber || '').trim().toUpperCase();
+      let existingPayDocRef = null;
+
+      if (cleanPaymentId) {
+        const qPay = query(collection(db, 'payments'), where('paymentId', '==', cleanPaymentId));
+        const snapPay = await getDocs(qPay);
+        if (!snapPay.empty) {
+          existingPayDocRef = snapPay.docs[0].ref;
+          for (let i = 1; i < snapPay.docs.length; i++) {
+            try { await deleteDoc(snapPay.docs[i].ref); } catch (e) {}
+          }
+        }
+      }
+
+      if (!existingPayDocRef && membershipId) {
+        const qMem = query(collection(db, 'payments'), where('membershipId', '==', membershipId));
+        const snapMem = await getDocs(qMem);
+        if (!snapMem.empty) {
+          existingPayDocRef = snapMem.docs[0].ref;
+          for (let i = 1; i < snapMem.docs.length; i++) {
+            try { await deleteDoc(snapMem.docs[i].ref); } catch (e) {}
+          }
+        }
+      }
+
+      const targetPayRef = existingPayDocRef || doc(db, 'payments', `mem_pay_${membershipId}`);
+      await setDoc(targetPayRef, paymentRecord, { merge: true });
+
+      // Clean up any stale mirror in 'donations' collection with the same paymentId
+      if (cleanPaymentId) {
+        const qDon = query(collection(db, 'donations'), where('paymentId', '==', cleanPaymentId));
+        const snapDon = await getDocs(qDon);
+        for (const d of snapDon.docs) {
+          try { await deleteDoc(d.ref); } catch (e) {}
+        }
+      }
+    } catch (e) {
+      console.warn("Could not update payments record:", e);
+    }
+
     try {
       await setDoc(doc(db, 'receipts', receiptNumber), paymentRecord);
     } catch (e) {}

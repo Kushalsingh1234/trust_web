@@ -933,7 +933,23 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
     for (const key of Object.keys(resultsByTarget)) {
       const list = resultsByTarget[key] || [];
       list.forEach(item => {
-        map.set(item.id, { ...map.get(item.id), ...item });
+        const cleanPaymentId = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
+        const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
+        const memId = (item.membershipId || item.membershipApplicationId || '').trim();
+        const canonKey = cleanReceipt || cleanPaymentId || memId || item.id;
+
+        if (!map.has(canonKey)) {
+          map.set(canonKey, item);
+        } else {
+          const existing = map.get(canonKey);
+          if (item.status === 'approved' && existing.status !== 'approved') {
+            map.set(canonKey, { ...existing, ...item });
+          } else if (item.receiptNumber && !existing.receiptNumber) {
+            map.set(canonKey, { ...existing, ...item });
+          } else {
+            map.set(canonKey, { ...item, ...existing });
+          }
+        }
       });
     }
 
@@ -1060,7 +1076,23 @@ export const subscribeAllCollection = (collectionName, callback) => {
     for (const target of targets) {
       const list = resultsByTarget[target] || [];
       list.forEach(item => {
-        map.set(item.id, { ...map.get(item.id), ...item });
+        const cleanPaymentId = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
+        const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
+        const memId = (item.membershipId || item.membershipApplicationId || '').trim();
+        const canonKey = cleanReceipt || cleanPaymentId || memId || item.id;
+
+        if (!map.has(canonKey)) {
+          map.set(canonKey, item);
+        } else {
+          const existing = map.get(canonKey);
+          if (item.status === 'approved' && existing.status !== 'approved') {
+            map.set(canonKey, { ...existing, ...item });
+          } else if (item.receiptNumber && !existing.receiptNumber) {
+            map.set(canonKey, { ...existing, ...item });
+          } else {
+            map.set(canonKey, { ...item, ...existing });
+          }
+        }
       });
     }
     const combined = Array.from(map.values());
