@@ -146,9 +146,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     const height = targetEl.offsetHeight || 520;
 
     let image = null;
+    const isNativeCapacitor = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 
     // On standard web browsers, try toPng first for crisp SVG vector rendering
-    if (!Capacitor.isNativePlatform()) {
+    if (!isNativeCapacitor) {
       try {
         image = await toPng(targetEl, {
           width,
@@ -532,10 +533,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       <div
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
+          left: '-9999px',
+          top: '0',
           width: '800px',
-          zIndex: 1, // Sits behind the z-50 modal backdrop; renders at (0,0) without negative coordinates to prevent blank downloads
+          zIndex: -9999,
           pointerEvents: 'none',
         }}
         aria-hidden="true"
