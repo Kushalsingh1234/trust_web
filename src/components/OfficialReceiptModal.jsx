@@ -1,9 +1,19 @@
 import React, { useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Download, Image as ImageIcon, Loader2, MessageSquare, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { uploadImageToCloudinary } from '../utils/cloudinaryService';
+import {
+  formatDonationReceiptWhatsAppMessage,
+  buildWhatsAppUrl,
+  checkBaileysServerStatus,
+  sendPersonalMessageViaBaileys
+} from '../firebase/whatsappService';
 
 // Helper: Convert numeric amount into formal Hindi words
 export const numberToHindiWords = (amount) => {
@@ -42,15 +52,16 @@ export const numberToHindiWords = (amount) => {
   return `${words.trim()} रुपये मात्र`;
 };
 
-export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
+export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }) => {
   const { lang } = useLanguage();
   const receiptCardRef = useRef(null);
   const exportReceiptRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
 
   if (!isOpen || !receipt) return null;
 
-  // Extract fields cleanly without fake default fallbacks
+  // Extract fields cleanly
   const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-0001');
   const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || receipt.applicantName || '—';
 
@@ -82,7 +93,19 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
   const isVolunteer = purpose === 'volunteer_registration' || itemType === 'volunteer' || receipt.role === 'volunteer' || receipt.memberType === 'volunteer';
   const isMembership = !isDonation && !isVolunteer && (purpose === 'membership_fee' || itemType === 'membership' || Boolean(receipt.category));
 
-  let receiptHeading = 'सनातन संरक्षण — समर्पण निधि';
+  // Determine if this is a Public / Non-member Donor (no father's name or address filled)
+  const isPublicDonor = Boolean(receipt.isPublicDonor) || (isDonation && (!receipt.fatherHusbandName || receipt.fatherHusbandName === '—') && (!receipt.address || receipt.address === '—') && !receipt.memberId);
+
+  const getPurposeTitle = () => {
+    if (receipt.purpose === 'cow_service') return 'गौ सेवा एवं पोषण प्रकल्प';
+    if (receipt.purpose === 'sanskar_camps') return '१६ वैदिक संस्कार जागरण शिविर';
+    if (receipt.purpose === 'medical_aid') return 'निर्धन चिकित्सा एवं औषधि सहयोग';
+    if (receipt.purpose === 'labor_welfare') return 'श्रमिक कल्याण एवं दुर्घटना सहायता';
+    return receipt.purposeTitle || receipt.purpose || 'सामान्य सनातन धर्मार्थ समर्पण निधि';
+  };
+  const purposeTitle = getPurposeTitle();
+
+  let receiptHeading = isPublicDonor ? 'सनातन संरक्षण — ई-समर्पण रसीद' : 'सनातन संरक्षण — समर्पण निधि';
   let receiptClosingText = 'सहर्ष प्राप्त किया।';
   let purposeLabel = 'से समर्पण निधि';
 
@@ -119,7 +142,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
   const formattedDate = getDateString();
 
-  // Helper: Capture canonical 800px landscape voucher image (never clipped by mobile viewport)
+  // Capture canonical 800px landscape voucher image
   const getCanonicalReceiptImage = async () => {
     const targetEl = exportReceiptRef.current || receiptCardRef.current;
     if (!targetEl) return null;
@@ -148,7 +171,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     let image = null;
     const isNativeCapacitor = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 
-    // On standard web browsers, try toPng first for crisp SVG vector rendering
     if (!isNativeCapacitor) {
       try {
         image = await toPng(targetEl, {
@@ -163,8 +185,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       }
     }
 
-    // In Capacitor native mobile app (Android/iOS WebView) or if toPng failed:
-    // use html2canvas which reliably rasterizes HTML elements directly
     if (!image) {
       try {
         const canvas = await html2canvas(targetEl, {
@@ -199,7 +219,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     return image;
   };
 
-  // Download PDF matching authentic landscape voucher
+  // Download PDF
   const handleDownloadPDF = async () => {
     if (isExporting) return;
     setIsExporting(true);
@@ -215,9 +235,8 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
-      const imgWidth = pdfWidth - margin * 2; // 277mm
+      const imgWidth = pdfWidth - margin * 2;
 
-      // Compute aspect ratio
       const img = new Image();
       await new Promise((resolve) => {
         img.onload = resolve;
@@ -248,7 +267,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
       const filename = `${receiptNumber}.png`;
 
-      // Convert to Blob URL for rock-solid mobile browser download compatibility
       try {
         const res = await fetch(image);
         const blob = await res.blob();
@@ -282,44 +300,162 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     }
   };
 
+  // Send Receipt Image / PDF directly to Donor on WhatsApp
+  const handleShareToWhatsApp = async () => {
+    if (isSharingWhatsApp) return;
+    setIsSharingWhatsApp(true);
+    try {
+      const image = await getCanonicalReceiptImage();
+      if (!image) {
+        alert(lang === 'hi' ? 'रसीद छवि तैयार नहीं हो सकी।' : 'Could not generate receipt image.');
+        return;
+      }
+
+      const receiptCaption = formatDonationReceiptWhatsAppMessage(receipt);
+      const targetPhone = mobile !== '—' ? mobile : (receipt.donorPhone || receipt.phone || receipt.mobile || '');
+      const cleanPhone = targetPhone.replace(/\D/g, '');
+
+      // 1. In native Android/iOS mobile app: write to cache and trigger Native Share
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const fileName = `Receipt_${receiptNumber}.png`;
+          const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+
+          await Share.share({
+            title: `समर्पण रसीद - ${receiptNumber}`,
+            text: receiptCaption,
+            url: savedFile.uri,
+            dialogTitle: 'व्हाट्सएप पर रसीद भेजें'
+          });
+
+          if (onReceiptSent) onReceiptSent(receipt);
+          return;
+        } catch (shareErr) {
+          console.warn('Native share fallback to Cloudinary/Web:', shareErr);
+        }
+      }
+
+      // 2. Web Browser: Try native navigator.share with File
+      if (typeof navigator !== 'undefined' && navigator.canShare) {
+        try {
+          const res = await fetch(image);
+          const blob = await res.blob();
+          const file = new File([blob], `Receipt_${receiptNumber}.png`, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `समर्पण रसीद - ${receiptNumber}`,
+              text: receiptCaption
+            });
+            if (onReceiptSent) onReceiptSent(receipt);
+            return;
+          }
+        } catch (webShareErr) {
+          console.warn('Web share file fallback:', webShareErr);
+        }
+      }
+
+      // 3. Automated Baileys or Cloudinary Hosted Link
+      let uploadedUrl = null;
+      try {
+        uploadedUrl = await uploadImageToCloudinary(image, 'receipts');
+      } catch (uploadErr) {
+        console.warn('Cloudinary upload fallback:', uploadErr);
+      }
+
+      let sentViaBot = false;
+      if (uploadedUrl && cleanPhone) {
+        try {
+          const serverState = await checkBaileysServerStatus();
+          if (serverState.connected) {
+            await sendPersonalMessageViaBaileys(cleanPhone, receiptCaption, uploadedUrl);
+            sentViaBot = true;
+          }
+        } catch (botErr) {
+          console.warn('Bot dispatch fallback:', botErr);
+        }
+      }
+
+      // 4. Open WhatsApp Chat directly with recipient
+      if (cleanPhone) {
+        const fullMessage = uploadedUrl 
+          ? `${receiptCaption}\n\n🖼️ *आपकी आधिकारिक रसीद छवि (High-Res Image):*\n${uploadedUrl}`
+          : receiptCaption;
+        const { mobileUrl, webUrl } = buildWhatsAppUrl(cleanPhone, fullMessage);
+        const targetUrl = window.innerWidth > 768 ? (webUrl || mobileUrl) : mobileUrl;
+        window.open(targetUrl, '_blank');
+      }
+
+      if (onReceiptSent) onReceiptSent(receipt);
+      if (sentViaBot) {
+        alert(lang === 'hi' ? 'रसीद छवि सीधे दानदाता के व्हाट्सएप पर भेज दी गई!' : 'Receipt image sent directly to donor on WhatsApp!');
+      }
+    } catch (err) {
+      console.error('WhatsApp receipt dispatch failed:', err);
+      alert('Error sending receipt: ' + err.message);
+    } finally {
+      setIsSharingWhatsApp(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       <div className="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-[#E9B44C]/40 my-auto sm:my-6 max-h-[96vh] flex flex-col">
         
         {/* Top Control Bar */}
-        <div className="bg-[#B84A06] text-white px-4 sm:px-6 py-3 flex items-center justify-between print:hidden flex-shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="bg-[#B84A06] text-white px-3 sm:px-6 py-3 flex items-center justify-between print:hidden flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-bold text-sm">
               ॐ
             </div>
-            <span className="font-extrabold text-sm sm:text-base font-hindi-heading truncate">
-              आधिकारिक समर्पण / सदस्यता रसीद (Official Trust Receipt)
+            <span className="font-extrabold text-xs sm:text-base font-hindi-heading truncate">
+              {isPublicDonor ? 'दानदाता ई-रसीद (Donation Receipt)' : 'आधिकारिक समर्पण / सदस्यता रसीद'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1">
+            {/* WhatsApp Send Button */}
+            <button
+              type="button"
+              onClick={handleShareToWhatsApp}
+              disabled={isSharingWhatsApp || isExporting}
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              title="Send Receipt Image to WhatsApp"
+            >
+              {isSharingWhatsApp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
+              <span>{isSharingWhatsApp ? 'भेज रहे हैं...' : 'व्हाट्सएप रसीद'}</span>
+            </button>
+
+            {/* Download PDF */}
             <button
               type="button"
               onClick={handleDownloadPDF}
               disabled={isExporting}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#B84A06] hover:bg-[#FFF8EF] font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white text-[#B84A06] hover:bg-[#FFF8EF] font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
               title="Download official PDF"
             >
               {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">डाउनलोड PDF</span>
             </button>
 
+            {/* Download PNG */}
             <button
               type="button"
               onClick={handleDownloadPNG}
               disabled={isExporting}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
               title="Download high-resolution image"
             >
               <ImageIcon className="w-3.5 h-3.5" />
               <span>इमेज (PNG)</span>
             </button>
 
+            {/* Close Button */}
             <button
               type="button"
               onClick={onClose}
@@ -332,9 +468,9 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
         </div>
 
         {/* Scrollable Receipt Preview Container */}
-        <div className="p-3 sm:p-6 overflow-y-auto bg-[#F7F3EB] flex-1 flex items-center justify-center">
+        <div className="p-2 sm:p-6 overflow-y-auto bg-[#F7F3EB] flex-1 flex items-center justify-center">
           
-          {/* EXACT OLD TRADITIONAL RECEIPT VOUCHER (Responsive On-Screen Preview) */}
+          {/* VISIBLE ON-SCREEN PREVIEW */}
           <div
             ref={receiptCardRef}
             id="traditional-receipt-card"
@@ -344,7 +480,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               backgroundSize: '24px 24px'
             }}
           >
-            {/* Subtle Historic Trust Voucher Watermark in Background */}
+            {/* Watermark */}
             <div 
               className="absolute inset-0 pointer-events-none opacity-[0.06] flex items-center justify-center select-none"
               style={{
@@ -355,14 +491,12 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               }}
             />
 
-            {/* Top Row: Left Om + Center Title + Right Om */}
+            {/* Header: Om + Trust Name + Om */}
             <div className="flex items-center justify-between gap-2 sm:gap-4 mb-2 relative z-10">
-              {/* Left Om Saffron Box */}
               <div className="w-10 h-10 sm:w-14 sm:h-14 flex-shrink-0 bg-[#C65D13] rounded-xl text-white flex items-center justify-center font-bold text-xl sm:text-3xl font-serif drop-shadow shadow-xs">
                 ॐ
               </div>
 
-              {/* Center Trust Name & Office Address */}
               <div className="text-center flex-1 px-1 min-w-0">
                 <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-[#C65D13] font-hindi-heading leading-tight tracking-tight">
                   राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
@@ -375,13 +509,12 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
                 </p>
               </div>
 
-              {/* Right Om Saffron Box */}
               <div className="w-10 h-10 sm:w-14 sm:h-14 flex-shrink-0 bg-[#C65D13] rounded-xl text-white flex items-center justify-center font-bold text-xl sm:text-3xl font-serif drop-shadow shadow-xs">
                 ॐ
               </div>
             </div>
 
-            {/* Slogan Deep Saffron Banner Strip */}
+            {/* Slogan Banner Strip */}
             <div className="bg-[#C65D13] text-white text-center py-1.5 px-3 rounded-lg font-bold text-xs sm:text-sm mb-3.5 shadow-xs relative z-10">
               हमारा लक्ष्य — वैदिक 16 संस्कारों का संरक्षण एवं जनकल्याणकारी सेवा कार्य
             </div>
@@ -405,62 +538,129 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               </div>
             </div>
 
-            {/* Receipt Form Fields with Traditional Dotted Underlines */}
-            <div className="space-y-2.5 text-xs sm:text-sm text-[#454545] leading-relaxed relative z-10">
-              
-              {/* Row 1: Name & Mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">नाम / Name:</span>
-                  <span className="font-extrabold text-[#2B1B10] truncate">{name}</span>
-                </div>
-                <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">मो० न० / Mobile:</span>
-                  <span className="font-bold text-[#2B1B10] font-mono">{mobile}</span>
-                </div>
-              </div>
+            {/* BODY: Public Donor Layout OR Traditional Member Layout */}
+            {isPublicDonor ? (
+              /* ========================================================
+                 PUBLIC / GUEST DONOR CUSTOM LAYOUT
+                 (No father's name or address lines!)
+                 ======================================================== */
+              <div className="space-y-3 relative z-10">
+                <div className="bg-[#FFF8EF]/80 border-2 border-[#C65D13]/30 rounded-xl p-3 sm:p-4 shadow-xs">
+                  {/* Row 1: Donor Name & Mobile */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pb-2.5 border-b border-dashed border-[#C65D13]/30">
+                    <div className="sm:col-span-7">
+                      <span className="text-[10px] sm:text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                        दानदाता का नाम / Donor Name
+                      </span>
+                      <div className="font-extrabold text-sm sm:text-lg text-[#2B1B10] mt-0.5">
+                        श्री / श्रीमती {name}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-5 text-left sm:text-right">
+                      <span className="text-[10px] sm:text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                        व्हाट्सएप / मो० नं० / Mobile
+                      </span>
+                      <div className="font-bold text-xs sm:text-base text-[#2B1B10] font-mono mt-0.5">
+                        {mobile !== '—' ? `+91 ${mobile}` : '—'}
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Row 2: Father's Name */}
-              <div className="border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">पिता / पति का नाम / Father's Name:</span>
-                <span className="font-bold text-[#2B1B10] truncate">{fatherHusbandName}</span>
-              </div>
+                  {/* Row 2: Purpose & Transaction Ref */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 py-2.5 border-b border-dashed border-[#C65D13]/30">
+                    <div className="sm:col-span-7">
+                      <span className="text-[10px] sm:text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                        समर्पण प्रयोजन / Contribution Purpose
+                      </span>
+                      <div className="font-extrabold text-xs sm:text-sm text-[#C65D13] mt-0.5">
+                        {purposeTitle}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-5 text-left sm:text-right">
+                      <span className="text-[10px] sm:text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                        यूटीआर / संदर्भ संख्या / UTR No.
+                      </span>
+                      <div className="font-mono font-bold text-xs sm:text-sm text-[#2B1B10] mt-0.5">
+                        {receipt.paymentId || receipt.utrNumber || 'UPI-VERIFIED'}
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Row 3: Address & Block */}
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">पता / ग्राम / मोहल्ला:</span>
-                  <span className="font-medium text-[#2B1B10] truncate">{address}</span>
+                  {/* Row 3: Amount in Words */}
+                  <div className="pt-2">
+                    <span className="text-[10px] sm:text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                      समर्पण राशि (शब्दों में) / Amount in Words
+                    </span>
+                    <div className="font-black text-xs sm:text-sm text-[#C65D13] underline decoration-[#C65D13]/40 underline-offset-4 mt-0.5">
+                      {amountWords}
+                    </div>
+                  </div>
                 </div>
-                <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">विकास खण्ड / Block:</span>
-                  <span className="font-medium text-[#2B1B10]">{block}</span>
-                </div>
-              </div>
 
-              {/* Row 4: District & State */}
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">जिला / District:</span>
-                  <span className="font-medium text-[#2B1B10]">{district}</span>
-                </div>
-                <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#2B1B10] flex-shrink-0">प्रदेश / State:</span>
-                  <span className="font-medium text-[#2B1B10]">{state}</span>
+                {/* Blessings Note */}
+                <div className="bg-[#FFF4E5] border-l-4 border-[#C65D13] px-3.5 py-2 rounded-r-lg text-[11px] sm:text-xs text-[#382719] leading-relaxed shadow-xs">
+                  🙏 <strong>संस्थान की ओर से साधुवाद:</strong> आपके द्वारा सनातन संस्कृति के संवर्धन, गौ-सेवा व जनकल्याण हेतु समर्पित यह सहयोग सहर्ष प्राप्त किया गया। प्रभु श्रीराम का आशीर्वाद आप व आपके परिवार पर सदैव बना रहे।
                 </div>
               </div>
+            ) : (
+              /* ========================================================
+                 TRADITIONAL MEMBER VOUCHER LAYOUT (Registered Members)
+                 ======================================================== */
+              <div className="space-y-2.5 text-xs sm:text-sm text-[#454545] leading-relaxed relative z-10">
+                {/* Row 1: Name & Mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">नाम / Name:</span>
+                    <span className="font-extrabold text-[#2B1B10] truncate">{name}</span>
+                  </div>
+                  <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">मो० न० / Mobile:</span>
+                    <span className="font-bold text-[#2B1B10] font-mono">{mobile}</span>
+                  </div>
+                </div>
 
-              {/* Row 5: Amount in Hindi words */}
-              <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10]">
-                  {purposeLabel} (रूपया शब्दों में):
-                </span>
-                <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
-                  {amountWords}
-                </span>
-                <span className="text-[#382719] font-medium">{receiptClosingText}</span>
+                {/* Row 2: Father's Name */}
+                <div className="border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">पिता / पति का नाम / Father's Name:</span>
+                  <span className="font-bold text-[#2B1B10] truncate">{fatherHusbandName}</span>
+                </div>
+
+                {/* Row 3: Address & Block */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">पता / ग्राम / मोहल्ला:</span>
+                    <span className="font-medium text-[#2B1B10] truncate">{address}</span>
+                  </div>
+                  <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">विकास खण्ड / Block:</span>
+                    <span className="font-medium text-[#2B1B10]">{block}</span>
+                  </div>
+                </div>
+
+                {/* Row 4: District & State */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">जिला / District:</span>
+                    <span className="font-medium text-[#2B1B10]">{district}</span>
+                  </div>
+                  <div className="sm:col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                    <span className="font-bold text-[#2B1B10] flex-shrink-0">प्रदेश / State:</span>
+                    <span className="font-medium text-[#2B1B10]">{state}</span>
+                  </div>
+                </div>
+
+                {/* Row 5: Amount in Hindi words */}
+                <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10]">
+                    {purposeLabel} (रूपया शब्दों में):
+                  </span>
+                  <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
+                    {amountWords}
+                  </span>
+                  <span className="text-[#382719] font-medium">{receiptClosingText}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Bottom Section: Rupee Box + Bank of India Account + Signatures */}
             <div className="mt-5 pt-3.5 border-t-2 border-[#E9B44C]/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
@@ -476,7 +676,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
                   </div>
                 </div>
 
-                {/* Subtle verified QR imprint */}
+                {/* Verified QR imprint */}
                 <div className="w-10 h-10 border border-amber-300 rounded bg-white/70 p-0.5 opacity-60 hidden sm:flex items-center justify-center">
                   <img
                     src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=boim-135883270012@boi&pn=RSSSST"
@@ -518,55 +718,32 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             <div className="mt-4 pt-2 border-t border-gray-200 text-center text-[10px] text-[#666666] relative z-10 leading-tight">
               Receipt generated with Trust Watermark, Bank of India Verification & General Secretary Endorsement. • संपर्क: 9794590044, 9026734887
             </div>
-
           </div>
-
         </div>
 
-      </div>
-
-      {/* =========================================================================
-          OFF-SCREEN CANONICAL EXPORT RECEIPT (800px Landscape Geometry)
-          Captured strictly during download to produce an authentic, 100% complete,
-          never-clipped receipt on all devices (mobile & desktop).
-         ========================================================================= */}
-      <div
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: '0',
-          width: '800px',
-          zIndex: -9999,
-          pointerEvents: 'none',
-        }}
-        aria-hidden="true"
-      >
+        {/* ====================================================================
+            OFFSCREEN CANONICAL 800px CONTAINER (Used for crisp PDF & PNG Image)
+            ==================================================================== */}
         <div
           ref={exportReceiptRef}
-          id="traditional-receipt-card-canonical"
+          aria-hidden="true"
           style={{
+            position: 'fixed',
+            left: '-9999px',
+            top: 0,
             width: '800px',
-            minWidth: '800px',
-            maxWidth: '800px',
+            backgroundColor: '#FFFDF8',
+            color: '#382719',
+            fontFamily: "'Noto Sans Devanagari', 'Tiro Devanagari Hindi', sans-serif",
+            padding: '24px',
+            border: '4px solid #C65D13',
+            borderRadius: '16px',
             boxSizing: 'border-box',
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
             backgroundImage: 'radial-gradient(#E9B44C 0.5px, transparent 0.5px)',
-            backgroundSize: '24px 24px',
+            backgroundSize: '24px 24px'
           }}
-          className="w-full bg-[#FFFDF8] border-4 border-[#C65D13] rounded-2xl p-7 shadow-none relative overflow-hidden text-[#382719]"
         >
-          {/* Background subtle historic watermark */}
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-[0.06] flex items-center justify-center select-none"
-            style={{
-              backgroundImage: 'url(/images/gallery/receipt_samarpan_nidhi.jpg)',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'cover'
-            }}
-          />
-
-          {/* Top Row: Left Om + Center Title + Right Om */}
+          {/* Header */}
           <div className="flex items-center justify-between gap-4 mb-2 relative z-10">
             <div className="w-14 h-14 flex-shrink-0 bg-[#C65D13] rounded-xl text-white flex items-center justify-center font-bold text-3xl font-serif drop-shadow shadow-xs">
               ॐ
@@ -609,65 +786,125 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             </div>
           </div>
 
-          {/* Receipt Form Fields with Traditional Dotted Underlines */}
-          <div className="space-y-2.5 text-sm text-[#454545] leading-relaxed relative z-10">
-            {/* Row 1: Name & Mobile */}
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">नाम / Name:</span>
-                <span className="font-extrabold text-[#2B1B10] truncate">{name}</span>
+          {/* BODY: Public Donor Layout OR Traditional Member Layout */}
+          {isPublicDonor ? (
+            <div className="space-y-3 relative z-10">
+              <div className="bg-[#FFF8EF] border-2 border-[#C65D13]/30 rounded-xl p-4 shadow-xs">
+                {/* Row 1: Name & Mobile */}
+                <div className="grid grid-cols-12 gap-2 pb-2.5 border-b border-dashed border-[#C65D13]/30">
+                  <div className="col-span-7">
+                    <span className="text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                      दानदाता का नाम / Donor Name
+                    </span>
+                    <div className="font-extrabold text-lg text-[#2B1B10] mt-0.5">
+                      श्री / श्रीमती {name}
+                    </div>
+                  </div>
+                  <div className="col-span-5 text-right">
+                    <span className="text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                      व्हाट्सएप / मो० नं० / Mobile
+                    </span>
+                    <div className="font-bold text-base text-[#2B1B10] font-mono mt-0.5">
+                      {mobile !== '—' ? `+91 ${mobile}` : '—'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 2: Purpose & UTR */}
+                <div className="grid grid-cols-12 gap-2 py-2.5 border-b border-dashed border-[#C65D13]/30">
+                  <div className="col-span-7">
+                    <span className="text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                      समर्पण प्रयोजन / Contribution Purpose
+                    </span>
+                    <div className="font-extrabold text-sm text-[#C65D13] mt-0.5">
+                      {purposeTitle}
+                    </div>
+                  </div>
+                  <div className="col-span-5 text-right">
+                    <span className="text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                      यूटीआर / संदर्भ संख्या / UTR No.
+                    </span>
+                    <div className="font-mono font-bold text-sm text-[#2B1B10] mt-0.5">
+                      {receipt.paymentId || receipt.utrNumber || 'UPI-VERIFIED'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 3: Amount in Words */}
+                <div className="pt-2">
+                  <span className="text-xs font-bold text-[#777777] uppercase block tracking-wider">
+                    समर्पण राशि (शब्दों में) / Amount in Words
+                  </span>
+                  <div className="font-black text-sm text-[#C65D13] underline decoration-[#C65D13]/40 underline-offset-4 mt-0.5">
+                    {amountWords}
+                  </div>
+                </div>
               </div>
-              <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">मो० न० / Mobile:</span>
-                <span className="font-bold text-[#2B1B10] font-mono">{mobile}</span>
+
+              {/* Blessings Note */}
+              <div className="bg-[#FFF4E5] border-l-4 border-[#C65D13] px-3.5 py-2.5 rounded-r-lg text-xs text-[#382719] leading-relaxed shadow-xs">
+                🙏 <strong>संस्थान की ओर से साधुवाद:</strong> आपके द्वारा सनातन संस्कृति के संवर्धन, गौ-सेवा व जनकल्याण हेतु समर्पित यह सहयोग सहर्ष प्राप्त किया गया। प्रभु श्रीराम का आशीर्वाद आप व आपके परिवार पर सदैव बना रहे।
               </div>
             </div>
-
-            {/* Row 2: Father's Name */}
-            <div className="border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-              <span className="font-bold text-[#2B1B10] flex-shrink-0">पिता / पति का नाम / Father's Name:</span>
-              <span className="font-bold text-[#2B1B10] truncate">{fatherHusbandName}</span>
-            </div>
-
-            {/* Row 3: Address & Block */}
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">पता / ग्राम / मोहल्ला:</span>
-                <span className="font-medium text-[#2B1B10] truncate">{address}</span>
+          ) : (
+            <div className="space-y-2.5 text-sm text-[#454545] leading-relaxed relative z-10">
+              {/* Row 1: Name & Mobile */}
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">नाम / Name:</span>
+                  <span className="font-extrabold text-[#2B1B10] truncate">{name}</span>
+                </div>
+                <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">मो० न० / Mobile:</span>
+                  <span className="font-bold text-[#2B1B10] font-mono">{mobile}</span>
+                </div>
               </div>
-              <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">विकास खण्ड / Block:</span>
-                <span className="font-medium text-[#2B1B10]">{block}</span>
+
+              {/* Row 2: Father's Name */}
+              <div className="border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                <span className="font-bold text-[#2B1B10] flex-shrink-0">पिता / पति का नाम / Father's Name:</span>
+                <span className="font-bold text-[#2B1B10] truncate">{fatherHusbandName}</span>
+              </div>
+
+              {/* Row 3: Address & Block */}
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">पता / ग्राम / मोहल्ला:</span>
+                  <span className="font-medium text-[#2B1B10] truncate">{address}</span>
+                </div>
+                <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">विकास खण्ड / Block:</span>
+                  <span className="font-medium text-[#2B1B10]">{block}</span>
+                </div>
+              </div>
+
+              {/* Row 4: District & State */}
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">जिला / District:</span>
+                  <span className="font-medium text-[#2B1B10]">{district}</span>
+                </div>
+                <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
+                  <span className="font-bold text-[#2B1B10] flex-shrink-0">प्रदेश / State:</span>
+                  <span className="font-medium text-[#2B1B10]">{state}</span>
+                </div>
+              </div>
+
+              {/* Row 5: Amount in Hindi words */}
+              <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
+                <span className="font-bold text-[#2B1B10]">
+                  {purposeLabel} (रूपया शब्दों में):
+                </span>
+                <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
+                  {amountWords}
+                </span>
+                <span className="text-[#382719] font-medium">{receiptClosingText}</span>
               </div>
             </div>
+          )}
 
-            {/* Row 4: District & State */}
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-7 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">जिला / District:</span>
-                <span className="font-medium text-[#2B1B10]">{district}</span>
-              </div>
-              <div className="col-span-5 border-b border-dotted border-gray-400 pb-1 flex items-baseline gap-1.5">
-                <span className="font-bold text-[#2B1B10] flex-shrink-0">प्रदेश / State:</span>
-                <span className="font-medium text-[#2B1B10]">{state}</span>
-              </div>
-            </div>
-
-            {/* Row 5: Amount in Hindi words */}
-            <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
-              <span className="font-bold text-[#2B1B10]">
-                {purposeLabel} (रूपया शब्दों में):
-              </span>
-              <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
-                {amountWords}
-              </span>
-              <span className="text-[#382719] font-medium">{receiptClosingText}</span>
-            </div>
-          </div>
-
-          {/* Bottom Section: Rupee Box + Bank of India Account + Signatures */}
+          {/* Bottom Section */}
           <div className="mt-5 pt-3.5 border-t-2 border-[#E9B44C]/50 flex items-center justify-between gap-4 relative z-10">
-            {/* Rupee Amount Box + QR Watermark */}
             <div className="flex items-center gap-2">
               <div className="flex items-center shadow-xs">
                 <div className="bg-[#C65D13] text-white px-3.5 py-1.5 rounded-l-lg font-bold text-xl flex items-center justify-center">
@@ -678,7 +915,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
                 </div>
               </div>
 
-              {/* Subtle verified QR imprint */}
               <div className="w-10 h-10 border border-amber-300 rounded bg-white/70 p-0.5 opacity-60 flex items-center justify-center">
                 <img
                   src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=boim-135883270012@boi&pn=RSSSST"
@@ -689,7 +925,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               </div>
             </div>
 
-            {/* Bank of India Official Account Credentials */}
             <div className="text-left leading-tight">
               <p className="font-bold text-sm text-[#C65D13]">
                 बैंक ऑफ़ इण्डिया (Bank of India)
@@ -702,7 +937,6 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               </p>
             </div>
 
-            {/* Authorized Signatory Endorsement */}
             <div className="text-right flex-shrink-0">
               <div className="font-serif italic font-black text-lg text-[#C65D13] tracking-wider">
                 बजरंगी दूबे
@@ -716,13 +950,11 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             </div>
           </div>
 
-          {/* Official Footer Verification Note */}
           <div className="mt-4 pt-2 border-t border-gray-200 text-center text-[10px] text-[#666666] relative z-10 leading-tight">
             Receipt generated with Trust Watermark, Bank of India Verification & General Secretary Endorsement. • संपर्क: 9794590044, 9026734887
           </div>
         </div>
       </div>
-
     </div>
   );
 };

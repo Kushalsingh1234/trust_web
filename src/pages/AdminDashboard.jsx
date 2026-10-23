@@ -329,53 +329,20 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     try {
       setIsProcessing(true);
       const res = await markReceiptSent(colName, item.id, currentUser?.uid || 'admin');
-      const phone = item.donorPhone || item.phone || item.mobile || item.whatsapp || item.payerMobile;
-      const isDonation = colName === 'donations' || item.purpose === 'samarpan' || item.purpose === 'donation' || !item.uid;
+      const updatedItem = {
+        ...item,
+        receiptNumber: res.receiptNumber || item.receiptNumber,
+        receiptSent: true
+      };
 
-      if (phone) {
-        const updatedItem = {
-          ...item,
-          receiptNumber: res.receiptNumber || item.receiptNumber,
-          receiptSent: true
-        };
-        const message = formatDonationReceiptWhatsAppMessage(updatedItem, whatsappSettings?.adminName);
+      // Open the specialized receipt modal so admin can preview the custom receipt and dispatch image/PDF to WhatsApp
+      handleDownloadReceipt(updatedItem);
 
-        // 1. Try automated sending if Baileys server is connected
-        let sentAutomated = false;
-        if (baileysServerState?.connected) {
-          try {
-            await sendPersonalMessageViaBaileys(phone, message);
-            sentAutomated = true;
-          } catch (e) {
-            console.warn('Baileys automated send fallback:', e);
-          }
-        }
-
-        // 2. Fallback / Direct WhatsApp Chat link
-        const { mobileUrl, webUrl } = buildWhatsAppUrl(phone, message);
-        const targetUrl = window.innerWidth > 768 ? (webUrl || mobileUrl) : mobileUrl;
-
-        if (sentAutomated) {
-          toast.success(
-            lang === 'hi'
-              ? `दान रसीद सीधे दानदाता के व्हाट्सएप (+91 ${phone}) पर भेज दी गई! (रसीद सं: ${res.receiptNumber})`
-              : `Donation receipt sent directly to donor's WhatsApp! (Receipt No: ${res.receiptNumber})`
-          );
-        } else {
-          window.open(targetUrl, '_blank');
-          toast.success(
-            lang === 'hi'
-              ? `रसीद जारी (सं: ${res.receiptNumber}) और व्हाट्सएप चैट खोल दी गई!`
-              : `Receipt dispatched (No: ${res.receiptNumber}) and WhatsApp chat opened!`
-          );
-        }
-      } else {
-        toast.success(
-          lang === 'hi'
-            ? `रसीद जारी कर दी गई है! (रसीद संख्या: ${res.receiptNumber})। अब इसे डाउनलोड किया जा सकता है।`
-            : `Receipt dispatched (No: ${res.receiptNumber})! Can now be downloaded.`
-        );
-      }
+      toast.success(
+        lang === 'hi'
+          ? `रसीद तैयार है (संख्या: ${res.receiptNumber})! अब व्हाट्सएप पर इमेज/PDF भेजें।`
+          : `Receipt ready (No: ${res.receiptNumber})! Preview and send image/PDF to WhatsApp.`
+      );
     } catch (err) {
       toast.error('Failed to send receipt: ' + err.message);
     } finally {
@@ -912,6 +879,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     const isDonationRecord = activeTab === 'donations' || record.purpose === 'samarpan' || record.purpose === 'donation';
     const isVolunteerRecord = activeTab === 'volunteers' || record.purpose === 'volunteer_registration' || record.role === 'volunteer';
     const effectivePurpose = isDonationRecord ? 'samarpan' : (isVolunteerRecord ? 'volunteer_registration' : (record.purpose || 'membership_fee'));
+    const isPublicDonor = isDonationRecord && (!record.fatherHusbandName && !member?.fatherHusbandName) && (!record.address && !member?.address);
 
     const effectiveAmount = Number(record.verifiedAmount ?? record.amount ?? record.claimedAmount ?? (isDonationRecord ? 0 : 200));
 
@@ -931,6 +899,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       block,
       district,
       state,
+      isPublicDonor,
       paymentId: record.paymentId || record.utrNumber || 'UPI-REF',
       purpose: effectivePurpose,
       itemType: isDonationRecord ? 'donation' : (isVolunteerRecord ? 'volunteer' : 'membership'),
@@ -3624,11 +3593,19 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         </div>
       )}
 
-      {/* Authentic Traditional Receipt Modal */}
+      {/* Authentic Traditional / Public Donor Receipt Modal */}
       <OfficialReceiptModal
         isOpen={Boolean(viewingReceipt)}
         onClose={() => setViewingReceipt(null)}
         receipt={viewingReceipt}
+        onReceiptSent={async (rcpt) => {
+          try {
+            await markReceiptSent(rcpt.tab || rcpt.colName || (activeTab === 'members' ? 'membershipApplications' : activeTab), rcpt.id, currentUser?.uid || 'admin');
+            setViewingReceipt(prev => prev ? { ...prev, receiptSent: true } : null);
+          } catch (e) {
+            console.warn('Could not mark receipt sent:', e);
+          }
+        }}
       />
 
       {/* Custom Receipt Modal */}

@@ -113,8 +113,14 @@ export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
   const amount = Number(data.verifiedAmount ?? data.amount ?? data.claimedAmount ?? 0);
   const amountWords = data.amountWords || numberToHindiWords(amount);
   const isMembership = data.purpose === 'membership_fee' || Boolean(data.category);
-  const heading = isMembership ? 'सनातन संस्थान — सदस्यता निधि' : 'सनातन संरक्षण — समर्पण निधि';
+  const isPublicDonor = Boolean(data.isPublicDonor) || (!isMembership && (!data.fatherHusbandName || data.fatherHusbandName === '—') && (!data.address || data.address === '—') && !data.memberId);
+  const heading = isPublicDonor ? 'सनातन संरक्षण — ई-समर्पण रसीद' : (isMembership ? 'सनातन संस्थान — सदस्यता निधि' : 'सनातन संरक्षण — समर्पण निधि');
   const closingText = isMembership ? 'सह धन्यवाद प्राप्त किया।' : 'सहर्ष प्राप्त किया।';
+  const purposeTitle = data.purposeTitle || (data.purpose === 'cow_service' ? 'गौ सेवा एवं पोषण प्रकल्प' :
+    data.purpose === 'sanskar_camps' ? '१६ वैदिक संस्कार जागरण शिविर' :
+    data.purpose === 'medical_aid' ? 'निर्धन चिकित्सा एवं औषधि सहयोग' :
+    data.purpose === 'labor_welfare' ? 'श्रमिक कल्याण एवं दुर्घटना सहायता' : 'सामान्य सनातन धर्मार्थ समर्पण निधि');
+  const utrNumber = data.paymentId || data.utrNumber || 'UPI-VERIFIED';
 
   let dateStr = '';
   try {
@@ -187,6 +193,40 @@ export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
           </div>
         </div>
 
+        ${isPublicDonor ? `
+        <div style="background-color: #FFF8EF; border: 2px solid rgba(198, 93, 19, 0.3); border-radius: 12px; padding: 14px 16px; margin: 12px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(198, 93, 19, 0.3); padding-bottom: 8px; margin-bottom: 8px;">
+            <div>
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">दानदाता का नाम / Donor Name:</span>
+              <div style="font-size: 17px; font-weight: 800; color: #2B1B10; margin-top: 2px;">श्री / श्रीमती ${name}</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">व्हाट्सएप / मो० नं० / Mobile:</span>
+              <div style="font-size: 15px; font-weight: 800; color: #2B1B10; font-family: monospace; margin-top: 2px;">${mobile !== '—' ? '+91 ' + mobile : '—'}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(198, 93, 19, 0.3); padding-bottom: 8px; margin-bottom: 8px;">
+            <div>
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">समर्पण प्रयोजन / Contribution Purpose:</span>
+              <div style="font-size: 13px; font-weight: 800; color: #C65D13; margin-top: 2px;">${purposeTitle}</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">यूटीआर / संदर्भ संख्या / UTR No.:</span>
+              <div style="font-size: 13px; font-weight: 800; color: #2B1B10; font-family: monospace; margin-top: 2px;">${utrNumber}</div>
+            </div>
+          </div>
+
+          <div style="padding-top: 2px;">
+            <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">समर्पण राशि (शब्दों में) / Amount in Words:</span>
+            <div style="font-size: 14px; font-weight: 900; color: #C65D13; text-decoration: underline; margin-top: 2px;">${amountWords}</div>
+          </div>
+        </div>
+
+        <div style="background-color: #FFF4E5; border-left: 4px solid #C65D13; padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #382719; line-height: 1.5; margin-bottom: 12px;">
+          🙏 <strong>संस्थान की ओर से साधुवाद:</strong> आपके द्वारा सनातन संस्कृति के संवर्धन, गौ-सेवा व जनकल्याण हेतु समर्पित यह सहयोग सहर्ष प्राप्त किया गया। प्रभु श्रीराम का आशीर्वाद आप व आपके परिवार पर सदैव बना रहे।
+        </div>
+        ` : `
         <div style="font-size: 13px; color: #454545; line-height: 1.8;">
           <div style="display: flex; gap: 16px; margin-bottom: 8px;">
             <div style="flex: 7; border-bottom: 1px dotted #888888; padding-bottom: 3px;">
@@ -225,6 +265,7 @@ export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
             <span style="color: #382719;"> ${closingText}</span>
           </div>
         </div>
+        `}
 
         <div style="display: flex; align-items: center; justify-content: space-between; border-top: 2px solid rgba(233, 180, 76, 0.5); padding-top: 12px; margin-top: 14px;">
           <div style="display: flex; align-items: center; gap: 8px;">
