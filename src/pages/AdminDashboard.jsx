@@ -35,6 +35,8 @@ import {
   disconnectAdminWhatsApp,
   getLocalWhatsAppSession,
   formatNoticeForWhatsApp,
+  formatDonationReceiptWhatsAppMessage,
+  buildWhatsAppUrl,
   checkBaileysServerStatus,
   broadcastNoticeViaBaileys,
   sendPersonalMessageViaBaileys
@@ -327,11 +329,53 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     try {
       setIsProcessing(true);
       const res = await markReceiptSent(colName, item.id, currentUser?.uid || 'admin');
-      toast.success(
-        lang === 'hi'
-          ? `रसीद जारी कर दी गई है! (रसीद संख्या: ${res.receiptNumber})। अब सदस्य इसे डाउनलोड कर सकते हैं।`
-          : `Receipt dispatched (No: ${res.receiptNumber})! Member can now download it.`
-      );
+      const phone = item.donorPhone || item.phone || item.mobile || item.whatsapp || item.payerMobile;
+      const isDonation = colName === 'donations' || item.purpose === 'samarpan' || item.purpose === 'donation' || !item.uid;
+
+      if (phone) {
+        const updatedItem = {
+          ...item,
+          receiptNumber: res.receiptNumber || item.receiptNumber,
+          receiptSent: true
+        };
+        const message = formatDonationReceiptWhatsAppMessage(updatedItem, whatsappSettings?.adminName);
+
+        // 1. Try automated sending if Baileys server is connected
+        let sentAutomated = false;
+        if (baileysServerState?.connected) {
+          try {
+            await sendPersonalMessageViaBaileys(phone, message);
+            sentAutomated = true;
+          } catch (e) {
+            console.warn('Baileys automated send fallback:', e);
+          }
+        }
+
+        // 2. Fallback / Direct WhatsApp Chat link
+        const { mobileUrl, webUrl } = buildWhatsAppUrl(phone, message);
+        const targetUrl = window.innerWidth > 768 ? (webUrl || mobileUrl) : mobileUrl;
+
+        if (sentAutomated) {
+          toast.success(
+            lang === 'hi'
+              ? `दान रसीद सीधे दानदाता के व्हाट्सएप (+91 ${phone}) पर भेज दी गई! (रसीद सं: ${res.receiptNumber})`
+              : `Donation receipt sent directly to donor's WhatsApp! (Receipt No: ${res.receiptNumber})`
+          );
+        } else {
+          window.open(targetUrl, '_blank');
+          toast.success(
+            lang === 'hi'
+              ? `रसीद जारी (सं: ${res.receiptNumber}) और व्हाट्सएप चैट खोल दी गई!`
+              : `Receipt dispatched (No: ${res.receiptNumber}) and WhatsApp chat opened!`
+          );
+        }
+      } else {
+        toast.success(
+          lang === 'hi'
+            ? `रसीद जारी कर दी गई है! (रसीद संख्या: ${res.receiptNumber})। अब इसे डाउनलोड किया जा सकता है।`
+            : `Receipt dispatched (No: ${res.receiptNumber})! Can now be downloaded.`
+        );
+      }
     } catch (err) {
       toast.error('Failed to send receipt: ' + err.message);
     } finally {
@@ -2057,7 +2101,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       currentDisplayData.map((item) => {
                         const status = (item.status || 'pending').toLowerCase();
                         const name = item.fullName || item.donorName || item.payerName || 'Unknown';
-                        const phone = item.phone || item.donorPhone || item.payerMobile || '—';
+                        const phone = item.phone || item.donorPhone || item.mobile || item.whatsapp || item.payerMobile || '—';
 
                         if (activeTab === 'members') {
                           const isRemoved = item.status === 'removed';
@@ -2223,7 +2267,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   )}
 
                                   {/* WhatsApp Personal Message */}
-                                  {(item.whatsapp || item.mobile || item.phone) && (
+                                  {(item.whatsapp || item.mobile || item.phone || item.donorPhone || item.payerMobile) && (
                                     <button
                                       type="button"
                                       onClick={() => handleOpenPersonalWhatsApp(item)}
@@ -2269,11 +2313,15 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                 )}
                                 <span>{name}</span>
                               </div>
-                              {item.uid && (
+                              {item.uid ? (
                                 <span className="text-[10px] text-[#888888] font-mono">
                                   UID: {item.uid.slice(0, 8)}...
                                 </span>
-                              )}
+                              ) : activeTab === 'donations' ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                                  🌟 {lang === 'hi' ? 'गैर-पंजीकृत दानदाता' : 'Public Donor'}
+                                </span>
+                              ) : null}
                             </td>
 
                             <td className="py-3.5 px-4 font-mono text-[#454545]">
@@ -2455,8 +2503,22 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                   </button>
                                 )}
 
+                                {/* WhatsApp Action: Send / Resend Official Receipt to WhatsApp for Donations */}
+                                {activeTab === 'donations' && status === 'approved' && (item.donorPhone || item.whatsapp || item.mobile || item.phone || item.payerMobile) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendReceipt(item, 'donations')}
+                                    disabled={isProcessing}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition-all cursor-pointer"
+                                    title={lang === 'hi' ? 'व्हाट्सएप पर दान रसीद भेजें' : 'Send Donation Receipt on WhatsApp'}
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                    <span>{item.receiptSent ? (lang === 'hi' ? 'पुनः रसीद' : 'Resend WA') : (lang === 'hi' ? 'व्हाट्सएप रसीद' : 'WA Receipt')}</span>
+                                  </button>
+                                )}
+
                                 {/* WhatsApp Personal Message */}
-                                {(item.whatsapp || item.mobile || item.phone) && (
+                                {(item.whatsapp || item.mobile || item.phone || item.donorPhone || item.payerMobile) && (activeTab !== 'donations' || status !== 'approved') && (
                                   <button
                                     type="button"
                                     onClick={() => handleOpenPersonalWhatsApp(item)}
@@ -2617,6 +2679,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               ) : (activeTab === 'memberships' || activeTab === 'members') ? (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
                                   {lang === 'hi' ? '🛡️ सदस्य' : '🛡️ Member'}
+                                </span>
+                              ) : (activeTab === 'donations' && (!item.uid || !item.memberId)) ? (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                  {lang === 'hi' ? '🌟 गैर-पंजीकृत दानदाता' : '🌟 Public Donor'}
                                 </span>
                               ) : null}
                             </div>
@@ -2920,8 +2986,22 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               </button>
                             )}
 
+                            {/* WhatsApp for Donations (Receipt) */}
+                            {activeTab === 'donations' && (item.donorPhone || item.whatsapp || item.mobile || item.phone || item.payerMobile) && (
+                              <button
+                                type="button"
+                                onClick={() => handleSendReceipt(item, 'donations')}
+                                disabled={isProcessing}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                                title={lang === 'hi' ? 'व्हाट्सएप पर रसीद भेजें' : 'Send Receipt to WhatsApp'}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                <span>{item.receiptSent ? (lang === 'hi' ? 'पुनः रसीद' : 'Resend WA') : (lang === 'hi' ? 'व्हाट्सएप रसीद' : 'WA Receipt')}</span>
+                              </button>
+                            )}
+
                             {/* WhatsApp */}
-                            {(item.whatsapp || item.mobile || item.phone) && (
+                            {(item.whatsapp || item.mobile || item.phone || item.donorPhone || item.payerMobile) && activeTab !== 'donations' && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenPersonalWhatsApp(item)}
@@ -3285,23 +3365,37 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                     </div>
 
                     {selectedItem.receiptSent ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadReceipt(selectedItem)}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>{lang === 'hi' ? 'रसीद देखें' : 'View Receipt'}</span>
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadReceipt(selectedItem)}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>{lang === 'hi' ? 'रसीद देखें' : 'View Receipt'}</span>
+                        </button>
+                        {(selectedItem.donorPhone || selectedItem.phone || selectedItem.mobile || selectedItem.whatsapp) && (
+                          <button
+                            type="button"
+                            onClick={() => handleSendReceipt(selectedItem, activeTab === 'members' ? 'membershipApplications' : activeTab)}
+                            disabled={isProcessing}
+                            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                            title={lang === 'hi' ? 'व्हाट्सएप पर पुनः रसीद भेजें' : 'Resend Receipt on WhatsApp'}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>{lang === 'hi' ? 'व्हाट्सएप पर पुनः भेजें' : 'Resend on WhatsApp'}</span>
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleSendReceipt(selectedItem, activeTab === 'members' ? 'membershipApplications' : activeTab)}
                         disabled={isProcessing}
-                        className="px-4 py-2 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>{lang === 'hi' ? 'रसीद भेजें' : 'Send Receipt'}</span>
+                        <span>{lang === 'hi' ? 'रसीद जारी करें व व्हाट्सएप भेजें' : 'Dispatch & Send to WhatsApp'}</span>
                       </button>
                     )}
                   </div>

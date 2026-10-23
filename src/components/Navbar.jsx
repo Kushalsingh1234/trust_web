@@ -362,21 +362,6 @@ export const Navbar = ({
                 </Link>
               )}
 
-              {/* Dedicated Receipt Download Action in Mobile */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenReceiptModal();
-                }}
-                className="w-full px-3 py-3 text-sm rounded-xl transition-colors flex items-center justify-between min-h-[44px] text-primary font-bold hover:bg-white bg-primary/5 border border-primary/25 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Download className="w-4 h-4 text-primary" />
-                  <span>{lang === 'hi' ? 'रसीद जनरेट एवं डाउनलोड करें' : 'Generate & Download Receipt'}</span>
-                </div>
-                <span className="text-primary text-xs font-bold font-mono">PDF →</span>
-              </button>
             </div>
 
             {/* Action buttons inside mobile drawer */}

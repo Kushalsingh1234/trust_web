@@ -142,20 +142,8 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-primary hover:bg-secondary text-white font-black text-sm shadow-saffron transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-primary"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'भुगतान UTR संदर्भ दर्ज करें (सत्यापन हेतु)' : 'Submit Payment UTR for Verification'}</span>
+                <span>{lang === 'hi' ? 'भुगतान UTR संदर्भ दर्ज करें (व्हाट्सएप पर रसीद हेतु)' : 'Submit Payment UTR (For WhatsApp Receipt)'}</span>
               </button>
-
-              <button
-                type="button"
-                onClick={onOpenReceiptModal}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-white to-amber-500/10 hover:bg-white text-secondary hover:text-primary border-2 border-[#E9B44C] font-black text-xs sm:text-sm shadow-xs transition-all active:scale-[0.98]"
-              >
-                <Download className="w-4 h-4 text-primary flex-shrink-0" />
-                <span>{lang === 'hi' ? 'डिजिटल रसीद जनरेट एवं डाउनलोड करें' : 'Generate & Download Digital Receipt'}</span>
-              </button>
-              <p className="text-[11px] text-[#454545] font-medium text-center mt-1">
-                {t.donate.receiptGenDesc}
-              </p>
             </div>
 
             {/* 80G Tax Exemption Transparent Statement */}

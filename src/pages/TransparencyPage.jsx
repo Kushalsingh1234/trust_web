@@ -49,20 +49,11 @@ export const TransparencyPage = ({ onOpenReceiptModal }) => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
-              <button
-                type="button"
-                onClick={onOpenReceiptModal}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
-              >
-                <FileText className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'डिजिटल रसीद सृजन' : 'Generate Receipt'}</span>
-              </button>
-
               <Link
                 to="/donate"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white hover:bg-[#FFF8EF] text-[#382719] font-bold text-xs sm:text-sm border border-[#E9B44C] shadow-xs transition-all"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
               >
-                <Heart className="w-4 h-4 text-primary" />
+                <Heart className="w-4 h-4 text-white" />
                 <span>{lang === 'hi' ? 'समर्पण निधि' : 'Donate'}</span>
               </Link>
             </div>

@@ -189,14 +189,64 @@ export const formatNoticeForWhatsApp = (notice, customNote = '') => {
 };
 
 /**
+ * Format an official donation receipt into a WhatsApp message
+ */
+export const formatDonationReceiptWhatsAppMessage = (donation, adminName = 'ट्रस्ट प्रबंधकारिणी') => {
+  const donorName = donation.donorName || donation.fullName || donation.payerName || 'दानदाता';
+  const amount = Number(donation.verifiedAmount ?? donation.amount ?? donation.claimedAmount ?? 0);
+  const receiptNo = donation.receiptNumber || `RSSSST-REC-${donation.id?.slice(0, 6).toUpperCase() || 'DON'}`;
+  
+  let dateStr = '';
+  try {
+    const rawDate = donation.approvedAt || donation.verifiedAt || donation.createdAt;
+    if (rawDate?.toDate) {
+      dateStr = rawDate.toDate().toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    } else if (rawDate) {
+      dateStr = new Date(rawDate).toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+  } catch (e) {
+    dateStr = new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  if (!dateStr) {
+    dateStr = new Date().toLocaleDateString('hi-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  const utr = donation.paymentId || donation.utrNumber || 'UPI-REF';
+
+  let msg = `*🕉️ राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)*\n`;
+  msg += `_पंजीकृत धर्मार्थ न्यास • 12A/80G पंजीकृत • गोरखपुर, उ.प्र._\n\n`;
+  msg += `*🧾 आधिकारिक ई-दान रसीद (Official Donation Receipt)*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `👤 *दानदाता:* ${donorName}\n`;
+  msg += `💰 *समर्पण राशि:* ₹${amount.toLocaleString('en-IN')}/-\n`;
+  msg += `📄 *रसीद क्रमांक:* ${receiptNo}\n`;
+  msg += `📅 *स्वीकृति दिनांक:* ${dateStr}\n`;
+  msg += `💳 *लेनदेन UTR / Ref:* ${utr}\n`;
+  msg += `🎯 *उद्देश्य:* सनातन संस्कार व धर्मार्थ सेवा (Samarpan)\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  msg += `🙏 *संस्थान की ओर से हार्दिक साधुवाद एवं आभार!*\n`;
+  msg += `आपके द्वारा समर्पित पुण्य सहयोग सनातन धर्म, गौ-सेवा, संस्कार शिविरों व समाज सेवा में प्रयुक्त होगा। प्रभु श्रीराम का आशीर्वाद आप व आपके परिवार पर सदैव बना रहे।\n\n`;
+  msg += `🌐 *ट्रस्ट की आधिकारिक वेबसाइट:* https://rashtriyasanatantrust.in\n`;
+  msg += `📞 *व्यवस्थापक संपर्क सूत्र:* +91 9794590044\n`;
+  msg += `🚩 _जय श्री राम • सर्वे भवन्तु सुखिनः_`;
+  return msg;
+};
+
+/**
  * Generate personal message templates for individual recipients
  */
 export const getPersonalMessageTemplates = (recipient, adminName = 'ट्रस्ट प्रबंधकारिणी') => {
-  const name = recipient.fullName || recipient.donorName || recipient.applicantName || 'भक्त/सदस्य';
+  const name = recipient.fullName || recipient.donorName || recipient.applicantName || recipient.payerName || 'भक्त/सदस्य';
   const id = recipient.memberId || recipient.volunteerId || recipient.id || '';
   const role = recipient.role === 'volunteer' || recipient.cardType === 'volunteer' ? 'स्वयंसेवक' : 'सदस्य';
 
   return [
+    {
+      id: 'donation_receipt',
+      titleHi: '🧾 दान रसीद प्रेषण (WhatsApp Receipt)',
+      titleEn: '🧾 Donation Receipt',
+      text: formatDonationReceiptWhatsAppMessage(recipient, adminName)
+    },
     {
       id: 'welcome_approval',
       titleHi: 'सदस्यता / स्वयंसेवक स्वीकृति',

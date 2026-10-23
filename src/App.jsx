@@ -314,11 +314,6 @@ function AppContent() {
         onClose={() => setHelpModalOpen(false)}
       />
 
-      <ReceiptGeneratorModal
-        isOpen={receiptModalOpen}
-        onClose={() => setReceiptModalOpen(false)}
-      />
-
       <ImageLightboxModal
         image={activeLightbox}
         onClose={() => setActiveLightbox(null)}

@@ -29,20 +29,25 @@ export const WhatsAppPersonalModal = ({
   const { lang } = useLanguage();
   const toast = useToast();
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState('welcome_approval');
+  const phone = recipient?.whatsapp || recipient?.mobile || recipient?.phone || recipient?.donorPhone || '';
+  const isDonation = recipient?.donorPhone || recipient?.purpose === 'samarpan' || recipient?.purpose === 'donation' || (!recipient?.memberId && recipient?.amount);
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState(isDonation ? 'donation_receipt' : 'welcome_approval');
   const [messageText, setMessageText] = useState('');
   const [copied, setCopied] = useState(false);
   const [isSendingApi, setIsSendingApi] = useState(false);
 
-  const phone = recipient?.whatsapp || recipient?.mobile || recipient?.phone || recipient?.donorPhone || '';
-
   useEffect(() => {
     if (recipient && isOpen) {
+      const isDon = recipient?.donorPhone || recipient?.purpose === 'samarpan' || recipient?.purpose === 'donation' || (!recipient?.memberId && recipient?.amount);
+      const initialTplId = isDon ? 'donation_receipt' : 'welcome_approval';
+      setSelectedTemplateId(initialTplId);
+
       const templates = getPersonalMessageTemplates(recipient, adminSettings?.adminName || 'ट्रस्ट प्रबंधकारिणी');
-      const defaultTpl = templates.find((t) => t.id === selectedTemplateId) || templates[0];
-      setMessageText(defaultTpl.text);
+      const defaultTpl = templates.find((t) => t.id === initialTplId) || templates[0];
+      setMessageText(defaultTpl?.text || '');
     }
-  }, [recipient, isOpen, selectedTemplateId, adminSettings]);
+  }, [recipient, isOpen, adminSettings]);
 
   if (!isOpen || !recipient) return null;
 

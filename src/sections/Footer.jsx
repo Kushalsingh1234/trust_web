@@ -126,13 +126,6 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
                 >
                   🔒 {lang === 'hi' ? 'व्यवस्थापक पोर्टल (Admin)' : 'Admin Dashboard'}
                 </Link>
-                <button
-                  type="button"
-                  onClick={onOpenReceiptModal}
-                  className="block text-[#FFF8EF]/70 hover:text-white underline text-left py-1"
-                >
-                  {lang === 'hi' ? 'ऑनलाइन डिजिटल रसीद सृजन' : 'Generate Digital Receipt'}
-                </button>
               </div>
 
               <div className="pt-2 text-xs text-[#FFF8EF]/70 space-y-1">
