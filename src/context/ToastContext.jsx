@@ -33,7 +33,7 @@ export const ToastProvider = ({ children }) => {
       {/* Toast Notification Container */}
       <div 
         aria-live="polite" 
-        className="fixed top-20 right-4 sm:right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"
+        className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:right-6 z-[9999] flex flex-col gap-2.5 w-[calc(100%-2rem)] sm:w-full sm:max-w-sm pointer-events-none"
       >
         {toasts.map((t) => (
           <div

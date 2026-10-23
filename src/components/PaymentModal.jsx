@@ -62,15 +62,6 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
     return () => unsub();
   }, []);
 
-  // Protected action: require login
-  useEffect(() => {
-    if (isOpen && !currentUser) {
-      onClose();
-      navigate('/login', {
-        state: { from: location, message: 'Please sign in to continue' }
-      });
-    }
-  }, [isOpen, currentUser]);
 
   useEffect(() => {
     if (userProfile) {
@@ -107,7 +98,7 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
       errs.payerName = lang === 'hi' ? 'कृपया दानदाता का नाम दर्ज करें' : 'Enter donor name';
     }
     if (!formData.payerMobile.trim() || !/^[6-9]\d{9}$/.test(formData.payerMobile.replace(/\D/g, ''))) {
-      errs.payerMobile = lang === 'hi' ? 'मान्य 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Enter valid 10-digit mobile';
+      errs.payerMobile = lang === 'hi' ? 'मान्य 10-अंकीय व्हाट्सएप नंबर दर्ज करें' : 'Enter valid 10-digit WhatsApp number';
     }
     if (!formData.amount || Number(formData.amount) <= 0) {
       errs.amount = lang === 'hi' ? 'मान्य समर्पण राशि दर्ज करें' : 'Enter valid positive amount';
@@ -262,7 +253,22 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* No sign up needed - Guest Samarpan Reassurance Banner */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex items-start gap-3 shadow-xs">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs leading-relaxed">
+                  <span className="font-extrabold text-emerald-900 block text-[13px]">
+                    {lang === 'hi' ? 'लॉगिन / साइन-अप की कोई आवश्यकता नहीं' : 'No Sign-up or Registration Needed'}
+                  </span>
+                  <span className="text-emerald-800 font-medium">
+                    {lang === 'hi'
+                      ? 'कोई भी श्रद्धालु सीधे समर्पण कर सकता है। आपके समर्पण की आधिकारिक डिजिटल रसीद नीचे दिए गए व्हाट्सएप नंबर पर तुरंत भेजी जाएगी।'
+                      : 'Anyone can donate directly. The official digital trust receipt will be dispatched to your WhatsApp number below.'}
+                  </span>
+                </div>
+              </div>
               
               {/* QR & Bank Information Box */}
               <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFF8EF] via-white to-[#FFF8EF] border border-[#E9B44C]/50 space-y-4">
@@ -329,19 +335,26 @@ export const PaymentModal = ({ isOpen, onClose, defaultPurpose = 'samarpan', def
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#382719] mb-1">
-                      {lang === 'hi' ? 'मोबाइल नंबर *' : 'Mobile Number *'}
+                    <label className="block text-xs font-bold text-[#382719] mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-emerald-600 font-extrabold">📱 WhatsApp</span>
+                        <span>{lang === 'hi' ? 'नंबर (रसीद प्रेषण हेतु) *' : 'Number (For Receipt Delivery) *'}</span>
+                      </span>
                     </label>
                     <input
                       type="tel"
                       name="payerMobile"
                       value={formData.payerMobile}
                       onChange={handleInputChange}
-                      placeholder="10-अंकीय मोबाइल नंबर"
+                      maxLength={10}
+                      placeholder={lang === 'hi' ? '10-अंकीय व्हाट्सएप नंबर' : '10-digit WhatsApp number'}
                       className={`w-full px-3 py-2 rounded-xl border ${
                         errors.payerMobile ? 'border-red-500' : 'border-[#E9B44C]/50'
-                      } text-xs focus:outline-none focus:ring-2 focus:ring-primary/40`}
+                      } text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono`}
                     />
+                    <p className="text-[10px] text-[#555555] font-medium mt-1">
+                      {lang === 'hi' ? 'सत्यापन उपरांत रसीद इसी व्हाट्सएप नंबर पर भेजी जाएगी।' : 'Official receipt will be sent to this WhatsApp number.'}
+                    </p>
                     {errors.payerMobile && <p className="text-[10px] text-red-500 mt-0.5">{errors.payerMobile}</p>}
                   </div>
                 </div>
