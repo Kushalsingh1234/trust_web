@@ -103,7 +103,12 @@ export const WhatsAppDeviceModal = ({ isOpen, onClose, onStatusChange }) => {
   // Request 8-character pairing code for mobile users
   const handleRequestPairingCode = async (e) => {
     if (e) e.preventDefault();
-    const cleanNum = adminPhoneInput.replace(/\D/g, '');
+    let cleanNum = adminPhoneInput.replace(/\D/g, '');
+    if (cleanNum.startsWith('91') && cleanNum.length === 12) {
+      cleanNum = cleanNum.slice(2);
+    } else if (cleanNum.startsWith('0') && cleanNum.length === 11) {
+      cleanNum = cleanNum.slice(1);
+    }
     if (cleanNum.length !== 10) {
       toast.error('कृपया मान्य 10-अंकीय व्हाट्सएप मोबाइल नंबर दर्ज करें।');
       return;
