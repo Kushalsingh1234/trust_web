@@ -33,12 +33,12 @@ export const ToastProvider = ({ children }) => {
       {/* Toast Notification Container */}
       <div 
         aria-live="polite" 
-        className="fixed top-20 left-4 right-4 sm:left-auto sm:right-6 z-50 flex flex-col gap-2.5 sm:max-w-sm pointer-events-none items-center sm:items-end"
+        className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:right-6 z-[9999] flex flex-col gap-2.5 w-[calc(100%-2rem)] sm:w-full sm:max-w-sm pointer-events-none"
       >
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`w-full pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-2 text-left ${
+            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-2 text-left ${
               t.type === 'success'
                 ? 'bg-white/95 border-emerald-500/40 text-[#241911]'
                 : t.type === 'error'

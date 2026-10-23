@@ -396,19 +396,6 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Loading Screen while Firebase Auth initializes (No UI Flicker)
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FFF8EF] flex flex-col items-center justify-center p-4">
-        <div className="relative">
-          <TrustLogo className="w-20 h-20 animate-pulse" showText={false} lang="hi" />
-        </div>
-        <p className="mt-4 font-hindi-heading font-black text-sm text-[#382719] tracking-wide animate-pulse">
-          सनातन संस्कार सेवा संस्थान...
-        </p>
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider

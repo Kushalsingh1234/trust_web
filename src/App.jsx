@@ -190,16 +190,14 @@ function AppContent() {
             }
           />
 
-          {/* 5. Protected Donate Page (Requires login) */}
+          {/* 5. Open Public Donate Page (No sign up required) */}
           <Route
             path="/donate"
             element={
-              <ProtectedRoute message="Please sign in to continue">
-                <DonatePage
-                  onOpenReceiptModal={() => setReceiptModalOpen(true)}
-                  onOpenPaymentModal={() => setPaymentModalOpen(true)}
-                />
-              </ProtectedRoute>
+              <DonatePage
+                onOpenReceiptModal={() => setReceiptModalOpen(true)}
+                onOpenPaymentModal={() => setPaymentModalOpen(true)}
+              />
             }
           />
 
