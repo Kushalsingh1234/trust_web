@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -86,17 +86,8 @@ import {
   Radio,
   Loader2,
   Smartphone,
-  MapPin,
-  SlidersHorizontal,
-  MoreHorizontal,
-  Receipt
+  MapPin
 } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
-import { LocalNotifications } from '@capacitor/local-notifications';
-import PushNotificationService from '../services/pushNotificationService';
-import { getWhatsAppApiBaseUrl } from '../firebase/whatsappService';
-import CustomReceiptModal from '../components/CustomReceiptModal';
 
 export const AdminDashboard = ({ onNavigateHome }) => {
   const { lang, toggleLanguage } = useLanguage();
@@ -106,9 +97,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   // Active Tab: 'helpRequests' | 'memberships' | 'members' | 'volunteers' | 'donations' | 'paymentSettings'
   const [activeTab, setActiveTab] = useState('helpRequests');
-  const [applicationTypeFilter, setApplicationTypeFilter] = useState('all'); // 'all' | 'membership' | 'volunteer'
-  const [customReceiptModalOpen, setCustomReceiptModalOpen] = useState(false);
-  const prevCountsRef = useRef({ help: -1, mem: -1, vol: -1, don: -1 });
 
   // Realtime datasets (initialized from local cache to prevent 0 on refresh)
   const [helpRequests, setHelpRequests] = useState(() => {
@@ -193,48 +181,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
   const [baileysServerState, setBaileysServerState] = useState({ online: false, connected: false, phoneNumber: null });
 
-  // Mobile bottom bar & extra options state
-  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
-  const [isSendingTestPush, setIsSendingTestPush] = useState(false);
-
-  const triggerHaptic = async () => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await Haptics.impact({ style: ImpactStyle.Light });
-      }
-    } catch (e) {}
-  };
-
-  useEffect(() => {
-    // 1. Initialize Capacitor Push Notifications for Admin
-    PushNotificationService.init(currentUser, (action) => {
-      const targetTab = action?.notification?.data?.tab;
-      if (targetTab) {
-        setActiveTab(targetTab);
-      }
-    });
-
-    const handleSwitchTab = (e) => {
-      if (e.detail) {
-        setActiveTab(e.detail);
-      }
-    };
-    window.addEventListener('admin_switch_tab', handleSwitchTab);
-
-    const handlePushReceived = (e) => {
-      const notif = e.detail;
-      if (notif?.title) {
-        toast.info(`${notif.title}: ${notif.body || ''}`);
-      }
-    };
-    window.addEventListener('admin_push_received', handlePushReceived);
-
-    return () => {
-      window.removeEventListener('admin_switch_tab', handleSwitchTab);
-      window.removeEventListener('admin_push_received', handlePushReceived);
-    };
-  }, [currentUser]);
-
   useEffect(() => {
     const checkStatus = async () => {
       const s = await checkBaileysServerStatus();
@@ -244,71 +190,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
   }, []);
-
-  // Handler to send a real test push notification from mobile admin app
-  const handleSendTestPush = async () => {
-    try {
-      setIsSendingTestPush(true);
-
-      // 1. Immediately trigger native local notification on device
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const perm = await LocalNotifications.checkPermissions();
-          if (perm.display !== 'granted') {
-            await LocalNotifications.requestPermissions();
-          }
-          await LocalNotifications.schedule({
-            notifications: [{
-              title: lang === 'hi' ? '🔔 सनातन ट्रस्ट — टेस्ट नोटिफिकेशन' : '🔔 Sanatan Trust Admin Alert',
-              body: lang === 'hi'
-                ? 'सूचना प्रणाली पूर्णतः सक्रिय है! नए आवेदन और दान आने पर तुरंत मोबाइल पर घंटी व अलर्ट मिलेगा।'
-                : 'Notification system is fully active! You will receive instant notifications for applications & donations.',
-              id: Date.now() % 1000000,
-              channelId: 'trust_admin_alerts',
-              sound: 'default'
-            }]
-          });
-          try {
-            await Haptics.notification({ type: NotificationType.Success });
-          } catch {}
-          toast.success(lang === 'hi' ? 'टेस्ट नोटिफिकेशन भेजा गया! आपके फोन पर अलर्ट आ गया है।' : 'Test alert triggered on your device!');
-        } catch (localErr) {
-          console.warn('Local notification test error:', localErr);
-        }
-      }
-
-      // 2. Also send via backend push server if reachable
-      try {
-        const baseUrl = getWhatsAppApiBaseUrl();
-        const res = await fetch(`${baseUrl}/api/admin/send-test-push`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: lang === 'hi' ? '🔔 सनातन ट्रस्ट व्यवस्थापक सूचना' : '🔔 Trust Admin Push Notification',
-            body: lang === 'hi'
-              ? 'पुश नोटिफिकेशन सफलतापूर्वक सक्रिय हो गया है! नए आवेदन व समर्पण की तत्काल सूचनाएं प्राप्त होंगी।'
-              : 'Push notifications are fully active! You will receive real-time alerts for new applications & donations.'
-          })
-        });
-        const data = await res.json();
-        if (data.success && !Capacitor.isNativePlatform()) {
-          toast.success(
-            lang === 'hi'
-              ? `टेस्ट नोटिफिकेशन प्रेषित किया गया! (सफल: ${data.result?.successCount || 1})`
-              : `Test push sent successfully! (Delivered: ${data.result?.successCount || 1})`
-          );
-        }
-      } catch (backendErr) {
-        if (!Capacitor.isNativePlatform()) {
-          toast.info(lang === 'hi' ? 'बैकग्राउंड अलर्ट सक्रिय।' : 'Alerts active.');
-        }
-      }
-    } catch (err) {
-      toast.info(lang === 'hi' ? 'अलर्ट सक्रिय है।' : 'Device registered for alerts.');
-    } finally {
-      setIsSendingTestPush(false);
-    }
-  };
 
   // Payment Settings Form State
   const [settingsForm, setSettingsForm] = useState(DEFAULT_PAYMENT_SETTINGS);
@@ -537,119 +418,12 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     }
   };
 
-  // Realtime subscriptions & Native Local Notifications
+  // Realtime subscriptions
   useEffect(() => {
-    // 1. Initialize Local Notification channel on Android
-    if (Capacitor.isNativePlatform()) {
-      (async () => {
-        try {
-          await LocalNotifications.createChannel({
-            id: 'trust_admin_alerts',
-            name: 'Trust Admin Alerts',
-            description: 'Instant alerts for applications, donations, and help requests',
-            importance: 5,
-            visibility: 1,
-            vibration: true,
-            sound: 'default'
-          });
-          const perm = await LocalNotifications.checkPermissions();
-          if (perm.display !== 'granted') {
-            await LocalNotifications.requestPermissions();
-          }
-        } catch (e) {
-          console.warn('[LocalNotif] Setup channel note:', e);
-        }
-      })();
-    }
-
-    const unsubHelp = subscribeAllCollection('helpRequests', (data) => {
-      if (prevCountsRef.current.help !== -1 && data.length > prevCountsRef.current.help) {
-        const diff = data.length - prevCountsRef.current.help;
-        const newItems = data.slice(0, diff);
-        newItems.forEach(item => {
-          if (Capacitor.isNativePlatform() && (item.status || 'pending').toLowerCase() === 'pending') {
-            LocalNotifications.schedule({
-              notifications: [{
-                title: 'नई सहायता प्रार्थना! 🙏',
-                body: `${item.fullName || 'आवेदक'}: ${item.category || item.helpType || 'सहायता'} हेतु प्रार्थना प्राप्त हुई।`,
-                id: Math.floor(Math.random() * 1000000),
-                channelId: 'trust_admin_alerts',
-                sound: 'default'
-              }]
-            }).catch(() => {});
-          }
-        });
-      }
-      prevCountsRef.current.help = data.length;
-      setHelpRequests(data);
-    });
-
-    const unsubMem = subscribeAllCollection('memberships', (data) => {
-      if (prevCountsRef.current.mem !== -1 && data.length > prevCountsRef.current.mem) {
-        const diff = data.length - prevCountsRef.current.mem;
-        const newItems = data.slice(0, diff);
-        newItems.forEach(item => {
-          if (Capacitor.isNativePlatform() && (item.status || 'pending').toLowerCase() === 'pending') {
-            LocalNotifications.schedule({
-              notifications: [{
-                title: 'नया सदस्यता आवेदन! 🛡️',
-                body: `${item.fullName || 'नया आवेदक'} ने सदस्यता हेतु आवेदन किया है।`,
-                id: Math.floor(Math.random() * 1000000),
-                channelId: 'trust_admin_alerts',
-                sound: 'default'
-              }]
-            }).catch(() => {});
-          }
-        });
-      }
-      prevCountsRef.current.mem = data.length;
-      setMemberships(data);
-    });
-
-    const unsubVol = subscribeAllCollection('volunteers', (data) => {
-      if (prevCountsRef.current.vol !== -1 && data.length > prevCountsRef.current.vol) {
-        const diff = data.length - prevCountsRef.current.vol;
-        const newItems = data.slice(0, diff);
-        newItems.forEach(item => {
-          if (Capacitor.isNativePlatform() && (item.status || 'pending').toLowerCase() === 'pending') {
-            LocalNotifications.schedule({
-              notifications: [{
-                title: 'नया स्वयंसेवक आवेदन! 🤝',
-                body: `${item.fullName || 'नया स्वयंसेवक'} ने सेवा हेतु पंजीकरण किया है।`,
-                id: Math.floor(Math.random() * 1000000),
-                channelId: 'trust_admin_alerts',
-                sound: 'default'
-              }]
-            }).catch(() => {});
-          }
-        });
-      }
-      prevCountsRef.current.vol = data.length;
-      setVolunteers(data);
-    });
-
-    const unsubDon = subscribeAllCollection('donations', (data) => {
-      if (prevCountsRef.current.don !== -1 && data.length > prevCountsRef.current.don) {
-        const diff = data.length - prevCountsRef.current.don;
-        const newItems = data.slice(0, diff);
-        newItems.forEach(item => {
-          if (Capacitor.isNativePlatform() && (item.status || 'pending').toLowerCase() === 'pending') {
-            LocalNotifications.schedule({
-              notifications: [{
-                title: 'नया समर्पण / दान प्राप्त! 💰',
-                body: `₹${item.verifiedAmount || item.claimedAmount || item.amount || 200}/- का समर्पण प्राप्त हुआ - ${item.donorName || item.fullName || 'दाता'}`,
-                id: Math.floor(Math.random() * 1000000),
-                channelId: 'trust_admin_alerts',
-                sound: 'default'
-              }]
-            }).catch(() => {});
-          }
-        });
-      }
-      prevCountsRef.current.don = data.length;
-      setDonations(data);
-    });
-
+    const unsubHelp = subscribeAllCollection('helpRequests', (data) => setHelpRequests(data));
+    const unsubMem = subscribeAllCollection('memberships', (data) => setMemberships(data));
+    const unsubVol = subscribeAllCollection('volunteers', (data) => setVolunteers(data));
+    const unsubDon = subscribeAllCollection('donations', (data) => setDonations(data));
     const unsubMembers = subscribeMembersList((data) => setMembersList(data));
     const unsubSettings = subscribePaymentSettings((settings) => {
       const safe = settings ? { ...DEFAULT_PAYMENT_SETTINGS, ...settings } : DEFAULT_PAYMENT_SETTINGS;
@@ -766,7 +540,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           }
 
           const res = await approveMembership(selectedItem.id, num, currentUser?.uid || 'admin');
-          const isVol = activeTab === 'volunteers' || selectedItem.appType === 'volunteer' || selectedItem.memberType === 'volunteer' || selectedItem.category === 'catC';
+          const isVol = activeTab === 'volunteers' || selectedItem.memberType === 'volunteer' || selectedItem.category === 'catC';
           toast.success(
             isExempted
               ? (isVol
@@ -803,14 +577,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           return;
         }
 
-        if (activeTab === 'volunteers' || selectedItem.appType === 'volunteer') {
-          await reviewDocument(
-            'volunteers',
-            selectedItem.id,
-            { status: 'rejected', reason: rejectReasonInput.trim() },
-            currentUser?.uid || 'admin'
-          );
-        } else if (activeTab === 'memberships') {
+        if (activeTab === 'memberships') {
           await rejectMembership(selectedItem.id, rejectReasonInput.trim(), currentUser?.uid || 'admin');
         } else if (activeTab === 'donations') {
           await rejectDonationPayment(selectedItem.id, rejectReasonInput.trim(), currentUser?.uid || 'admin');
@@ -849,24 +616,49 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   // Re-download / View Receipt PDF
   const handleDownloadReceipt = (record) => {
+    if (!record) return;
+
+    // If record has an associated member UID, find their profile in membersList or memberships
+    const member = (record.uid || record.applicantUid || record.payerUid)
+      ? (membersList.find(m => (m.uid && (m.uid === record.uid || m.uid === record.applicantUid || m.uid === record.payerUid)) || m.id === record.uid) ||
+         memberships.find(m => (m.uid && (m.uid === record.uid || m.uid === record.applicantUid || m.uid === record.payerUid)) || m.id === record.uid))
+      : null;
+
+    const donorName = record.donorName || record.fullName || record.payerName || member?.fullName || member?.donorName || '—';
+    const rawMobile = record.donorPhone || record.phone || record.mobile || record.payerMobile || record.whatsapp || member?.phone || member?.mobile || '';
+    const fatherHusbandName = record.fatherHusbandName || record.fatherName || member?.fatherHusbandName || member?.fatherName || '—';
+    const address = record.address || record.villageOrLocality || record.location || member?.address || member?.villageOrLocality || '—';
+    const block = record.block || member?.block || '—';
+    const district = record.district || member?.district || '—';
+    const state = record.state || member?.state || 'उत्तर प्रदेश';
+
+    const isDonationRecord = activeTab === 'donations' || record.purpose === 'samarpan' || record.purpose === 'donation';
+    const isVolunteerRecord = activeTab === 'volunteers' || record.purpose === 'volunteer_registration' || record.role === 'volunteer';
+    const effectivePurpose = isDonationRecord ? 'samarpan' : (isVolunteerRecord ? 'volunteer_registration' : (record.purpose || 'membership_fee'));
+
+    const effectiveAmount = Number(record.verifiedAmount ?? record.amount ?? record.claimedAmount ?? (isDonationRecord ? 0 : 200));
+
     setViewingReceipt({
-      receiptNumber: record.receiptNumber || `RSSSST-2026-${record.id?.slice(0, 4).toUpperCase() || '2864'}`,
-      date: record.approvedAt || record.createdAt,
-      donorName: record.donorName || record.fullName || 'Contributor',
-      username: record.username || '',
-      memberId: record.memberId || '',
-      phone: record.donorPhone || record.phone || record.mobile || record.whatsapp || '',
-      mobile: record.mobile || record.donorPhone || record.phone || record.whatsapp || '',
-      donorPhone: record.donorPhone || record.phone || record.mobile || record.whatsapp || '',
-      fatherHusbandName: record.fatherHusbandName || record.fatherName || '',
-      address: record.address || record.location || '',
-      block: record.block || 'सदर',
-      district: record.district || record.cityDistrict || 'गोरखपुर',
-      state: record.state || 'उत्तर प्रदेश',
+      ...record,
+      receiptNumber: record.receiptNumber || `RSSSST-2026-${record.id?.slice(0, 4).toUpperCase() || '0001'}`,
+      date: record.approvedAt || record.verifiedAt || record.createdAt,
+      donorName,
+      fullName: donorName,
+      username: record.username || member?.username || '',
+      memberId: record.memberId || member?.memberId || '',
+      phone: rawMobile,
+      mobile: rawMobile,
+      donorPhone: rawMobile,
+      fatherHusbandName,
+      address,
+      block,
+      district,
+      state,
       paymentId: record.paymentId || record.utrNumber || 'UPI-REF',
-      purpose: record.purpose || (activeTab === 'members' || activeTab === 'memberships' ? 'membership_fee' : 'samarpan'),
-      amount: record.verifiedAmount || record.claimedAmount || record.amount || 200,
-      verifiedAmount: record.verifiedAmount || record.claimedAmount || record.amount || 200
+      purpose: effectivePurpose,
+      itemType: isDonationRecord ? 'donation' : (isVolunteerRecord ? 'volunteer' : 'membership'),
+      amount: effectiveAmount,
+      verifiedAmount: effectiveAmount
     });
   };
 
@@ -928,81 +720,10 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     }
 
     let list = [];
-    if (activeTab === 'helpRequests') {
-      list = helpRequests;
-    } else if (activeTab === 'memberships') {
-      // Unified Applications tab: Merges both membership and volunteer applications with strict deduplication
-      let rawCombined = [];
-      if (applicationTypeFilter === 'all' || applicationTypeFilter === 'membership') {
-        rawCombined = rawCombined.concat(memberships.map(m => ({
-          ...m,
-          appType: m.category === 'catC' || m.memberType === 'volunteer' ? 'volunteer' : 'membership'
-        })));
-      }
-      if (applicationTypeFilter === 'all' || applicationTypeFilter === 'volunteer') {
-        rawCombined = rawCombined.concat(volunteers.map(v => ({ ...v, appType: 'volunteer' })));
-      }
-
-      // Deduplicate applications by unique ID or membershipApplicationId or (phone + name)
-      const seenAppKeys = new Set();
-      const dedupedApps = [];
-      for (const item of rawCombined) {
-        const cleanId = (item.membershipApplicationId || item.id || '').trim();
-        const cleanPhone = (item.phone || item.mobile || item.donorPhone || '').replace(/\D/g, '');
-        const cleanName = (item.fullName || item.donorName || '').trim().toLowerCase();
-        const fallbackKey = cleanPhone && cleanName ? `${cleanPhone}_${cleanName}` : null;
-        const key = cleanId || fallbackKey;
-
-        if (key && !seenAppKeys.has(key)) {
-          seenAppKeys.add(key);
-          dedupedApps.push(item);
-        } else if (!key) {
-          dedupedApps.push(item);
-        }
-      }
-
-      dedupedApps.sort((a, b) => {
-        const tA = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-        const tB = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-        return tB - tA;
-      });
-      list = dedupedApps;
-    } else if (activeTab === 'volunteers') {
-      list = volunteers.map(v => ({ ...v, appType: 'volunteer' }));
-    } else if (activeTab === 'donations') {
-      // Strict deduplication for donations
-      const seenDonKeys = new Set();
-      const dedupedDonations = [];
-      for (const item of donations) {
-        const cleanPid = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
-        const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
-        const isRealPid = cleanPid && !cleanPid.startsWith('UPI-') && !cleanPid.startsWith('PROOF-');
-        const key = cleanReceipt || (isRealPid ? cleanPid : null) || item.id;
-
-        if (key && !seenDonKeys.has(key)) {
-          seenDonKeys.add(key);
-          dedupedDonations.push(item);
-        } else if (key) {
-          const idx = dedupedDonations.findIndex(x => {
-            const xPid = (x.paymentId || x.utrNumber || '').trim().toUpperCase();
-            const xReceipt = (x.receiptNumber || '').trim().toUpperCase();
-            return (cleanReceipt && xReceipt === cleanReceipt) || (isRealPid && xPid === cleanPid) || x.id === item.id;
-          });
-          if (idx !== -1 && (item.status === 'approved' || item.receiptNumber)) {
-            dedupedDonations[idx] = { ...dedupedDonations[idx], ...item };
-          }
-        } else {
-          dedupedDonations.push(item);
-        }
-      }
-
-      dedupedDonations.sort((a, b) => {
-        const tA = a.createdAt?.seconds || (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-        const tB = b.createdAt?.seconds || (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-        return tB - tA;
-      });
-      list = dedupedDonations;
-    }
+    if (activeTab === 'helpRequests') list = helpRequests;
+    else if (activeTab === 'memberships') list = memberships;
+    else if (activeTab === 'volunteers') list = volunteers;
+    else if (activeTab === 'donations') list = donations;
 
     return list.filter(item => {
       const statusMatch = statusFilter === 'all' || (item.status || 'pending').toLowerCase() === statusFilter.toLowerCase();
@@ -1047,20 +768,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-            {/* Custom Receipt Button: Hidden on mobile top bar to protect Trust Name */}
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setCustomReceiptModalOpen(true);
-              }}
-              className="hidden sm:flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#E87516] hover:from-amber-600 hover:to-[#B84A06] text-white text-xs font-black items-center gap-1.5 transition-all shadow-md cursor-pointer"
-              title={lang === 'hi' ? 'कस्टम रसीद बनाएं' : 'Generate Custom Receipt'}
-            >
-              <Receipt className="w-3.5 h-3.5 text-white" />
-              <span>{lang === 'hi' ? '➕ कस्टम रसीद' : '➕ Custom Receipt'}</span>
-            </button>
-
             <button
               type="button"
               onClick={toggleLanguage}
@@ -1085,7 +792,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
       </header>
 
       {/* Main Admin Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-28 sm:py-6 flex-1 w-full space-y-5 sm:space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 w-full space-y-5 sm:space-y-6">
         
         {/* Metric Badges Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -1101,11 +808,11 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
           <div className="bg-amber-50/70 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-amber-300 shadow-xs flex flex-col justify-between">
             <span className="text-[11px] sm:text-xs text-amber-800 font-bold block mb-1 truncate">
-              {lang === 'hi' ? 'लंबित आवेदन (सदस्य व स्वयंसेवक)' : 'Pending Applications'}
+              {lang === 'hi' ? 'लंबित सदस्यता' : 'Pending Memberships'}
             </span>
             <div className="flex items-center justify-between mt-auto">
               <span className="text-xl sm:text-2xl font-black text-amber-700 font-mono">
-                {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length + volunteers.filter(v => (v.status || 'pending').toLowerCase() === 'pending').length}
+                {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length}
               </span>
               <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 flex-shrink-0" />
             </div>
@@ -1156,7 +863,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
           <button
             type="button"
-            onClick={() => { setActiveTab('memberships'); setSearchQuery(''); setStatusFilter('all'); setApplicationTypeFilter('all'); }}
+            onClick={() => { setActiveTab('memberships'); setSearchQuery(''); setStatusFilter('all'); }}
             className={`min-h-[44px] shrink-0 py-2.5 px-3 sm:px-4 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 ${
               activeTab === 'memberships'
                 ? 'border-primary text-primary bg-[#FFF8EF] rounded-t-xl font-black'
@@ -1164,9 +871,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
             }`}
           >
             <UserPlus className="w-4 h-4 flex-shrink-0" />
-            <span>{lang === 'hi' ? 'आवेदन (सदस्यता व स्वयंसेवक)' : 'Applications (Members & Volunteers)'}</span>
+            <span>{lang === 'hi' ? 'सदस्यता आवेदन' : 'Membership Applications'}</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono font-bold">
-              {memberships.length + volunteers.length}
+              {memberships.length}
             </span>
           </button>
 
@@ -1929,46 +1636,7 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 flex-wrap">
-                  {activeTab === 'memberships' && (
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                      <button
-                        type="button"
-                        onClick={() => setApplicationTypeFilter('all')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                          applicationTypeFilter === 'all'
-                            ? 'bg-[#382719] text-white shadow-xs'
-                            : 'bg-[#FFF8EF] text-[#666666] hover:text-[#382719] border border-[#E9B44C]/40'
-                        }`}
-                      >
-                        {lang === 'hi' ? `सभी (${memberships.length + volunteers.length})` : `All (${memberships.length + volunteers.length})`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setApplicationTypeFilter('membership')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                          applicationTypeFilter === 'membership'
-                            ? 'bg-amber-600 text-white shadow-xs'
-                            : 'bg-[#FFF8EF] text-[#666666] hover:text-[#382719] border border-[#E9B44C]/40'
-                        }`}
-                      >
-                        🛡️ {lang === 'hi' ? `सदस्यता (${memberships.length})` : `Members (${memberships.length})`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setApplicationTypeFilter('volunteer')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                          applicationTypeFilter === 'volunteer'
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'bg-[#FFF8EF] text-[#666666] hover:text-[#382719] border border-[#E9B44C]/40'
-                        }`}
-                      >
-                        🤝 {lang === 'hi' ? `स्वयंसेवक (${volunteers.length})` : `Volunteers (${volunteers.length})`}
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   {[
                     { id: 'all', label: lang === 'hi' ? 'सभी' : 'All' },
                     { id: 'pending', label: lang === 'hi' ? 'लंबित' : 'Pending' },
@@ -1988,7 +1656,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                       {f.label}
                     </button>
                   ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -2269,9 +1936,9 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                               {activeTab === 'memberships' && (
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    {item.appType === 'volunteer' || item.memberType === 'volunteer' || item.category === 'catC' ? (
+                                    {item.memberType === 'volunteer' || item.category === 'catC' ? (
                                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                        🤝 स्वयंसेवक आवेदन (Volunteer)
+                                        🤝 स्वयंसेवक (Volunteer)
                                       </span>
                                     ) : item.category === 'catA' ? (
                                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
@@ -2279,31 +1946,17 @@ export const AdminDashboard = ({ onNavigateHome }) => {
                                       </span>
                                     ) : (
                                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">
-                                        🛡️ सदस्यता आवेदन (Member)
+                                        🛡️ सदस्य (Member)
                                       </span>
                                     )}
-                                    {item.appType === 'volunteer' ? (
-                                      <span className="text-[10px] font-bold text-emerald-700">सेवा पंजीकरण</span>
-                                    ) : item.category === 'catA' ? (
+                                    {item.category === 'catA' ? (
                                       <span className="text-[10px] font-bold text-emerald-700">Fee: ₹0 (Exempted)</span>
                                     ) : (
                                       <span className="text-[10px] font-mono font-bold text-[#454545]">₹{item.claimedAmount || 200}</span>
                                     )}
                                   </div>
 
-                                  {item.appType === 'volunteer' ? (
-                                    <div className="text-[11px] text-[#555555]">
-                                      <span className="font-semibold text-emerald-800">{item.cityOrDistrict || item.district || 'गोरखपुर'}</span>
-                                      <span className="text-[10px] text-[#777777] block">
-                                        समय: {item.availability === 'full_time' ? 'पूर्णकालिक (Full Time)' : 'सप्ताहांत (Weekends)'}
-                                      </span>
-                                      {item.serviceAreas && (
-                                        <span className="text-[10px] text-[#555555] block">
-                                          विंग्स: {Array.isArray(item.serviceAreas) ? item.serviceAreas.join(', ') : item.serviceAreas}
-                                        </span>
-                                      )}
-                                    </div>
-                                  ) : item.category === 'catA' ? (
+                                  {item.category === 'catA' ? (
                                     <div className="text-[11px] text-[#555555]">
                                       <span className="font-semibold text-primary">{item.helpType || 'सहायता प्रार्थी'}</span>
                                       {item.assistanceDescription && (
@@ -3522,16 +3175,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         receipt={viewingReceipt}
       />
 
-      {/* Custom Receipt Modal */}
-      <CustomReceiptModal
-        isOpen={customReceiptModalOpen}
-        onClose={() => setCustomReceiptModalOpen(false)}
-        onReceiptGenerated={(receiptData) => {
-          setViewingReceipt(receiptData);
-          toast.success(lang === 'hi' ? 'कस्टम रसीद तैयार की गई और सहेजी गई!' : 'Custom receipt generated and saved!');
-        }}
-      />
-
       {/* WhatsApp Notice Broadcast Modal */}
       <WhatsAppBroadcastModal
         isOpen={broadcastModalOpen}
@@ -3564,372 +3207,6 @@ export const AdminDashboard = ({ onNavigateHome }) => {
           });
         }}
       />
-
-
-      {/* ========================================================
-          NATIVE MOBILE BOTTOM NAVIGATION BAR (for Trust Admin App)
-          ======================================================== */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#2D1F14] text-white border-t border-[#E9B44C]/30 shadow-[0_-4px_24px_rgba(0,0,0,0.3)] pb-[max(env(safe-area-inset-bottom),10px)] pt-2 px-1 flex items-center justify-around sm:hidden">
-        {/* Tab 1: Applications (संयुक्त आवेदन - सदस्यता व स्वयंसेवक) */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            setActiveTab('memberships');
-            setSearchQuery('');
-            setStatusFilter('all');
-            setApplicationTypeFilter('all');
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'memberships'
-              ? 'text-[#E9B44C] font-black'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <div className="relative">
-            <UserPlus className="w-5 h-5" />
-            {(memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length + volunteers.filter(v => (v.status || 'pending').toLowerCase() === 'pending').length) > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-black text-[9px] font-black flex items-center justify-center font-mono animate-pulse">
-                {memberships.filter(m => (m.status || 'pending').toLowerCase() === 'pending').length + volunteers.filter(v => (v.status || 'pending').toLowerCase() === 'pending').length}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'आवेदन' : 'Applications'}
-          </span>
-          {activeTab === 'memberships' && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
-          )}
-        </button>
-
-        {/* Tab 2: Donations (समर्पण / दान) */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            setActiveTab('donations');
-            setSearchQuery('');
-            setStatusFilter('all');
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'donations'
-              ? 'text-[#E9B44C] font-black'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <div className="relative">
-            <Heart className="w-5 h-5" />
-            {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center font-mono">
-                {donations.filter(d => (d.status || 'pending').toLowerCase() === 'pending').length}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'दान' : 'Donations'}
-          </span>
-          {activeTab === 'donations' && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
-          )}
-        </button>
-
-        {/* Tab 3: Notices & Announcements (सूचना प्रकाशन) */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            setActiveTab('announcements');
-            setSearchQuery('');
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'announcements'
-              ? 'text-[#E9B44C] font-black'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <div className="relative">
-            <Bell className="w-5 h-5" />
-            {announcements.length > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center font-mono">
-                {announcements.length}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'सूचनाएं' : 'Notices'}
-          </span>
-          {activeTab === 'announcements' && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
-          )}
-        </button>
-
-        {/* Tab 4: Help Requests (सहायता) */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            setActiveTab('helpRequests');
-            setSearchQuery('');
-            setStatusFilter('all');
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'helpRequests'
-              ? 'text-[#E9B44C] font-black'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <div className="relative">
-            <HandHeart className="w-5 h-5" />
-            {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center font-mono">
-                {helpRequests.filter(h => (h.status || 'pending').toLowerCase() === 'pending').length}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'सहायता' : 'Help'}
-          </span>
-          {activeTab === 'helpRequests' && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
-          )}
-        </button>
-
-        {/* Tab 5: More (अधिक विकल्प - WhatsApp, Volunteers, Settings, Push Test) */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            setMobileMoreOpen(true);
-          }}
-          className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'paymentSettings' || activeTab === 'volunteers' || mobileMoreOpen
-              ? 'text-[#E9B44C] font-black'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <SlidersHorizontal className="w-5 h-5" />
-          <span className="text-[10px] mt-1 tracking-tight">
-            {lang === 'hi' ? 'अधिक' : 'More'}
-          </span>
-          {(activeTab === 'paymentSettings' || activeTab === 'volunteers') && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E9B44C] mt-0.5" />
-          )}
-        </button>
-      </nav>
-
-      {/* ========================================================
-          MOBILE "MORE" BOTTOM DRAWER / SHEET
-          ======================================================== */}
-      {mobileMoreOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end sm:hidden">
-          <div
-            className="fixed inset-0"
-            onClick={() => setMobileMoreOpen(false)}
-          />
-          <div className="relative bg-white rounded-t-3xl border-t border-[#E9B44C]/40 p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),20px)]">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-primary" />
-                <h3 className="font-hindi-heading font-black text-base text-[#382719]">
-                  {lang === 'hi' ? 'व्यवस्थापक अधिक विकल्प' : 'Admin More Options'}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMoreOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Custom Receipt Generator */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  setCustomReceiptModalOpen(true);
-                  setMobileMoreOpen(false);
-                }}
-                className="p-3 rounded-2xl border border-amber-300 bg-amber-50/80 text-left transition-all flex flex-col gap-1.5 cursor-pointer shadow-xs"
-              >
-                <div className="flex items-center justify-between">
-                  <Receipt className="w-5 h-5 text-amber-700" />
-                  <span className="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded">NEW</span>
-                </div>
-                <span className="text-xs font-black text-amber-950">
-                  {lang === 'hi' ? 'कस्टम रसीद' : 'Custom Receipt'}
-                </span>
-                <span className="text-[10px] text-amber-800">
-                  {lang === 'hi' ? 'विवरण भरकर रसीद बनाएं' : 'Generate & download'}
-                </span>
-              </button>
-
-              {/* Verified Members List */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  setActiveTab('members');
-                  setSearchQuery('');
-                  setMobileMoreOpen(false);
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
-                  activeTab === 'members'
-                    ? 'bg-primary/10 border-primary text-primary font-bold'
-                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                  <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    {membersList.length}
-                  </span>
-                </div>
-                <span className="text-xs font-black">
-                  {lang === 'hi' ? 'सत्यापित सदस्य' : 'Verified Members'}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {lang === 'hi' ? 'आईडी कार्ड व सूची' : 'Members & ID cards'}
-                </span>
-              </button>
-
-              {/* Volunteers List */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  setActiveTab('volunteers');
-                  setSearchQuery('');
-                  setStatusFilter('all');
-                  setMobileMoreOpen(false);
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
-                  activeTab === 'volunteers'
-                    ? 'bg-primary/10 border-primary text-primary font-bold'
-                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <Users className="w-5 h-5 text-primary" />
-                  <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                    {volunteers.length}
-                  </span>
-                </div>
-                <span className="text-xs font-black">
-                  {lang === 'hi' ? 'स्वयंसेवक सूची' : 'Volunteers List'}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {lang === 'hi' ? 'स्वयंसेवक व संपर्क' : 'Manage volunteers'}
-                </span>
-              </button>
-
-              {/* Payment & Settings */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  setActiveTab('paymentSettings');
-                  setMobileMoreOpen(false);
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
-                  activeTab === 'paymentSettings'
-                    ? 'bg-primary/10 border-primary text-primary font-bold'
-                    : 'bg-[#FFFDF9] border-[#E9B44C]/30 text-gray-800 hover:bg-gray-50'
-                }`}
-              >
-                <QrCode className="w-5 h-5 text-amber-600" />
-                <span className="text-xs font-black">
-                  {lang === 'hi' ? 'भुगतान सेटिंग्स' : 'Payment Settings'}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {lang === 'hi' ? 'UPI, QR व बैंक विवरण' : 'QR code & UPI info'}
-                </span>
-              </button>
-
-              {/* WhatsApp Bot Connection */}
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  setDeviceModalOpen(true);
-                  setMobileMoreOpen(false);
-                }}
-                className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 text-left transition-all flex flex-col gap-1.5 cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <Smartphone className="w-5 h-5 text-emerald-600" />
-                  <span className={`w-2 h-2 rounded-full ${baileysServerState.connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                </div>
-                <span className="text-xs font-black text-emerald-900">
-                  {lang === 'hi' ? 'व्हाट्सएप बॉट' : 'WhatsApp Bot'}
-                </span>
-                <span className="text-[10px] text-emerald-700">
-                  {baileysServerState.connected ? (baileysServerState.phoneNumber || 'सक्रिय (Online)') : (lang === 'hi' ? 'QR स्कैन करें' : 'Pair Device')}
-                </span>
-              </button>
-
-              {/* Test Push Notification */}
-              <button
-                type="button"
-                onClick={handleSendTestPush}
-                disabled={isSendingTestPush}
-                className="p-3 rounded-2xl border border-blue-200 bg-blue-50/70 text-left transition-all flex flex-col gap-1.5 cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <Bell className="w-5 h-5 text-blue-600" />
-                  {isSendingTestPush && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />}
-                </div>
-                <span className="text-xs font-black text-blue-900">
-                  {lang === 'hi' ? 'टेस्ट नोटिफिकेशन' : 'Test Push Alert'}
-                </span>
-                <span className="text-[10px] text-blue-700">
-                  {lang === 'hi' ? 'अलर्ट जांचें' : 'Trigger test alert'}
-                </span>
-              </button>
-            </div>
-
-            {/* Background 24/7 Notification Helper Note */}
-            <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-950 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                <Bell className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>24/7 बैकग्राउंड अलर्ट सेटिंग (Keep Alerts Active):</span>
-              </div>
-              <p className="text-[10.5px] text-amber-800 leading-relaxed">
-                फोन बंद होने या ऐप हटने पर भी घंटी बजने के लिए: फोन की <strong>Settings &gt; Apps &gt; Trust Admin &gt; Battery Usage</strong> में <strong>"Allow Background Activity"</strong> व <strong>"Auto-launch"</strong> चालू रखें।
-              </p>
-            </div>
-
-            {/* Quick Actions (Language & Logout) */}
-            <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  toggleLanguage();
-                }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Globe className="w-4 h-4 text-primary" />
-                <span>{lang === 'hi' ? 'Switch to English' : 'हिंदी में बदलें'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic();
-                  handleExitAdmin();
-                }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'सत्र बंद करें' : 'Exit Admin'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

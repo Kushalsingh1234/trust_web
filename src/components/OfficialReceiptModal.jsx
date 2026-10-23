@@ -1,14 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { useToast } from '../context/ToastContext';
-import { X, Download, Image as ImageIcon, Loader2, Share2 } from 'lucide-react';
+import { X, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-
 
 // Helper: Convert numeric amount into formal Hindi words
 export const numberToHindiWords = (amount) => {
@@ -49,29 +44,57 @@ export const numberToHindiWords = (amount) => {
 
 export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
   const { lang } = useLanguage();
-  const toast = useToast();
   const receiptCardRef = useRef(null);
   const exportReceiptRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
 
   if (!isOpen || !receipt) return null;
 
-  // Extract fields with robust fallbacks
-  const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-2864');
-  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || '—';
-  const mobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || receipt.whatsapp || '—';
-  const fatherHusbandName = receipt.fatherHusbandName || receipt.fatherName || '—';
-  const address = receipt.address || receipt.location || receipt.cityDistrict || '—';
-  const block = receipt.block || 'सदर';
-  const district = receipt.district || receipt.cityDistrict || 'गोरखपुर';
-  const state = receipt.state || 'उत्तर प्रदेश';
+  // Extract fields cleanly without fake default fallbacks
+  const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-0001');
+  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || receipt.applicantName || '—';
 
-  const numericAmount = Number(receipt.verifiedAmount || receipt.amount || receipt.claimedAmount || 200);
+  let rawMobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || receipt.whatsapp || '';
+  let mobile = '—';
+  if (rawMobile) {
+    const digits = String(rawMobile).replace(/\D/g, '');
+    if (digits.length === 10) mobile = digits;
+    else if (digits.length === 12 && digits.startsWith('91')) mobile = digits.slice(2);
+    else if (digits.length > 0) mobile = String(rawMobile);
+  }
+
+  const fatherHusbandName = (receipt.fatherHusbandName || receipt.fatherName || receipt.husbandName || receipt.guardianName || '').trim() || '—';
+  const address = (receipt.address || receipt.villageOrLocality || receipt.locality || receipt.location || '').trim() || '—';
+  const block = (receipt.block || receipt.tehsil || '').trim() || '—';
+
+  const rawDistrict = (receipt.district || receipt.cityDistrict || receipt.city || receipt.cityOrDistrict || '').trim();
+  const district = rawDistrict ? rawDistrict.replace(/\s*\([^\)]*\)/g, '').trim() : 'गोरखपुर';
+
+  const rawState = (receipt.state || '').trim();
+  const state = rawState ? rawState.replace(/\s*\([^\)]*\)/g, '').trim() : 'उत्तर प्रदेश';
+
+  const numericAmount = Number(receipt.verifiedAmount ?? receipt.amount ?? receipt.claimedAmount ?? 0);
   const amountWords = receipt.amountWords || numberToHindiWords(numericAmount);
 
-  const isMembership = receipt.purpose === 'membership_fee' || receipt.category || Boolean(receipt.memberId);
-  const receiptHeading = isMembership ? 'सनातन संस्थान — सदस्यता निधि' : 'सनातन संरक्षण — समर्पण निधि';
-  const receiptClosingText = isMembership ? 'सह धन्यवाद प्राप्त किया।' : 'सहर्ष प्राप्त किया।';
+  const purpose = String(receipt.purpose || '').toLowerCase();
+  const itemType = String(receipt.itemType || receipt.type || '').toLowerCase();
+  const isDonation = purpose === 'samarpan' || purpose === 'donation' || purpose === 'voluntary_contribution' || itemType === 'donation' || itemType === 'donations' || receipt.tab === 'donations';
+  const isVolunteer = purpose === 'volunteer_registration' || itemType === 'volunteer' || receipt.role === 'volunteer' || receipt.memberType === 'volunteer';
+  const isMembership = !isDonation && !isVolunteer && (purpose === 'membership_fee' || itemType === 'membership' || Boolean(receipt.category));
+
+  let receiptHeading = 'सनातन संरक्षण — समर्पण निधि';
+  let receiptClosingText = 'सहर्ष प्राप्त किया।';
+  let purposeLabel = 'से समर्पण निधि';
+
+  if (isMembership) {
+    receiptHeading = 'सनातन संस्थान — सदस्यता निधि';
+    receiptClosingText = 'सह धन्यवाद प्राप्त किया।';
+    purposeLabel = 'से सदस्यता निधि';
+  } else if (isVolunteer) {
+    receiptHeading = 'सनातन संस्थान — स्वयंसेवक पंजीकरण निधि';
+    receiptClosingText = 'सह धन्यवाद प्राप्त किया।';
+    purposeLabel = 'से स्वयंसेवक पंजीकरण निधि';
+  }
 
   // Format Date (DD/MM/YYYY)
   const getDateString = () => {
@@ -101,9 +124,11 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     const targetEl = exportReceiptRef.current || receiptCardRef.current;
     if (!targetEl) return null;
 
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
+    try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    } catch {}
 
     const imgElements = targetEl.querySelectorAll('img');
     await Promise.all(
@@ -112,6 +137,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
         return new Promise((resolve) => {
           img.onload = resolve;
           img.onerror = resolve;
+          setTimeout(resolve, 800);
         });
       })
     );
@@ -119,31 +145,54 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     const width = 800;
     const height = targetEl.offsetHeight || 520;
 
-    let image;
-    try {
-      // Primary: High-fidelity native SVG foreignObject engine
-      image = await toPng(targetEl, {
-        width,
-        height,
-        pixelRatio: 2.5, // 2000px x ~1300px ultra-high-definition
-        quality: 1.0,
-        cacheBust: false,
-      });
-    } catch (toPngErr) {
-      console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
-      const canvas = await html2canvas(targetEl, {
-        scale: 2.5,
-        width: 800,
-        height,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 800,
-        windowHeight: height,
-        useCORS: true,
-        backgroundColor: '#FFFDF9',
-        logging: false,
-      });
-      image = canvas.toDataURL('image/png');
+    let image = null;
+
+    // On standard web browsers, try toPng first for crisp SVG vector rendering
+    if (!Capacitor.isNativePlatform()) {
+      try {
+        image = await toPng(targetEl, {
+          width,
+          height,
+          pixelRatio: 2.0,
+          quality: 1.0,
+          cacheBust: false,
+        });
+      } catch (toPngErr) {
+        console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
+      }
+    }
+
+    // In Capacitor native mobile app (Android/iOS WebView) or if toPng failed:
+    // use html2canvas which reliably rasterizes HTML elements directly
+    if (!image) {
+      try {
+        const canvas = await html2canvas(targetEl, {
+          scale: 2.0,
+          width: 800,
+          height,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 800,
+          windowHeight: height,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FFFDF9',
+          logging: false,
+        });
+        image = canvas.toDataURL('image/png');
+      } catch (canvasErr) {
+        console.warn('html2canvas on exportReceiptRef failed, falling back to visible card:', canvasErr);
+        if (receiptCardRef.current) {
+          const fallbackCanvas = await html2canvas(receiptCardRef.current, {
+            scale: 2.0,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#FFFDF9',
+            logging: false,
+          });
+          image = fallbackCanvas.toDataURL('image/png');
+        }
+      }
     }
 
     return image;
@@ -179,33 +228,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       const yOffset = Math.max(margin, (pdfHeight - imgHeight) / 2);
 
       pdf.addImage(image, 'PNG', margin, yOffset, imgWidth, imgHeight);
-
-      if (Capacitor.isNativePlatform()) {
-        const fileName = `${receiptNumber}.pdf`;
-        const dataUri = pdf.output('datauristring');
-        const base64Data = dataUri.split(',')[1];
-        await Filesystem.writeFile({
-          path: fileName,
-          data: base64Data,
-          directory: Directory.Documents,
-          recursive: true
-        });
-        toast.success(
-          lang === 'hi'
-            ? `रसीद PDF (${fileName}) सफलतापूर्वक डाउनलोड हो गई है!`
-            : `Receipt PDF (${fileName}) downloaded successfully!`
-        );
-      } else {
-        pdf.save(`${receiptNumber}.pdf`);
-        toast.success(
-          lang === 'hi'
-            ? `रसीद PDF (${receiptNumber}.pdf) डाउनलोड हो गई है!`
-            : `Receipt PDF (${receiptNumber}.pdf) downloaded successfully!`
-        );
-      }
+      pdf.save(`${receiptNumber}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      toast.error(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
+      alert(lang === 'hi' ? 'रसीद PDF तैयार करने में समस्या आई।' : 'PDF generation failed.');
     } finally {
       setIsExporting(false);
     }
@@ -221,93 +247,35 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
       const filename = `${receiptNumber}.png`;
 
-      if (Capacitor.isNativePlatform()) {
-        const base64Data = image.includes(',') ? image.split(',')[1] : image;
-        await Filesystem.writeFile({
-          path: filename,
-          data: base64Data,
-          directory: Directory.Documents,
-          recursive: true
-        });
-        toast.success(
-          lang === 'hi'
-            ? `रसीद इमेज (${filename}) सफलतापूर्वक डाउनलोड हो गई है!`
-            : `Receipt image (${filename}) downloaded successfully!`
-        );
-      } else {
-        // Convert to Blob URL for rock-solid mobile browser download compatibility
-        try {
-          const res = await fetch(image);
-          const blob = await res.blob();
-          const blobUrl = URL.createObjectURL(blob);
+      // Convert to Blob URL for rock-solid mobile browser download compatibility
+      try {
+        const res = await fetch(image);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = blobUrl;
-          document.body.appendChild(link);
-          link.click();
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
 
-          setTimeout(() => {
-            if (link.parentNode) link.parentNode.removeChild(link);
-            URL.revokeObjectURL(blobUrl);
-          }, 1500);
-        } catch (blobErr) {
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = image;
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            if (link.parentNode) link.parentNode.removeChild(link);
-          }, 1500);
-        }
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1500);
+      } catch (blobErr) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = image;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (link.parentNode) link.parentNode.removeChild(link);
+        }, 1500);
       }
     } catch (err) {
       console.error("Image generation failed:", err);
-      toast.error(lang === 'hi' ? 'रसीद छवि तैयार करने में समस्या आई।' : 'Image generation failed.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Dedicated Share Receipt via System Share Sheet
-  const handleShareReceipt = async () => {
-    if (isExporting) return;
-    setIsExporting(true);
-    try {
-      const image = await getCanonicalReceiptImage();
-      if (!image) return;
-
-      const filename = `${receiptNumber}.png`;
-
-      if (Capacitor.isNativePlatform()) {
-        const base64Data = image.includes(',') ? image.split(',')[1] : image;
-        const result = await Filesystem.writeFile({
-          path: filename,
-          data: base64Data,
-          directory: Directory.Documents,
-          recursive: true
-        });
-        await Share.share({
-          title: `Receipt - ${receiptNumber}`,
-          text: `Sanatan Trust Receipt: ${receiptNumber}`,
-          url: result.uri,
-          dialogTitle: lang === 'hi' ? 'रसीद शेयर करें' : 'Share Receipt'
-        });
-      } else if (navigator.share) {
-        const res = await fetch(image);
-        const blob = await res.blob();
-        const file = new File([blob], filename, { type: 'image/png' });
-        await navigator.share({
-          title: `Receipt - ${receiptNumber}`,
-          text: `Sanatan Trust Receipt: ${receiptNumber}`,
-          files: [file]
-        });
-      } else {
-        await handleDownloadPNG();
-      }
-    } catch (err) {
-      console.warn("Share failed or dismissed:", err);
+      alert(lang === 'hi' ? 'रसीद छवि तैयार करने में समस्या आई।' : 'Image generation failed.');
     } finally {
       setIsExporting(false);
     }
@@ -324,7 +292,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               ॐ
             </div>
             <span className="font-extrabold text-sm sm:text-base font-hindi-heading truncate">
-              {lang === 'hi' ? 'आधिकारिक समर्पण / सदस्यता रसीद' : 'Official Trust Receipt'}
+              आधिकारिक समर्पण / सदस्यता रसीद (Official Trust Receipt)
             </span>
           </div>
 
@@ -348,18 +316,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               title="Download high-resolution image"
             >
               <ImageIcon className="w-3.5 h-3.5" />
-              <span>इमेज</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleShareReceipt}
-              disabled={isExporting}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
-              title="Share receipt"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>शेयर</span>
+              <span>इमेज (PNG)</span>
             </button>
 
             <button
@@ -495,7 +452,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               {/* Row 5: Amount in Hindi words */}
               <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
                 <span className="font-bold text-[#2B1B10]">
-                  {isMembership ? 'से सदस्यता निधि' : 'से समर्पण निधि'} (रूपया शब्दों में):
+                  {purposeLabel} (रूपया शब्दों में):
                 </span>
                 <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
                   {amountWords}
@@ -575,10 +532,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       <div
         style={{
           position: 'fixed',
-          left: '-9999px',
-          top: '0',
+          top: 0,
+          left: 0,
           width: '800px',
-          zIndex: -9999,
+          zIndex: 1, // Sits behind the z-50 modal backdrop; renders at (0,0) without negative coordinates to prevent blank downloads
           pointerEvents: 'none',
         }}
         aria-hidden="true"
@@ -698,7 +655,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             {/* Row 5: Amount in Hindi words */}
             <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
               <span className="font-bold text-[#2B1B10]">
-                {isMembership ? 'से सदस्यता निधि' : 'से समर्पण निधि'} (रूपया शब्दों में):
+                {purposeLabel} (रूपया शब्दों में):
               </span>
               <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
                 {amountWords}

@@ -95,16 +95,24 @@ export const numberToHindiWords = (amount) => {
 export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
   const data = receiptData || {};
   const receiptNumber = data.receiptNumber || data.receiptNo || (data.id ? `RSSSST-2026-${data.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-2864');
-  const name = data.donorName || data.fullName || data.name || data.payerName || '';
-  const mobile = data.phone || data.donorPhone || data.mobile || data.payerMobile || data.whatsapp || '';
-  const fatherHusbandName = data.fatherHusbandName || data.fatherName || '';
-  const address = data.address || data.location || data.cityDistrict || '';
-  const block = data.block || 'सदर';
-  const district = data.district || data.cityDistrict || 'गोरखपुर';
-  const state = data.state || 'उत्तर प्रदेश';
-  const amount = Number(data.verifiedAmount || data.amount || data.claimedAmount || 200);
+  const name = data.donorName || data.fullName || data.name || data.payerName || '—';
+  let rawMobile = data.phone || data.donorPhone || data.mobile || data.payerMobile || '';
+  let mobile = '—';
+  if (rawMobile) {
+    const digits = String(rawMobile).replace(/\D/g, '');
+    if (digits.length === 10) mobile = digits;
+    else if (digits.length === 12 && digits.startsWith('91')) mobile = digits.slice(2);
+    else if (digits.length > 0) mobile = String(rawMobile);
+  }
+
+  const fatherHusbandName = (data.fatherHusbandName || data.fatherName || '').trim() || '—';
+  const address = (data.address || data.location || data.cityDistrict || '').trim() || '—';
+  const block = (data.block || '').trim() || '—';
+  const district = (data.district || '').replace(/\s*\([^\)]*\)/g, '').trim() || 'गोरखपुर';
+  const state = (data.state || '').replace(/\s*\([^\)]*\)/g, '').trim() || 'उत्तर प्रदेश';
+  const amount = Number(data.verifiedAmount ?? data.amount ?? data.claimedAmount ?? 0);
   const amountWords = data.amountWords || numberToHindiWords(amount);
-  const isMembership = data.purpose === 'membership_fee' || Boolean(data.memberId);
+  const isMembership = data.purpose === 'membership_fee' || Boolean(data.category);
   const heading = isMembership ? 'सनातन संस्थान — सदस्यता निधि' : 'सनातन संरक्षण — समर्पण निधि';
   const closingText = isMembership ? 'सह धन्यवाद प्राप्त किया।' : 'सहर्ष प्राप्त किया।';
 
