@@ -12,6 +12,14 @@
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#9a3412"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#9a3412",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
     }
   }
 }
