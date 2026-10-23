@@ -50,22 +50,51 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
 
   if (!isOpen || !receipt) return null;
 
-  // Extract fields with robust fallbacks
-  const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-2864');
-  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || 'रमेश कुमार शर्मा';
-  const mobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || '9876543210';
-  const fatherHusbandName = receipt.fatherHusbandName || receipt.fatherName || 'श्री दीनदयाल शर्मा';
-  const address = receipt.address || receipt.location || receipt.cityDistrict || 'वार्ड नं 12, साकेत नगर';
-  const block = receipt.block || 'सदर';
-  const district = receipt.district || receipt.cityDistrict || 'गोरखपुर';
-  const state = receipt.state || 'उत्तर प्रदेश';
+  // Extract fields cleanly without fake default fallbacks
+  const receiptNumber = receipt.receiptNumber || receipt.receiptNo || (receipt.id ? `RSSSST-2026-${receipt.id.slice(0, 4).toUpperCase()}` : 'RSSSST-2026-0001');
+  const name = receipt.donorName || receipt.fullName || receipt.name || receipt.payerName || receipt.applicantName || '—';
 
-  const numericAmount = Number(receipt.verifiedAmount || receipt.amount || receipt.claimedAmount || 200);
+  let rawMobile = receipt.donorPhone || receipt.phone || receipt.mobile || receipt.payerMobile || receipt.whatsapp || '';
+  let mobile = '—';
+  if (rawMobile) {
+    const digits = String(rawMobile).replace(/\D/g, '');
+    if (digits.length === 10) mobile = digits;
+    else if (digits.length === 12 && digits.startsWith('91')) mobile = digits.slice(2);
+    else if (digits.length > 0) mobile = String(rawMobile);
+  }
+
+  const fatherHusbandName = (receipt.fatherHusbandName || receipt.fatherName || receipt.husbandName || receipt.guardianName || '').trim() || '—';
+  const address = (receipt.address || receipt.villageOrLocality || receipt.locality || receipt.location || '').trim() || '—';
+  const block = (receipt.block || receipt.tehsil || '').trim() || '—';
+
+  const rawDistrict = (receipt.district || receipt.cityDistrict || receipt.city || receipt.cityOrDistrict || '').trim();
+  const district = rawDistrict ? rawDistrict.replace(/\s*\([^\)]*\)/g, '').trim() : 'गोरखपुर';
+
+  const rawState = (receipt.state || '').trim();
+  const state = rawState ? rawState.replace(/\s*\([^\)]*\)/g, '').trim() : 'उत्तर प्रदेश';
+
+  const numericAmount = Number(receipt.verifiedAmount ?? receipt.amount ?? receipt.claimedAmount ?? 0);
   const amountWords = receipt.amountWords || numberToHindiWords(numericAmount);
 
-  const isMembership = receipt.purpose === 'membership_fee' || receipt.category || Boolean(receipt.memberId);
-  const receiptHeading = isMembership ? 'सनातन संस्थान — सदस्यता निधि' : 'सनातन संरक्षण — समर्पण निधि';
-  const receiptClosingText = isMembership ? 'सह धन्यवाद प्राप्त किया।' : 'सहर्ष प्राप्त किया।';
+  const purpose = String(receipt.purpose || '').toLowerCase();
+  const itemType = String(receipt.itemType || receipt.type || '').toLowerCase();
+  const isDonation = purpose === 'samarpan' || purpose === 'donation' || purpose === 'voluntary_contribution' || itemType === 'donation' || itemType === 'donations' || receipt.tab === 'donations';
+  const isVolunteer = purpose === 'volunteer_registration' || itemType === 'volunteer' || receipt.role === 'volunteer' || receipt.memberType === 'volunteer';
+  const isMembership = !isDonation && !isVolunteer && (purpose === 'membership_fee' || itemType === 'membership' || Boolean(receipt.category));
+
+  let receiptHeading = 'सनातन संरक्षण — समर्पण निधि';
+  let receiptClosingText = 'सहर्ष प्राप्त किया।';
+  let purposeLabel = 'से समर्पण निधि';
+
+  if (isMembership) {
+    receiptHeading = 'सनातन संस्थान — सदस्यता निधि';
+    receiptClosingText = 'सह धन्यवाद प्राप्त किया।';
+    purposeLabel = 'से सदस्यता निधि';
+  } else if (isVolunteer) {
+    receiptHeading = 'सनातन संस्थान — स्वयंसेवक पंजीकरण निधि';
+    receiptClosingText = 'सह धन्यवाद प्राप्त किया।';
+    purposeLabel = 'से स्वयंसेवक पंजीकरण निधि';
+  }
 
   // Format Date (DD/MM/YYYY)
   const getDateString = () => {
@@ -95,9 +124,11 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     const targetEl = exportReceiptRef.current || receiptCardRef.current;
     if (!targetEl) return null;
 
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
+    try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    } catch {}
 
     const imgElements = targetEl.querySelectorAll('img');
     await Promise.all(
@@ -106,6 +137,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
         return new Promise((resolve) => {
           img.onload = resolve;
           img.onerror = resolve;
+          setTimeout(resolve, 800);
         });
       })
     );
@@ -113,31 +145,54 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
     const width = 800;
     const height = targetEl.offsetHeight || 520;
 
-    let image;
-    try {
-      // Primary: High-fidelity native SVG foreignObject engine
-      image = await toPng(targetEl, {
-        width,
-        height,
-        pixelRatio: 2.5, // 2000px x ~1300px ultra-high-definition
-        quality: 1.0,
-        cacheBust: false,
-      });
-    } catch (toPngErr) {
-      console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
-      const canvas = await html2canvas(targetEl, {
-        scale: 2.5,
-        width: 800,
-        height,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 800,
-        windowHeight: height,
-        useCORS: true,
-        backgroundColor: '#FFFDF9',
-        logging: false,
-      });
-      image = canvas.toDataURL('image/png');
+    let image = null;
+
+    // On standard web browsers, try toPng first for crisp SVG vector rendering
+    if (!Capacitor.isNativePlatform()) {
+      try {
+        image = await toPng(targetEl, {
+          width,
+          height,
+          pixelRatio: 2.0,
+          quality: 1.0,
+          cacheBust: false,
+        });
+      } catch (toPngErr) {
+        console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
+      }
+    }
+
+    // In Capacitor native mobile app (Android/iOS WebView) or if toPng failed:
+    // use html2canvas which reliably rasterizes HTML elements directly
+    if (!image) {
+      try {
+        const canvas = await html2canvas(targetEl, {
+          scale: 2.0,
+          width: 800,
+          height,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 800,
+          windowHeight: height,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FFFDF9',
+          logging: false,
+        });
+        image = canvas.toDataURL('image/png');
+      } catch (canvasErr) {
+        console.warn('html2canvas on exportReceiptRef failed, falling back to visible card:', canvasErr);
+        if (receiptCardRef.current) {
+          const fallbackCanvas = await html2canvas(receiptCardRef.current, {
+            scale: 2.0,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#FFFDF9',
+            logging: false,
+          });
+          image = fallbackCanvas.toDataURL('image/png');
+        }
+      }
     }
 
     return image;
@@ -397,7 +452,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
               {/* Row 5: Amount in Hindi words */}
               <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
                 <span className="font-bold text-[#2B1B10]">
-                  {isMembership ? 'से सदस्यता निधि' : 'से समर्पण निधि'} (रूपया शब्दों में):
+                  {purposeLabel} (रूपया शब्दों में):
                 </span>
                 <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
                   {amountWords}
@@ -477,10 +532,10 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
       <div
         style={{
           position: 'fixed',
-          left: '-9999px',
-          top: '0',
+          top: 0,
+          left: 0,
           width: '800px',
-          zIndex: -9999,
+          zIndex: 1, // Sits behind the z-50 modal backdrop; renders at (0,0) without negative coordinates to prevent blank downloads
           pointerEvents: 'none',
         }}
         aria-hidden="true"
@@ -600,7 +655,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt }) => {
             {/* Row 5: Amount in Hindi words */}
             <div className="border-b border-dotted border-gray-400 pb-1 flex flex-wrap items-baseline gap-1.5">
               <span className="font-bold text-[#2B1B10]">
-                {isMembership ? 'से सदस्यता निधि' : 'से समर्पण निधि'} (रूपया शब्दों में):
+                {purposeLabel} (रूपया शब्दों में):
               </span>
               <span className="font-black text-[#C65D13] underline decoration-[#C65D13]/40">
                 {amountWords}

@@ -1109,18 +1109,23 @@ export const UserDashboardPage = () => {
                             type="button"
                             onClick={() => {
                               setViewingReceipt({
-                                receiptNumber: item.receiptNumber || 'RSSSST-2026-MEMBER',
+                                ...item,
+                                receiptNumber: item.receiptNumber || userProfile?.receiptNumber || 'RSSSST-2026-MEMBER',
                                 donorName: item.fullName || userProfile?.fullName,
+                                phone: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
+                                mobile: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
+                                donorPhone: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
                                 username: item.username || userProfile?.username,
                                 memberId: item.memberId || userProfile?.memberId,
-                                fatherHusbandName: item.fatherHusbandName || '',
-                                address: item.address || item.district || '',
-                                block: item.block || 'सदर',
-                                district: item.district || 'गोरखपुर',
-                                state: item.state || 'उत्तर प्रदेश',
+                                fatherHusbandName: item.fatherHusbandName || userProfile?.fatherHusbandName || '—',
+                                address: item.address || item.villageOrLocality || userProfile?.address || '—',
+                                block: item.block || userProfile?.block || '—',
+                                district: item.district || userProfile?.district || 'गोरखपुर',
+                                state: item.state || userProfile?.state || 'उत्तर प्रदेश',
                                 purpose: 'membership_fee',
-                                verifiedAmount: item.verifiedAmount || item.claimedAmount || 200,
-                                claimedAmount: item.claimedAmount || 200,
+                                itemType: 'membership',
+                                verifiedAmount: Number(item.verifiedAmount ?? item.claimedAmount ?? item.amount ?? 200),
+                                amount: Number(item.verifiedAmount ?? item.claimedAmount ?? item.amount ?? 200),
                                 paymentId: item.paymentId || item.utrNumber,
                                 approvedAt: item.approvedAt || item.memberSince
                               });
@@ -1311,16 +1316,23 @@ export const UserDashboardPage = () => {
                             type="button"
                             onClick={() => {
                               setViewingReceipt({
+                                ...item,
                                 receiptNumber: item.receiptNumber || 'RSSSST-2026-VOLUNTEER',
                                 donorName: item.fullName || userProfile?.fullName,
+                                phone: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
+                                mobile: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
+                                donorPhone: item.mobile || item.phone || userProfile?.mobile || userProfile?.phone || '',
                                 username: item.username || userProfile?.username,
                                 memberId: item.volunteerId || item.memberId || userProfile?.volunteerId,
-                                address: item.address || item.cityOrDistrict || 'गोरखपुर',
-                                district: item.cityOrDistrict || 'गोरखपुर',
-                                state: 'उत्तर प्रदेश',
+                                fatherHusbandName: item.fatherHusbandName || userProfile?.fatherHusbandName || '—',
+                                address: item.address || item.cityOrDistrict || userProfile?.address || '—',
+                                block: item.block || userProfile?.block || '—',
+                                district: item.cityOrDistrict || item.district || userProfile?.district || 'गोरखपुर',
+                                state: item.state || userProfile?.state || 'उत्तर प्रदेश',
                                 purpose: 'volunteer_registration',
-                                verifiedAmount: item.verifiedAmount || item.amount || 200,
-                                claimedAmount: item.claimedAmount || item.amount || 200,
+                                itemType: 'volunteer',
+                                verifiedAmount: Number(item.verifiedAmount ?? item.claimedAmount ?? item.amount ?? 200),
+                                amount: Number(item.verifiedAmount ?? item.claimedAmount ?? item.amount ?? 200),
                                 paymentId: item.paymentId || 'VERIFIED',
                                 approvedAt: item.approvedAt || item.createdAt
                               });
@@ -1522,13 +1534,23 @@ export const UserDashboardPage = () => {
                             type="button"
                             onClick={() => {
                               setViewingReceipt({
+                                ...item,
                                 receiptNumber: item.receiptNumber || userProfile?.receiptNumber || 'RSSSST-2026-DONATION',
                                 donorName: item.donorName || item.fullName || userProfile?.fullName,
                                 username: item.username || userProfile?.username,
-                                memberId: item.memberId || userProfile?.memberId,
-                                phone: item.donorPhone || item.phone || userProfile?.phone,
-                                purpose: item.purpose || 'membership_fee',
-                                verifiedAmount: item.verifiedAmount || item.amount || 200,
+                                memberId: item.memberId || userProfile?.memberId || '',
+                                phone: item.donorPhone || item.phone || item.mobile || userProfile?.phone || userProfile?.mobile || '',
+                                mobile: item.donorPhone || item.phone || item.mobile || userProfile?.phone || userProfile?.mobile || '',
+                                donorPhone: item.donorPhone || item.phone || item.mobile || userProfile?.phone || userProfile?.mobile || '',
+                                fatherHusbandName: item.fatherHusbandName || userProfile?.fatherHusbandName || '—',
+                                address: item.address || userProfile?.address || '—',
+                                block: item.block || userProfile?.block || '—',
+                                district: item.district || userProfile?.district || 'गोरखपुर',
+                                state: item.state || userProfile?.state || 'उत्तर प्रदेश',
+                                purpose: item.purpose || 'samarpan',
+                                itemType: 'donation',
+                                verifiedAmount: Number(item.verifiedAmount ?? item.amount ?? item.claimedAmount ?? 200),
+                                amount: Number(item.verifiedAmount ?? item.amount ?? item.claimedAmount ?? 200),
                                 paymentId: item.paymentId || item.utrNumber,
                                 approvedAt: item.approvedAt || item.createdAt
                               });

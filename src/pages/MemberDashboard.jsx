@@ -509,14 +509,26 @@ export const MemberDashboard = ({ onNavigateHome }) => {
                                 <button
                                   type="button"
                                   onClick={() => setSelectedReceipt({
+                                    ...p,
                                     receiptNumber: p.receiptNumber,
-                                    payerName: p.payerName,
-                                    payerMobile: p.payerMobile,
-                                    amount: p.amount,
-                                    purpose: p.purpose,
-                                    paymentMethod: p.paymentMethod,
-                                    utrNumber: p.utrNumber,
-                                    issuedAt: p.verifiedAt
+                                    donorName: p.payerName || userProfile?.fullName || userProfile?.displayName || memberRecord?.fullName || '—',
+                                    fullName: p.payerName || userProfile?.fullName || userProfile?.displayName || memberRecord?.fullName || '—',
+                                    payerName: p.payerName || userProfile?.fullName || userProfile?.displayName || memberRecord?.fullName || '—',
+                                    phone: p.payerMobile || userProfile?.mobile || userProfile?.phone || memberRecord?.phone || '',
+                                    mobile: p.payerMobile || userProfile?.mobile || userProfile?.phone || memberRecord?.phone || '',
+                                    donorPhone: p.payerMobile || userProfile?.mobile || userProfile?.phone || memberRecord?.phone || '',
+                                    fatherHusbandName: userProfile?.fatherHusbandName || memberRecord?.fatherHusbandName || '—',
+                                    address: userProfile?.address || memberRecord?.address || '—',
+                                    block: userProfile?.block || memberRecord?.block || '—',
+                                    district: userProfile?.district || memberRecord?.district || 'गोरखपुर',
+                                    state: userProfile?.state || memberRecord?.state || 'उत्तर प्रदेश',
+                                    amount: Number(p.amount || 200),
+                                    verifiedAmount: Number(p.amount || 200),
+                                    purpose: p.purpose || 'membership_fee',
+                                    itemType: p.purpose === 'samarpan' ? 'donation' : 'membership',
+                                    paymentMethod: p.paymentMethod || 'UPI',
+                                    utrNumber: p.utrNumber || '',
+                                    issuedAt: p.verifiedAt || p.submittedAt || new Date()
                                   })}
                                   className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white font-bold text-xs transition-all"
                                 >

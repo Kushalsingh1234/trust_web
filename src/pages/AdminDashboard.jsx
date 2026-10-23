@@ -616,22 +616,49 @@ export const AdminDashboard = ({ onNavigateHome }) => {
 
   // Re-download / View Receipt PDF
   const handleDownloadReceipt = (record) => {
+    if (!record) return;
+
+    // If record has an associated member UID, find their profile in membersList or memberships
+    const member = (record.uid || record.applicantUid || record.payerUid)
+      ? (membersList.find(m => (m.uid && (m.uid === record.uid || m.uid === record.applicantUid || m.uid === record.payerUid)) || m.id === record.uid) ||
+         memberships.find(m => (m.uid && (m.uid === record.uid || m.uid === record.applicantUid || m.uid === record.payerUid)) || m.id === record.uid))
+      : null;
+
+    const donorName = record.donorName || record.fullName || record.payerName || member?.fullName || member?.donorName || '—';
+    const rawMobile = record.donorPhone || record.phone || record.mobile || record.payerMobile || record.whatsapp || member?.phone || member?.mobile || '';
+    const fatherHusbandName = record.fatherHusbandName || record.fatherName || member?.fatherHusbandName || member?.fatherName || '—';
+    const address = record.address || record.villageOrLocality || record.location || member?.address || member?.villageOrLocality || '—';
+    const block = record.block || member?.block || '—';
+    const district = record.district || member?.district || '—';
+    const state = record.state || member?.state || 'उत्तर प्रदेश';
+
+    const isDonationRecord = activeTab === 'donations' || record.purpose === 'samarpan' || record.purpose === 'donation';
+    const isVolunteerRecord = activeTab === 'volunteers' || record.purpose === 'volunteer_registration' || record.role === 'volunteer';
+    const effectivePurpose = isDonationRecord ? 'samarpan' : (isVolunteerRecord ? 'volunteer_registration' : (record.purpose || 'membership_fee'));
+
+    const effectiveAmount = Number(record.verifiedAmount ?? record.amount ?? record.claimedAmount ?? (isDonationRecord ? 0 : 200));
+
     setViewingReceipt({
-      receiptNumber: record.receiptNumber || `RSSSST-2026-${record.id?.slice(0, 4).toUpperCase() || '2864'}`,
-      date: record.approvedAt || record.createdAt,
-      donorName: record.donorName || record.fullName || 'Contributor',
-      username: record.username || '',
-      memberId: record.memberId || '',
-      phone: record.donorPhone || record.phone || '',
-      fatherHusbandName: record.fatherHusbandName || '',
-      address: record.address || record.location || '',
-      block: record.block || 'सदर',
-      district: record.district || 'गोरखपुर',
-      state: record.state || 'उत्तर प्रदेश',
+      ...record,
+      receiptNumber: record.receiptNumber || `RSSSST-2026-${record.id?.slice(0, 4).toUpperCase() || '0001'}`,
+      date: record.approvedAt || record.verifiedAt || record.createdAt,
+      donorName,
+      fullName: donorName,
+      username: record.username || member?.username || '',
+      memberId: record.memberId || member?.memberId || '',
+      phone: rawMobile,
+      mobile: rawMobile,
+      donorPhone: rawMobile,
+      fatherHusbandName,
+      address,
+      block,
+      district,
+      state,
       paymentId: record.paymentId || record.utrNumber || 'UPI-REF',
-      purpose: record.purpose || (activeTab === 'members' || activeTab === 'memberships' ? 'membership_fee' : 'samarpan'),
-      amount: record.verifiedAmount || record.claimedAmount || record.amount || 200,
-      verifiedAmount: record.verifiedAmount || record.claimedAmount || record.amount || 200
+      purpose: effectivePurpose,
+      itemType: isDonationRecord ? 'donation' : (isVolunteerRecord ? 'volunteer' : 'membership'),
+      amount: effectiveAmount,
+      verifiedAmount: effectiveAmount
     });
   };
 
