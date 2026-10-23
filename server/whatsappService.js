@@ -250,23 +250,35 @@ class WhatsAppService {
       clean = '91' + clean;
     }
 
-    if (!this.sock || this.state.status === 'DISCONNECTED') {
+    if (this.sock && this.state.status === 'CONNECTED') {
+      return 'ALREADY_CONNECTED';
+    }
+
+    if (!this.sock || !this.sock.ws || this.state.status === 'DISCONNECTED') {
       await this.initSession();
     }
 
-    // Wait until socket is ready
-    for (let i = 0; i < 10; i++) {
-      if (this.sock && typeof this.sock.requestPairingCode === 'function') break;
-      await new Promise(r => setTimeout(r, 400));
+    // Wait until the underlying WebSocket connection is open (typically 1-2.5s)
+    let isOpen = false;
+    for (let i = 0; i < 30; i++) {
+      if (this.sock?.ws?.isOpen) {
+        isOpen = true;
+        break;
+      }
+      await new Promise(r => setTimeout(r, 300));
     }
 
-    if (!this.sock || typeof this.sock.requestPairingCode !== 'function') {
-      throw new Error('WhatsApp engine initializing. Please try again in 2 seconds.');
+    if (!isOpen || !this.sock || typeof this.sock.requestPairingCode !== 'function') {
+      throw new Error('WhatsApp server connection timed out. Please try again in a few moments.');
     }
 
-    const code = await this.sock.requestPairingCode(clean);
-    console.log(`[WhatsApp] Pairing code generated for ${clean}: ${code}`);
-    return code;
+    const rawCode = await this.sock.requestPairingCode(clean);
+    // WhatsApp format is usually XXXX-XXXX (8 chars)
+    const formattedCode = rawCode && rawCode.length === 8 
+      ? `${rawCode.slice(0, 4)}-${rawCode.slice(4)}` 
+      : rawCode;
+    console.log(`[WhatsApp] Pairing code generated for ${clean}: ${formattedCode}`);
+    return formattedCode;
   }
 
   static formatPhoneToJid(phone) {
