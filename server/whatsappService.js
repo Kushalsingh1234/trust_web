@@ -1,6 +1,8 @@
 import makeWASocket, {
   DisconnectReason,
-  useMultiFileAuthState
+  useMultiFileAuthState,
+  Browsers,
+  delay
 } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
 import pino from 'pino';
@@ -96,7 +98,7 @@ class WhatsAppService {
         auth: authState,
         printQRInTerminal: false,
         logger: this.logger,
-        browser: ['Rashtriya Sanatan Trust', 'Chrome', '1.0.0'],
+        browser: Browsers.ubuntu('Chrome'),
         syncFullHistory: false,
         markOnlineOnConnect: true,
         generateHighQualityLinkPreview: false,
@@ -254,30 +256,49 @@ class WhatsAppService {
       return 'ALREADY_CONNECTED';
     }
 
-    if (!this.sock || !this.sock.ws || this.state.status === 'DISCONNECTED') {
-      await this.initSession();
+    // Always reset session credentials before a new pairing attempt to prevent stale key corruption
+    if (this.sock) {
+      try {
+        this.sock.end(undefined);
+      } catch (e) {}
+      this.sock = null;
     }
 
-    // Wait until the underlying WebSocket connection is open (typically 1-2.5s)
+    const sessionDir = this.getSessionDir();
+    try {
+      if (fs.existsSync(sessionDir)) {
+        fs.rmSync(sessionDir, { recursive: true, force: true });
+        console.log('[WhatsApp] Cleared previous session credentials before new pairing request.');
+      }
+    } catch (e) {
+      console.warn('[WhatsApp] Could not clear session dir:', e.message);
+    }
+
+    await this.initSession();
+
+    // Wait until the WebSocket connection is open
     let isOpen = false;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 35; i++) {
       if (this.sock?.ws?.isOpen) {
         isOpen = true;
         break;
       }
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 200));
     }
 
     if (!isOpen || !this.sock || typeof this.sock.requestPairingCode !== 'function') {
       throw new Error('WhatsApp server connection timed out. Please try again in a few moments.');
     }
 
+    // Give socket 3 seconds to stabilize handshake with WhatsApp servers before requesting pairing code
+    await delay(3000);
+
     const rawCode = await this.sock.requestPairingCode(clean);
     // WhatsApp format is usually XXXX-XXXX (8 chars)
     const formattedCode = rawCode && rawCode.length === 8 
       ? `${rawCode.slice(0, 4)}-${rawCode.slice(4)}` 
       : rawCode;
-    console.log(`[WhatsApp] Pairing code generated for ${clean}: ${formattedCode}`);
+    console.log(`[WhatsApp] Fresh pairing code generated for ${clean}: ${formattedCode}`);
     return formattedCode;
   }
 
