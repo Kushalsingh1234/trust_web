@@ -533,7 +533,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
     }
   };
 
-  // 1. Direct WhatsApp Dispatch with receipt text & high-res image link
+  // 1. Direct WhatsApp Dispatch: sends the ACTUAL IMAGE of the receipt to the donor's WhatsApp
   const handleShareToWhatsApp = async () => {
     if (isSharingWhatsApp) return;
     setIsSharingWhatsApp(true);
@@ -542,40 +542,75 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
       const targetPhone = mobile !== '—' ? mobile : (receipt.donorPhone || receipt.phone || receipt.mobile || receipt.whatsapp || '');
       const cleanPhone = targetPhone.replace(/\D/g, '').slice(-10);
 
-      // Attempt to get high-resolution image and upload to Cloudinary for instant preview link
+      if (!cleanPhone) {
+        alert(lang === 'hi' ? 'दानदाता का व्हाट्सएप नंबर उपलब्ध नहीं है।' : 'No donor WhatsApp phone available.');
+        setIsSharingWhatsApp(false);
+        return;
+      }
+
+      // Step 1: Render high-resolution receipt image & upload to Cloudinary
       let uploadedUrl = receipt.receiptImageUrl || null;
       if (!uploadedUrl) {
-        try {
-          const image = await getCanonicalReceiptImage();
-          if (image) {
+        const image = await getCanonicalReceiptImage();
+        if (image) {
+          try {
             uploadedUrl = await uploadImageToCloudinary(image, 'receipts');
+          } catch (e) {
+            console.warn('Cloudinary upload warning:', e);
           }
-        } catch (e) {
-          console.warn('Cloudinary upload fallback:', e);
         }
       }
 
-      const fullMessage = uploadedUrl 
-        ? `${receiptCaption}\n\n🖼️ *आपकी आधिकारिक रसीद छवि (High-Res Image):*\n${uploadedUrl}`
-        : receiptCaption;
+      if (!uploadedUrl) {
+        alert(lang === 'hi' ? 'रसीद छवि तैयार नहीं हो सकी। कृपया पुनः प्रयास करें।' : 'Could not generate receipt image. Please try again.');
+        setIsSharingWhatsApp(false);
+        return;
+      }
 
-      if (cleanPhone) {
-        const { mobileUrl, webUrl } = buildWhatsAppUrl(cleanPhone, fullMessage);
-        const targetUrl = (typeof window !== 'undefined' && window.innerWidth > 768) ? (webUrl || mobileUrl) : mobileUrl;
-        if (Capacitor.isNativePlatform()) {
-          window.open(mobileUrl, '_system');
-        } else {
-          window.open(targetUrl, '_blank');
+      // Step 2: Dispatch the actual IMAGE to the donor's WhatsApp via automated engine
+      let sentSuccess = false;
+      try {
+        const serverState = await checkBaileysServerStatus();
+        if (serverState.connected) {
+          const res = await sendPersonalMessageViaBaileys(cleanPhone, receiptCaption, uploadedUrl);
+          if (res?.success) {
+            sentSuccess = true;
+          }
         }
+      } catch (botErr) {
+        console.warn('Baileys server dispatch error:', botErr);
+      }
+
+      if (sentSuccess) {
+        if (onReceiptSent) onReceiptSent({ ...receipt, receiptImageUrl: uploadedUrl, receiptSent: true });
+        alert(
+          lang === 'hi'
+            ? `रसीद की छवि सफलतापूर्वक दानदाता के व्हाट्सएप (+91 ${cleanPhone}) पर भेज दी गई है!`
+            : `Receipt image successfully sent to donor on WhatsApp (+91 ${cleanPhone})!`
+        );
+        return;
+      }
+
+      // Fallback: If automated server is offline, alert admin and open direct chat with image link
+      alert(
+        lang === 'hi'
+          ? `व्हाट्सएप सर्वर वर्तमान में ऑफलाइन है। कृपया एडमिन सेटिंग्स में व्हाट्सएप कनेक्ट करें, या नीचे "इमेज शेयर करें" बटन से सीधे व्हाट्सएप में इमेज भेजें।`
+          : `WhatsApp automation is currently offline. Please connect WhatsApp in Admin Settings, or use "Share Image File" below.`
+      );
+
+      const fullMessage = `${receiptCaption}\n\n🖼️ *आपकी आधिकारिक रसीद छवि (High-Res Image):*\n${uploadedUrl}`;
+      const { mobileUrl, webUrl } = buildWhatsAppUrl(cleanPhone, fullMessage);
+      const targetUrl = (typeof window !== 'undefined' && window.innerWidth > 768) ? (webUrl || mobileUrl) : mobileUrl;
+      if (Capacitor.isNativePlatform()) {
+        window.open(mobileUrl, '_system');
       } else {
-        const encoded = encodeURIComponent(fullMessage);
-        window.open(`https://wa.me/?text=${encoded}`, Capacitor.isNativePlatform() ? '_system' : '_blank');
+        window.open(targetUrl, '_blank');
       }
 
-      if (onReceiptSent) onReceiptSent(receipt);
+      if (onReceiptSent) onReceiptSent({ ...receipt, receiptImageUrl: uploadedUrl, receiptSent: true });
     } catch (err) {
       console.error('WhatsApp receipt dispatch failed:', err);
-      alert('Error opening WhatsApp: ' + err.message);
+      alert('Error sending receipt to WhatsApp: ' + err.message);
     } finally {
       setIsSharingWhatsApp(false);
     }
@@ -959,20 +994,20 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Direct WhatsApp Message */}
+            {/* Direct WhatsApp Image Dispatch */}
             <button
               type="button"
               onClick={handleShareToWhatsApp}
               disabled={isSharingWhatsApp}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
-              title="व्हाट्सएप पर रसीद विवरण व लिंक भेजें"
+              title={lang === 'hi' ? 'व्हाट्सएप पर रसीद की आधिकारिक छवि भेजें' : 'Send official receipt image to WhatsApp'}
             >
               {isSharingWhatsApp ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <MessageSquare className="w-4 h-4" />
               )}
-              <span>{lang === 'hi' ? 'व्हाट्सएप पर भेजें' : 'Send to WhatsApp'}</span>
+              <span>{lang === 'hi' ? 'व्हाट्सएप पर रसीद छवि भेजें' : 'Send Receipt Image'}</span>
             </button>
 
             {/* Native Share Image File */}

@@ -336,28 +336,13 @@ export const AdminDashboard = ({ onNavigateHome }) => {
         receiptSent: true
       };
 
-      // 1. Format the official donation receipt WhatsApp message
-      const targetPhone = (item.donorPhone || item.whatsapp || item.mobile || item.phone || item.payerMobile || '').replace(/\D/g, '').slice(-10);
-      const receiptMsg = formatDonationReceiptWhatsAppMessage(updatedItem);
-
-      // 2. Open WhatsApp directly with the donor's contact and formatted receipt text
-      if (targetPhone) {
-        const { mobileUrl, webUrl } = buildWhatsAppUrl(targetPhone, receiptMsg);
-        const targetUrl = (typeof window !== 'undefined' && window.innerWidth > 768) ? (webUrl || mobileUrl) : mobileUrl;
-        if (Capacitor.isNativePlatform()) {
-          window.open(mobileUrl, '_system');
-        } else {
-          window.open(targetUrl, '_blank');
-        }
-      }
-
-      // 3. Open the specialized receipt modal so admin can preview the custom receipt and download or share image/PDF
+      // Open the specialized receipt modal so admin can preview the custom receipt and dispatch image directly to WhatsApp
       handleDownloadReceipt(updatedItem);
 
       toast.success(
         lang === 'hi'
-          ? `रसीद (संख्या: ${receiptNumber}) तैयार है और व्हाट्सएप पर भेजी जा रही है!`
-          : `Receipt (No: ${receiptNumber}) ready! WhatsApp opened.`
+          ? `रसीद तैयार है (संख्या: ${receiptNumber})! नीचे "व्हाट्सएप पर रसीद छवि भेजें" बटन से इमेज भेजें।`
+          : `Receipt ready (No: ${receiptNumber})! Click "Send Receipt Image" to dispatch image.`
       );
     } catch (err) {
       toast.error('Failed to send receipt: ' + err.message);
