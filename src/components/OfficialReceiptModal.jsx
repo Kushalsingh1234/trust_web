@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { X, Download, Image as ImageIcon, Loader2, MessageSquare, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -58,6 +59,25 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
   const exportReceiptRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+
+  // Generate verified local UPI QR Code safely without any external network dependency
+  useEffect(() => {
+    let isMounted = true;
+    QRCode.toDataURL('upi://pay?pa=boim-135883270012@boi&pn=RSSSST', {
+      margin: 1,
+      width: 140,
+      color: {
+        dark: '#2B1B10',
+        light: '#FFFFFF'
+      }
+    }).then((url) => {
+      if (isMounted) setQrCodeDataUrl(url);
+    }).catch((err) => {
+      console.warn('QR generation fallback:', err);
+    });
+    return () => { isMounted = false; };
+  }, []);
 
   if (!isOpen || !receipt) return null;
 
@@ -144,15 +164,16 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
 
   // Capture canonical 800px landscape voucher image
   const getCanonicalReceiptImage = async () => {
-    const targetEl = exportReceiptRef.current || receiptCardRef.current;
-    if (!targetEl) return null;
-
     try {
       if (document.fonts?.ready) {
         await document.fonts.ready;
       }
     } catch {}
 
+    const targetEl = exportReceiptRef.current || receiptCardRef.current;
+    if (!targetEl) return null;
+
+    // Ensure all internal images are ready
     const imgElements = targetEl.querySelectorAll('img');
     await Promise.all(
       Array.from(imgElements).map((img) => {
@@ -160,59 +181,77 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
         return new Promise((resolve) => {
           img.onload = resolve;
           img.onerror = resolve;
-          setTimeout(resolve, 800);
+          setTimeout(resolve, 400);
         });
       })
     );
 
-    const width = 800;
-    const height = targetEl.offsetHeight || 520;
+    const width = targetEl.offsetWidth || 800;
+    const height = targetEl.offsetHeight || 540;
 
     let image = null;
-    const isNativeCapacitor = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 
-    if (!isNativeCapacitor) {
+    // Primary attempt: html2canvas with exact coordinates
+    try {
+      const canvas = await html2canvas(targetEl, {
+        scale: 2.5,
+        width,
+        height,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: width,
+        windowHeight: height,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FFFDF8',
+        logging: false,
+      });
+
+      if (canvas && canvas.width > 0 && canvas.height > 0) {
+        const dataUrl = canvas.toDataURL('image/png');
+        if (dataUrl && dataUrl.length > 1500) {
+          image = dataUrl;
+        }
+      }
+    } catch (canvasErr) {
+      console.warn('html2canvas on exportReceiptRef failed:', canvasErr);
+    }
+
+    // Secondary attempt: html-to-image toPng
+    if (!image) {
       try {
-        image = await toPng(targetEl, {
+        const dataUrl = await toPng(targetEl, {
           width,
           height,
           pixelRatio: 2.0,
           quality: 1.0,
           cacheBust: false,
         });
+        if (dataUrl && dataUrl.length > 1500) {
+          image = dataUrl;
+        }
       } catch (toPngErr) {
-        console.warn('html-to-image failed, using html2canvas fallback:', toPngErr);
+        console.warn('html-to-image failed, using visible card fallback:', toPngErr);
       }
     }
 
-    if (!image) {
+    // Tertiary fallback: capture the visible receipt card directly
+    if (!image && receiptCardRef.current) {
       try {
-        const canvas = await html2canvas(targetEl, {
-          scale: 2.0,
-          width: 800,
-          height,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 800,
-          windowHeight: height,
+        const fallbackCanvas = await html2canvas(receiptCardRef.current, {
+          scale: 2.5,
           useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#FFFDF9',
+          allowTaint: false,
+          backgroundColor: '#FFFDF8',
           logging: false,
         });
-        image = canvas.toDataURL('image/png');
-      } catch (canvasErr) {
-        console.warn('html2canvas on exportReceiptRef failed, falling back to visible card:', canvasErr);
-        if (receiptCardRef.current) {
-          const fallbackCanvas = await html2canvas(receiptCardRef.current, {
-            scale: 2.0,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#FFFDF9',
-            logging: false,
-          });
+        if (fallbackCanvas && fallbackCanvas.width > 0 && fallbackCanvas.height > 0) {
           image = fallbackCanvas.toDataURL('image/png');
         }
+      } catch (fallbackErr) {
+        console.error('Visible card fallback failed:', fallbackErr);
       }
     }
 
@@ -468,13 +507,13 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
         </div>
 
         {/* Scrollable Receipt Preview Container */}
-        <div className="p-2 sm:p-6 overflow-y-auto bg-[#F7F3EB] flex-1 flex items-center justify-center">
+        <div className="p-3 sm:p-6 overflow-y-auto bg-[#F7F3EB] flex-1 flex justify-center items-start">
           
           {/* VISIBLE ON-SCREEN PREVIEW */}
           <div
             ref={receiptCardRef}
             id="traditional-receipt-card"
-            className="w-full max-w-3xl bg-[#FFFDF8] border-4 border-[#C65D13] rounded-2xl p-4 sm:p-7 shadow-xl relative overflow-hidden text-[#382719] font-sans"
+            className="w-full max-w-3xl bg-[#FFFDF8] border-4 border-[#C65D13] rounded-2xl p-4 sm:p-7 shadow-xl relative overflow-hidden text-[#382719] font-sans my-1 sm:my-3"
             style={{
               backgroundImage: 'radial-gradient(#E9B44C 0.5px, transparent 0.5px)',
               backgroundSize: '24px 24px'
@@ -678,12 +717,13 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
 
                 {/* Verified QR imprint */}
                 <div className="w-10 h-10 border border-amber-300 rounded bg-white/70 p-0.5 opacity-60 hidden sm:flex items-center justify-center">
-                  <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=boim-135883270012@boi&pn=RSSSST"
-                    alt="UPI Verification QR"
-                    crossOrigin="anonymous"
-                    className="w-full h-full object-contain"
-                  />
+                  {qrCodeDataUrl ? (
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="UPI Verification QR"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : null}
                 </div>
               </div>
 
@@ -729,9 +769,13 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
           aria-hidden="true"
           style={{
             position: 'fixed',
-            left: '-9999px',
             top: 0,
+            left: 0,
             width: '800px',
+            zIndex: -9999,
+            pointerEvents: 'none',
+            opacity: 1,
+            visibility: 'visible',
             backgroundColor: '#FFFDF8',
             color: '#382719',
             fontFamily: "'Noto Sans Devanagari', 'Tiro Devanagari Hindi', sans-serif",
@@ -743,6 +787,16 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
             backgroundSize: '24px 24px'
           }}
         >
+          {/* Watermark */}
+          <div 
+            className="absolute inset-0 pointer-events-none opacity-[0.06] select-none"
+            style={{
+              backgroundImage: 'url(/images/gallery/receipt_samarpan_nidhi.jpg)',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover'
+            }}
+          />
           {/* Header */}
           <div className="flex items-center justify-between gap-4 mb-2 relative z-10">
             <div className="w-14 h-14 flex-shrink-0 bg-[#C65D13] rounded-xl text-white flex items-center justify-center font-bold text-3xl font-serif drop-shadow shadow-xs">
@@ -916,12 +970,13 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
               </div>
 
               <div className="w-10 h-10 border border-amber-300 rounded bg-white/70 p-0.5 opacity-60 flex items-center justify-center">
-                <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=boim-135883270012@boi&pn=RSSSST"
-                  alt="UPI Verification QR"
-                  crossOrigin="anonymous"
-                  className="w-full h-full object-contain"
-                />
+                {qrCodeDataUrl ? (
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="UPI Verification QR"
+                    className="w-full h-full object-contain"
+                  />
+                ) : null}
               </div>
             </div>
 

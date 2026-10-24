@@ -146,10 +146,12 @@ export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
   if (typeof document !== 'undefined') {
     const container = document.createElement('div');
     container.style.position = 'fixed';
-    container.style.left = '-9999px';
     container.style.top = '0';
+    container.style.left = '0';
     container.style.width = '820px';
     container.style.zIndex = '-9999';
+    container.style.pointerEvents = 'none';
+    container.style.opacity = '1';
     container.style.backgroundColor = '#FFFDF8';
     container.style.fontFamily = "'Noto Sans Devanagari', 'Tiro Devanagari Hindi', sans-serif";
 
@@ -303,7 +305,12 @@ export const generateReceiptPDF = async (receiptData = {}, settings = {}) => {
     try {
       const canvas = await html2canvas(container.firstElementChild, {
         scale: 2.5,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
         useCORS: true,
+        allowTaint: false,
         backgroundColor: '#FFFDF8',
         logging: false
       });
