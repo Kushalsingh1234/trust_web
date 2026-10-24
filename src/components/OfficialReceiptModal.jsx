@@ -436,30 +436,25 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
 
       pdf.addImage(image, 'PNG', margin, yOffset, imgWidth, imgHeight);
 
-      // In Native Android Capacitor App: write to Documents/Cache and offer Save/Share dialog
+      // In Native Android Capacitor App: write to Documents/Cache and alert completion
       if (Capacitor.isNativePlatform()) {
         const pdfBase64 = pdf.output('datauristring').split(',')[1];
         const fileName = `${receiptNumber}.pdf`;
-        let savedFile;
         try {
-          savedFile = await Filesystem.writeFile({
+          await Filesystem.writeFile({
             path: fileName,
             data: pdfBase64,
             directory: Directory.Documents
           });
         } catch {
-          savedFile = await Filesystem.writeFile({
+          await Filesystem.writeFile({
             path: fileName,
             data: pdfBase64,
             directory: Directory.Cache
           });
         }
 
-        await Share.share({
-          title: fileName,
-          files: [savedFile.uri],
-          dialogTitle: 'रसीद PDF सहेजें / शेयर करें'
-        });
+        alert(lang === 'hi' ? 'रसीद PDF डाउनलोड पूर्ण!' : 'Receipt PDF download completed!');
         return;
       }
 
@@ -483,29 +478,24 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
 
       const filename = `${receiptNumber}.png`;
 
-      // In Native Android Capacitor App: write to Documents/Cache and offer Save/Share dialog
+      // In Native Android Capacitor App: write to Documents/Cache and alert completion
       if (Capacitor.isNativePlatform()) {
         const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
-        let savedFile;
         try {
-          savedFile = await Filesystem.writeFile({
+          await Filesystem.writeFile({
             path: filename,
             data: base64Data,
             directory: Directory.Documents
           });
         } catch {
-          savedFile = await Filesystem.writeFile({
+          await Filesystem.writeFile({
             path: filename,
             data: base64Data,
             directory: Directory.Cache
           });
         }
 
-        await Share.share({
-          title: filename,
-          files: [savedFile.uri],
-          dialogTitle: 'रसीद छवि सहेजें / शेयर करें'
-        });
+        alert(lang === 'hi' ? 'रसीद इमेज डाउनलोड पूर्ण!' : 'Receipt image download completed!');
         return;
       }
 
@@ -652,38 +642,26 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
         
         {/* Top Control Bar */}
         <div className="bg-[#B84A06] text-white px-3 sm:px-6 py-3 flex items-center justify-between print:hidden flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-bold text-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-bold text-base flex-shrink-0">
               ॐ
             </div>
-            <span className="font-extrabold text-xs sm:text-base font-hindi-heading truncate">
+            <span className="font-extrabold text-sm sm:text-base font-hindi-heading truncate">
               {isPublicDonor ? 'दानदाता ई-रसीद (Donation Receipt)' : 'आधिकारिक समर्पण / सदस्यता रसीद'}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1">
-            {/* WhatsApp Send Button */}
-            <button
-              type="button"
-              onClick={handleShareToWhatsApp}
-              disabled={isSharingWhatsApp || isExporting}
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
-              title="Send Receipt Image to WhatsApp"
-            >
-              {isSharingWhatsApp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
-              <span>{isSharingWhatsApp ? 'भेज रहे हैं...' : 'व्हाट्सएप रसीद'}</span>
-            </button>
-
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
             {/* Download PDF */}
             <button
               type="button"
               onClick={handleDownloadPDF}
               disabled={isExporting}
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white text-[#B84A06] hover:bg-[#FFF8EF] font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#B84A06] hover:bg-[#FFF8EF] font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
               title="Download official PDF"
             >
               {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">डाउनलोड PDF</span>
+              <span>PDF</span>
             </button>
 
             {/* Download PNG */}
@@ -691,11 +669,11 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
               type="button"
               onClick={handleDownloadPNG}
               disabled={isExporting}
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
               title="Download high-resolution image"
             >
               <ImageIcon className="w-3.5 h-3.5" />
-              <span>इमेज (PNG)</span>
+              <span>PNG</span>
             </button>
 
             {/* Close Button */}
