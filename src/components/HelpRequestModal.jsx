@@ -125,6 +125,11 @@ export const HelpRequestModal = ({ isOpen, onClose }) => {
     } else if (!/^[6-9]\d{9}$/.test(formData.mobile.replace(/\D/g, ''))) {
       newErrors.mobile = lang === 'hi' ? 'कृपया मान्य 10-अंकीय भारतीय मोबाइल नंबर दर्ज करें' : 'Enter valid 10-digit mobile number';
     }
+    if (!formData.whatsapp || !formData.whatsapp.trim()) {
+      newErrors.whatsapp = lang === 'hi' ? 'कृपया व्हाट्सएप नंबर दर्ज करें' : 'Please enter WhatsApp number';
+    } else if (!/^[6-9]\d{9}$/.test(formData.whatsapp.replace(/\D/g, ''))) {
+      newErrors.whatsapp = lang === 'hi' ? 'कृपया मान्य 10-अंकीय व्हाट्सएप नंबर दर्ज करें' : 'Enter valid 10-digit WhatsApp number';
+    }
     if (!formData.location.trim()) {
       newErrors.location = lang === 'hi' ? 'कृपया निवास स्थान / पता दर्ज करें' : 'Please enter address';
     }
@@ -384,7 +389,7 @@ _निवेदन: कृपया इस आवेदन की समीक�
 
                   <div>
                     <label className="block text-xs font-bold text-[#382719] mb-1">
-                      {lang === 'hi' ? 'व्हाट्सएप नंबर (वैकल्पिक)' : 'WhatsApp Number (Optional)'}
+                      {lang === 'hi' ? 'व्हाट्सएप नंबर' : 'WhatsApp Number'} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -393,8 +398,11 @@ _निवेदन: कृपया इस आवेदन की समीक�
                       value={formData.whatsapp}
                       onChange={handleInputChange}
                       placeholder="9876543210"
-                      className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      className={`w-full text-sm px-3.5 py-2.5 rounded-xl border ${
+                        errors.whatsapp ? 'border-red-500 bg-red-50/20 ring-1 ring-red-400' : 'border-gray-300 bg-white'
+                      } focus:outline-none focus:ring-2 focus:ring-primary/40`}
                     />
+                    {errors.whatsapp && <p className="text-red-500 text-[11px] mt-1 font-semibold">{errors.whatsapp}</p>}
                   </div>
 
                   <div className="sm:col-span-2">

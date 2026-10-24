@@ -329,19 +329,35 @@ export const AdminDashboard = ({ onNavigateHome }) => {
     try {
       setIsProcessing(true);
       const res = await markReceiptSent(colName, item.id, currentUser?.uid || 'admin');
+      const receiptNumber = res.receiptNumber || item.receiptNumber || `RSSSST-2026-${item.id?.slice(0, 4).toUpperCase() || '0001'}`;
       const updatedItem = {
         ...item,
-        receiptNumber: res.receiptNumber || item.receiptNumber,
+        receiptNumber,
         receiptSent: true
       };
 
-      // Open the specialized receipt modal so admin can preview the custom receipt and dispatch image/PDF to WhatsApp
+      // 1. Format the official donation receipt WhatsApp message
+      const targetPhone = (item.donorPhone || item.whatsapp || item.mobile || item.phone || item.payerMobile || '').replace(/\D/g, '').slice(-10);
+      const receiptMsg = formatDonationReceiptWhatsAppMessage(updatedItem);
+
+      // 2. Open WhatsApp directly with the donor's contact and formatted receipt text
+      if (targetPhone) {
+        const { mobileUrl, webUrl } = buildWhatsAppUrl(targetPhone, receiptMsg);
+        const targetUrl = (typeof window !== 'undefined' && window.innerWidth > 768) ? (webUrl || mobileUrl) : mobileUrl;
+        if (Capacitor.isNativePlatform()) {
+          window.open(mobileUrl, '_system');
+        } else {
+          window.open(targetUrl, '_blank');
+        }
+      }
+
+      // 3. Open the specialized receipt modal so admin can preview the custom receipt and download or share image/PDF
       handleDownloadReceipt(updatedItem);
 
       toast.success(
         lang === 'hi'
-          ? `रसीद तैयार है (संख्या: ${res.receiptNumber})! अब व्हाट्सएप पर इमेज/PDF भेजें।`
-          : `Receipt ready (No: ${res.receiptNumber})! Preview and send image/PDF to WhatsApp.`
+          ? `रसीद (संख्या: ${receiptNumber}) तैयार है और व्हाट्सएप पर भेजी जा रही है!`
+          : `Receipt (No: ${receiptNumber}) ready! WhatsApp opened.`
       );
     } catch (err) {
       toast.error('Failed to send receipt: ' + err.message);

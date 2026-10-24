@@ -533,104 +533,107 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
     }
   };
 
-  // Send Receipt Image / PDF directly to Donor on WhatsApp
+  // 1. Direct WhatsApp Dispatch with receipt text & high-res image link
   const handleShareToWhatsApp = async () => {
+    if (isSharingWhatsApp) return;
+    setIsSharingWhatsApp(true);
+    try {
+      const receiptCaption = formatDonationReceiptWhatsAppMessage(receipt);
+      const targetPhone = mobile !== '—' ? mobile : (receipt.donorPhone || receipt.phone || receipt.mobile || receipt.whatsapp || '');
+      const cleanPhone = targetPhone.replace(/\D/g, '').slice(-10);
+
+      // Attempt to get high-resolution image and upload to Cloudinary for instant preview link
+      let uploadedUrl = receipt.receiptImageUrl || null;
+      if (!uploadedUrl) {
+        try {
+          const image = await getCanonicalReceiptImage();
+          if (image) {
+            uploadedUrl = await uploadImageToCloudinary(image, 'receipts');
+          }
+        } catch (e) {
+          console.warn('Cloudinary upload fallback:', e);
+        }
+      }
+
+      const fullMessage = uploadedUrl 
+        ? `${receiptCaption}\n\n🖼️ *आपकी आधिकारिक रसीद छवि (High-Res Image):*\n${uploadedUrl}`
+        : receiptCaption;
+
+      if (cleanPhone) {
+        const { mobileUrl, webUrl } = buildWhatsAppUrl(cleanPhone, fullMessage);
+        const targetUrl = (typeof window !== 'undefined' && window.innerWidth > 768) ? (webUrl || mobileUrl) : mobileUrl;
+        if (Capacitor.isNativePlatform()) {
+          window.open(mobileUrl, '_system');
+        } else {
+          window.open(targetUrl, '_blank');
+        }
+      } else {
+        const encoded = encodeURIComponent(fullMessage);
+        window.open(`https://wa.me/?text=${encoded}`, Capacitor.isNativePlatform() ? '_system' : '_blank');
+      }
+
+      if (onReceiptSent) onReceiptSent(receipt);
+    } catch (err) {
+      console.error('WhatsApp receipt dispatch failed:', err);
+      alert('Error opening WhatsApp: ' + err.message);
+    } finally {
+      setIsSharingWhatsApp(false);
+    }
+  };
+
+  // 2. Share Image File directly via System Share Sheet (attaches actual PNG file)
+  const handleShareImageFile = async () => {
     if (isSharingWhatsApp) return;
     setIsSharingWhatsApp(true);
     try {
       const image = await getCanonicalReceiptImage();
       if (!image) {
         alert(lang === 'hi' ? 'रसीद छवि तैयार नहीं हो सकी।' : 'Could not generate receipt image.');
+        setIsSharingWhatsApp(false);
         return;
       }
 
       const receiptCaption = formatDonationReceiptWhatsAppMessage(receipt);
-      const targetPhone = mobile !== '—' ? mobile : (receipt.donorPhone || receipt.phone || receipt.mobile || '');
-      const cleanPhone = targetPhone.replace(/\D/g, '');
 
-      // 1. In native Android/iOS mobile app: write to Cache and trigger Native Share with files: [savedFile.uri]
       if (Capacitor.isNativePlatform()) {
-        try {
-          const fileName = `Receipt_${receiptNumber}.png`;
-          const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
-          const savedFile = await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Cache
-          });
+        const fileName = `Receipt_${receiptNumber}.png`;
+        const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
 
-          await Share.share({
+        await Share.share({
+          title: `समर्पण रसीद - ${receiptNumber}`,
+          text: receiptCaption,
+          files: [savedFile.uri],
+          dialogTitle: 'व्हाट्सएप या अन्य ऐप पर रसीद शेयर करें'
+        });
+
+        if (onReceiptSent) onReceiptSent(receipt);
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.canShare) {
+        const res = await fetch(image);
+        const blob = await res.blob();
+        const file = new File([blob], `Receipt_${receiptNumber}.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
             title: `समर्पण रसीद - ${receiptNumber}`,
-            text: receiptCaption,
-            files: [savedFile.uri],
-            dialogTitle: 'व्हाट्सएप पर रसीद भेजें'
+            text: receiptCaption
           });
-
           if (onReceiptSent) onReceiptSent(receipt);
           return;
-        } catch (shareErr) {
-          console.warn('Native share fallback to Cloudinary/Web:', shareErr);
         }
       }
 
-      // 2. Web Browser: Try native navigator.share with File
-      if (typeof navigator !== 'undefined' && navigator.canShare) {
-        try {
-          const res = await fetch(image);
-          const blob = await res.blob();
-          const file = new File([blob], `Receipt_${receiptNumber}.png`, { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: `समर्पण रसीद - ${receiptNumber}`,
-              text: receiptCaption
-            });
-            if (onReceiptSent) onReceiptSent(receipt);
-            return;
-          }
-        } catch (webShareErr) {
-          console.warn('Web share file fallback:', webShareErr);
-        }
-      }
-
-      // 3. Automated Baileys or Cloudinary Hosted Link
-      let uploadedUrl = null;
-      try {
-        uploadedUrl = await uploadImageToCloudinary(image, 'receipts');
-      } catch (uploadErr) {
-        console.warn('Cloudinary upload fallback:', uploadErr);
-      }
-
-      let sentViaBot = false;
-      if (uploadedUrl && cleanPhone) {
-        try {
-          const serverState = await checkBaileysServerStatus();
-          if (serverState.connected) {
-            await sendPersonalMessageViaBaileys(cleanPhone, receiptCaption, uploadedUrl);
-            sentViaBot = true;
-          }
-        } catch (botErr) {
-          console.warn('Bot dispatch fallback:', botErr);
-        }
-      }
-
-      // 4. Open WhatsApp Chat directly with recipient
-      if (cleanPhone) {
-        const fullMessage = uploadedUrl 
-          ? `${receiptCaption}\n\n🖼️ *आपकी आधिकारिक रसीद छवि (High-Res Image):*\n${uploadedUrl}`
-          : receiptCaption;
-        const { mobileUrl, webUrl } = buildWhatsAppUrl(cleanPhone, fullMessage);
-        const targetUrl = window.innerWidth > 768 ? (webUrl || mobileUrl) : mobileUrl;
-        window.open(targetUrl, Capacitor.isNativePlatform() ? '_system' : '_blank');
-      }
-
-      if (onReceiptSent) onReceiptSent(receipt);
-      if (sentViaBot) {
-        alert(lang === 'hi' ? 'रसीद छवि सीधे दानदाता के व्हाट्सएप पर भेज दी गई!' : 'Receipt image sent directly to donor on WhatsApp!');
-      }
+      // Fallback: download PNG if web share with file is unavailable
+      handleDownloadPNG();
     } catch (err) {
-      console.error('WhatsApp receipt dispatch failed:', err);
-      alert('Error sending receipt: ' + err.message);
+      console.error('Image share failed:', err);
     } finally {
       setIsSharingWhatsApp(false);
     }
@@ -945,8 +948,56 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
             </div>
           </div>
         </div>
+        </div>
+
+        {/* Bottom Action Bar (Keeps top emblem ॐ completely clean and unobscured) */}
+        <div className="bg-white border-t border-[#E9B44C]/30 px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 flex-shrink-0 print:hidden shadow-lg z-20">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-[#382719]">
+            <span className="font-bold text-[#8C3403]">
+              {mobile && mobile !== '—' ? `📞 ${mobile}` : '📞 नंबर उपलब्ध नहीं'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Direct WhatsApp Message */}
+            <button
+              type="button"
+              onClick={handleShareToWhatsApp}
+              disabled={isSharingWhatsApp}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+              title="व्हाट्सएप पर रसीद विवरण व लिंक भेजें"
+            >
+              {isSharingWhatsApp ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MessageSquare className="w-4 h-4" />
+              )}
+              <span>{lang === 'hi' ? 'व्हाट्सएप पर भेजें' : 'Send to WhatsApp'}</span>
+            </button>
+
+            {/* Native Share Image File */}
+            <button
+              type="button"
+              onClick={handleShareImageFile}
+              disabled={isSharingWhatsApp}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+              title="रसीद छवि सीधे व्हाट्सएप या अन्य ऐप्स पर शेयर करें"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>{lang === 'hi' ? 'इमेज शेयर करें' : 'Share Image File'}</span>
+            </button>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs sm:text-sm transition-all cursor-pointer"
+            >
+              {lang === 'hi' ? 'बंद करें' : 'Close'}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
     </div>
   );
 };

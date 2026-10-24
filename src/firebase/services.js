@@ -466,20 +466,27 @@ export const submitAssistanceRequest = async (requestData, applicantUid) => {
 
   const docRef = await addDoc(colRef, data);
 
-  // Also save to unified 'helpRequests' collection
+  // Also save to unified 'helpRequests' collection with the SAME document ID
   try {
-    await addDoc(collection(db, 'helpRequests'), {
+    await setDoc(doc(db, 'helpRequests', docRef.id), {
+      id: docRef.id,
+      trackingId: trackingId,
       uid: applicantUid || null,
       fullName: requestData.fullName.trim(),
       phone: requestData.mobile.trim(),
+      mobile: requestData.mobile.trim(),
+      whatsapp: requestData.whatsapp ? requestData.whatsapp.trim() : requestData.mobile.trim(),
       address: `${requestData.location || ''} ${requestData.cityDistrict || ''}`.trim(),
       helpType: requestData.category || 'medical',
+      category: requestData.category || 'medical',
       amountNeeded: Number(requestData.amountNeeded) || null,
       description: requestData.description.trim(),
       urgency: requestData.urgency || 'urgent',
+      bankOrUpi: requestData.bankOrUpi ? requestData.bankOrUpi.trim() : '',
       status: 'pending',
       adminNote: '',
       createdAt: serverTimestamp(),
+      submittedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
   } catch (e) {
@@ -936,19 +943,37 @@ export const subscribeUserCollection = (collectionName, uid, callback) => {
         const cleanPaymentId = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
         const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
         const memId = (item.membershipId || item.membershipApplicationId || '').trim();
-        const canonKey = cleanReceipt || cleanPaymentId || memId || item.id;
+        const trackingKey = (item.trackingId || '').trim().toUpperCase();
+
+        // Help Request deduplication: merge records from assistanceRequests and helpRequests
+        let helpKey = null;
+        const rawPhone = (item.phone || item.mobile || item.whatsapp || '').replace(/\D/g, '').slice(-10);
+        const namePart = (item.fullName || item.name || '').trim().toLowerCase().replace(/\s+/g, '');
+        if (rawPhone && namePart) {
+          helpKey = `HELP_${namePart}_${rawPhone}`;
+        }
+
+        const canonKey = cleanReceipt || cleanPaymentId || memId || trackingKey || helpKey || item.id;
 
         if (!map.has(canonKey)) {
           map.set(canonKey, item);
         } else {
           const existing = map.get(canonKey);
-          if (item.status === 'approved' && existing.status !== 'approved') {
-            map.set(canonKey, { ...existing, ...item });
-          } else if (item.receiptNumber && !existing.receiptNumber) {
-            map.set(canonKey, { ...existing, ...item });
-          } else {
-            map.set(canonKey, { ...item, ...existing });
-          }
+          const isExistingApproved = (existing.status || '').toLowerCase() === 'approved';
+          const isItemApproved = (item.status || '').toLowerCase() === 'approved';
+          const preferredStatus = isExistingApproved ? existing.status : (isItemApproved ? item.status : (existing.status || item.status));
+
+          map.set(canonKey, {
+            ...item,
+            ...existing,
+            status: preferredStatus,
+            trackingId: existing.trackingId || item.trackingId || '',
+            mobile: existing.mobile || item.mobile || existing.phone || item.phone || '',
+            phone: existing.phone || item.phone || existing.mobile || item.mobile || '',
+            whatsapp: existing.whatsapp || item.whatsapp || existing.mobile || item.mobile || '',
+            adminNotes: existing.adminNotes || item.adminNotes || existing.adminNote || item.adminNote || '',
+            receiptNumber: existing.receiptNumber || item.receiptNumber || ''
+          });
         }
       });
     }
@@ -1079,19 +1104,37 @@ export const subscribeAllCollection = (collectionName, callback) => {
         const cleanPaymentId = (item.paymentId || item.utrNumber || '').trim().toUpperCase();
         const cleanReceipt = (item.receiptNumber || '').trim().toUpperCase();
         const memId = (item.membershipId || item.membershipApplicationId || '').trim();
-        const canonKey = cleanReceipt || cleanPaymentId || memId || item.id;
+        const trackingKey = (item.trackingId || '').trim().toUpperCase();
+
+        // Help Request deduplication: merge records from assistanceRequests and helpRequests
+        let helpKey = null;
+        const rawPhone = (item.phone || item.mobile || item.whatsapp || '').replace(/\D/g, '').slice(-10);
+        const namePart = (item.fullName || item.name || '').trim().toLowerCase().replace(/\s+/g, '');
+        if (rawPhone && namePart) {
+          helpKey = `HELP_${namePart}_${rawPhone}`;
+        }
+
+        const canonKey = cleanReceipt || cleanPaymentId || memId || trackingKey || helpKey || item.id;
 
         if (!map.has(canonKey)) {
           map.set(canonKey, item);
         } else {
           const existing = map.get(canonKey);
-          if (item.status === 'approved' && existing.status !== 'approved') {
-            map.set(canonKey, { ...existing, ...item });
-          } else if (item.receiptNumber && !existing.receiptNumber) {
-            map.set(canonKey, { ...existing, ...item });
-          } else {
-            map.set(canonKey, { ...item, ...existing });
-          }
+          const isExistingApproved = (existing.status || '').toLowerCase() === 'approved';
+          const isItemApproved = (item.status || '').toLowerCase() === 'approved';
+          const preferredStatus = isExistingApproved ? existing.status : (isItemApproved ? item.status : (existing.status || item.status));
+
+          map.set(canonKey, {
+            ...item,
+            ...existing,
+            status: preferredStatus,
+            trackingId: existing.trackingId || item.trackingId || '',
+            mobile: existing.mobile || item.mobile || existing.phone || item.phone || '',
+            phone: existing.phone || item.phone || existing.mobile || item.mobile || '',
+            whatsapp: existing.whatsapp || item.whatsapp || existing.mobile || item.mobile || '',
+            adminNotes: existing.adminNotes || item.adminNotes || existing.adminNote || item.adminNote || '',
+            receiptNumber: existing.receiptNumber || item.receiptNumber || ''
+          });
         }
       });
     }
@@ -1153,6 +1196,26 @@ export const reviewDocument = async (collectionName, docId, { status, adminNote,
       const docRef = doc(db, target, docId);
       await updateDoc(docRef, updatePayload);
     } catch (e) {}
+  }
+
+  // If trackingId exists or document is a help request, sync across all matching trackingId docs
+  if (collectionName === 'helpRequests' || collectionName === 'assistanceRequests') {
+    for (const target of targets) {
+      try {
+        const snap = await getDoc(doc(db, target, docId));
+        const data = snap.exists() ? snap.data() : null;
+        const tracking = data?.trackingId;
+        if (tracking) {
+          const q = query(collection(db, target), where('trackingId', '==', tracking));
+          const querySnap = await getDocs(q);
+          for (const d of querySnap.docs) {
+            if (d.id !== docId) {
+              await updateDoc(doc(db, target, d.id), updatePayload);
+            }
+          }
+        }
+      } catch (e) {}
+    }
   }
 
   return updatePayload;
