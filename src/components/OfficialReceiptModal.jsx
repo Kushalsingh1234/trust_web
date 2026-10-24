@@ -161,7 +161,7 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
 
   const formattedDate = getDateString();
 
-  // Capture canonical voucher image
+  // Capture canonical 820px landscape voucher image (always landscape, never portrait on mobile)
   const getCanonicalReceiptImage = async () => {
     try {
       if (document.fonts?.ready) {
@@ -169,69 +169,235 @@ export const OfficialReceiptModal = ({ isOpen, onClose, receipt, onReceiptSent }
       }
     } catch {}
 
-    const targetEl = receiptCardRef.current;
-    if (!targetEl) return null;
-
-    // Ensure all internal images are ready
-    const imgElements = targetEl.querySelectorAll('img');
-    await Promise.all(
-      Array.from(imgElements).map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-          setTimeout(resolve, 400);
+    // Ensure we have a local QR data url
+    let qrUrl = qrCodeDataUrl;
+    if (!qrUrl) {
+      try {
+        qrUrl = await QRCode.toDataURL('upi://pay?pa=boim-135883270012@boi&pn=RSSSST', {
+          margin: 1,
+          width: 140,
+          color: { dark: '#2B1B10', light: '#FFFFFF' }
         });
-      })
-    );
+      } catch {}
+    }
 
-    let image = null;
+    // Create an isolated 820px fixed landscape container (only in DOM during capture)
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '820px';
+    container.style.zIndex = '-9999';
+    container.style.pointerEvents = 'none';
+    container.style.opacity = '1';
+    container.style.backgroundColor = '#FFFDF8';
+    container.style.fontFamily = "'Noto Sans Devanagari', 'Tiro Devanagari Hindi', sans-serif";
 
-    // Primary attempt: html2canvas with onclone standard sizing
+    container.innerHTML = `
+      <div style="background-color: #FFFDF8; border: 4px solid #C65D13; border-radius: 16px; padding: 24px; position: relative; color: #382719; box-sizing: border-box; background-image: radial-gradient(#E9B44C 0.5px, transparent 0.5px); background-size: 24px 24px; overflow: hidden; width: 820px;">
+        <!-- Watermark -->
+        <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.06; background-image: url(/images/gallery/receipt_samarpan_nidhi.jpg); background-position: center; background-repeat: no-repeat; background-size: cover;"></div>
+
+        <!-- Header: Om + Trust Name + Om -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; position: relative; z-index: 10;">
+          <div style="width: 52px; height: 52px; background-color: #C65D13; border-radius: 12px; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 30px; font-family: serif; flex-shrink: 0;">
+            ॐ
+          </div>
+          <div style="text-align: center; flex: 1; padding: 0 12px;">
+            <div style="font-size: 24px; font-weight: 900; color: #C65D13; line-height: 1.2;">
+              राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)
+            </div>
+            <div style="font-size: 11px; color: #382719; font-weight: 500; margin-top: 2px;">
+              मुख्य कार्यालय: शिवाजीनगर सेक्टर-2 (बागरानी) रूस्तमपुर, गोरखपुर, उ.प्र. - 273016
+            </div>
+            <div style="font-size: 10px; color: #382719; font-weight: 500;">
+              सम्पर्क एवं सहयोग कार्यस्थल: साकेतनगर (मधुर शहनाई लान के सामने) रूस्तमपुर, गोरखपुर
+            </div>
+          </div>
+          <div style="width: 52px; height: 52px; background-color: #C65D13; border-radius: 12px; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 30px; font-family: serif; flex-shrink: 0;">
+            ॐ
+          </div>
+        </div>
+
+        <!-- Slogan Banner -->
+        <div style="background-color: #C65D13; color: #ffffff; text-align: center; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 13px; margin: 10px 0 12px 0; position: relative; z-index: 10;">
+          हमारा लक्ष्य — वैदिक 16 संस्कारों का संरक्षण एवं जनकल्याणकारी सेवा कार्य
+        </div>
+
+        <!-- Receipt No, Title, Date -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(233, 180, 76, 0.5); padding-bottom: 8px; margin-bottom: 14px; position: relative; z-index: 10;">
+          <div>
+            <div style="font-size: 11px; color: #555555;">क्र.म. / Receipt No:</div>
+            <div style="font-family: monospace; font-weight: 900; font-size: 14px; color: #C65D13;">${receiptNumber}</div>
+          </div>
+          <div style="font-size: 19px; font-weight: 900; color: #2B1B10; text-decoration: underline; text-underline-offset: 6px;">
+            ${receiptHeading}
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #555555;">दिनांक / Date:</div>
+            <div style="font-weight: bold; font-size: 13px; color: #2B1B10; font-family: monospace;">${formattedDate}</div>
+          </div>
+        </div>
+
+        <!-- BODY: Public Donor vs Traditional Member Layout -->
+        ${isPublicDonor ? `
+        <div style="background-color: #FFF8EF; border: 2px solid rgba(198, 93, 19, 0.3); border-radius: 12px; padding: 14px 16px; margin: 12px 0; position: relative; z-index: 10;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(198, 93, 19, 0.3); padding-bottom: 8px; margin-bottom: 8px;">
+            <div>
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">दानदाता का नाम / Donor Name:</span>
+              <div style="font-size: 17px; font-weight: 800; color: #2B1B10; margin-top: 2px;">श्री / श्रीमती ${name}</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">व्हाट्सएप / मो० नं० / Mobile:</span>
+              <div style="font-size: 15px; font-weight: 800; color: #2B1B10; font-family: monospace; margin-top: 2px;">${mobile !== '—' ? '+91 ' + mobile : '—'}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed rgba(198, 93, 19, 0.3); padding-bottom: 8px; margin-bottom: 8px;">
+            <div>
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">समर्पण प्रयोजन / Contribution Purpose:</span>
+              <div style="font-size: 13px; font-weight: 800; color: #C65D13; margin-top: 2px;">${purposeTitle}</div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">यूटीआर / संदर्भ संख्या / UTR No.:</span>
+              <div style="font-size: 13px; font-weight: 800; color: #2B1B10; font-family: monospace; margin-top: 2px;">${receipt.paymentId || receipt.utrNumber || 'UPI-VERIFIED'}</div>
+            </div>
+          </div>
+
+          <div style="padding-top: 2px;">
+            <span style="font-size: 11px; color: #777777; font-weight: bold; text-transform: uppercase;">समर्पण राशि (शब्दों में) / Amount in Words:</span>
+            <div style="font-size: 14px; font-weight: 900; color: #C65D13; text-decoration: underline; margin-top: 2px;">${amountWords}</div>
+          </div>
+        </div>
+
+        <div style="background-color: #FFF4E5; border-left: 4px solid #C65D13; padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #382719; line-height: 1.5; margin-bottom: 12px; position: relative; z-index: 10;">
+          🙏 <strong>संस्थान की ओर से साधुवाद:</strong> आपके द्वारा सनातन संस्कृति के संवर्धन, गौ-सेवा व जनकल्याण हेतु समर्पित यह सहयोग सहर्ष प्राप्त किया गया। प्रभु श्रीराम का आशीर्वाद आप व आपके परिवार पर सदैव बना रहे।
+        </div>
+        ` : `
+        <div style="font-size: 13px; color: #454545; line-height: 1.8; position: relative; z-index: 10;">
+          <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+            <div style="flex: 7; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">नाम / Name:</span> <span style="font-weight: 800; color: #2B1B10;">${name}</span>
+            </div>
+            <div style="flex: 5; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">मो० न० / Mobile:</span> <span style="font-weight: bold; color: #2B1B10; font-family: monospace;">${mobile}</span>
+            </div>
+          </div>
+
+          <div style="border-bottom: 1px dotted #888888; padding-bottom: 3px; margin-bottom: 8px; display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">पिता / पति का नाम / Father's Name:</span> <span style="font-weight: bold; color: #2B1B10;">${fatherHusbandName}</span>
+          </div>
+
+          <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+            <div style="flex: 7; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">पता / ग्राम / मोहल्ला:</span> <span style="color: #2B1B10;">${address}</span>
+            </div>
+            <div style="flex: 5; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">विकास खण्ड / Block:</span> <span style="color: #2B1B10;">${block}</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+            <div style="flex: 7; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">जिला / District:</span> <span style="color: #2B1B10;">${district}</span>
+            </div>
+            <div style="flex: 5; border-bottom: 1px dotted #888888; padding-bottom: 3px; display: flex; align-items: baseline; gap: 6px;">
+              <span style="font-weight: bold; color: #2B1B10; flex-shrink: 0;">प्रदेश / State:</span> <span style="color: #2B1B10;">${state}</span>
+            </div>
+          </div>
+
+          <div style="border-bottom: 1px dotted #888888; padding-bottom: 4px; margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;">
+            <span style="font-weight: bold; color: #2B1B10;">${purposeLabel} (रूपया शब्दों में):</span>
+            <span style="font-weight: 900; color: #C65D13; text-decoration: underline;">${amountWords}</span>
+            <span style="color: #382719;"> ${receiptClosingText}</span>
+          </div>
+        </div>
+        `}
+
+        <!-- Bottom Section -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 2px solid rgba(233, 180, 76, 0.5); padding-top: 12px; margin-top: 14px; position: relative; z-index: 10;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center;">
+              <div style="background-color: #C65D13; color: #ffffff; padding: 6px 12px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-weight: bold; font-size: 20px;">
+                ₹
+              </div>
+              <div style="border: 2px solid #C65D13; border-left: none; background-color: #ffffff; padding: 6px 16px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; font-weight: 900; font-size: 22px; color: #C65D13; font-family: monospace;">
+                ${numericAmount}/-
+              </div>
+            </div>
+            ${qrUrl ? `
+              <div style="width: 44px; height: 44px; border: 1px solid #fcd34d; border-radius: 4px; background: rgba(255,255,255,0.7); padding: 2px; display: flex; align-items: center; justify-content: center;">
+                <img src="${qrUrl}" alt="QR" style="width: 100%; height: 100%; object-fit: contain;" />
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="text-align: left; line-height: 1.3;">
+            <div style="font-weight: bold; font-size: 13px; color: #C65D13;">बैंक ऑफ़ इण्डिया (Bank of India)</div>
+            <div style="font-weight: bold; font-size: 13px; color: #2B1B10; font-family: monospace;">खाता सं. : 135820110000012</div>
+            <div style="font-size: 11px; color: #555555; font-family: monospace;">UPI: boim-135883270012@boi</div>
+          </div>
+
+          <div style="text-align: right; line-height: 1.3;">
+            <div style="font-family: serif; font-style: italic; font-weight: 900; font-size: 18px; color: #C65D13; letter-spacing: 1px;">बजरंगी दूबे</div>
+            <div style="font-weight: bold; font-size: 11px; color: #2B1B10; border-top: 1px solid #888888; padding-top: 2px; margin-top: 2px;">राष्ट्रीय महामंत्री / प्रबन्धक</div>
+            <div style="font-size: 10px; color: #666666;">हस्ताक्षर प्राप्तकर्ता (Authorized Signatory)</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e5e5e5; text-align: center; font-size: 10px; color: #666666; position: relative; z-index: 10;">
+          Receipt generated with Trust Watermark, Bank of India Verification & General Secretary Endorsement. • संपर्क: 9794590044, 9026734887
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(container);
+
     try {
-      const canvas = await html2canvas(targetEl, {
+      // Let images inside render
+      const imgElements = container.querySelectorAll('img');
+      await Promise.all(
+        Array.from(imgElements).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 300);
+          });
+        })
+      );
+
+      const canvas = await html2canvas(container.firstElementChild, {
         scale: 2.5,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#FFFDF8',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const card = clonedDoc.getElementById('traditional-receipt-card');
-          if (card) {
-            card.style.width = '800px';
-            card.style.maxWidth = '800px';
-            card.style.margin = '0 auto';
-          }
-        }
+        logging: false
       });
 
-      if (canvas && canvas.width > 0 && canvas.height > 0) {
-        const dataUrl = canvas.toDataURL('image/png');
-        if (dataUrl && dataUrl.length > 1500) {
-          image = dataUrl;
-        }
-      }
+      return canvas.toDataURL('image/png');
     } catch (canvasErr) {
-      console.warn('html2canvas on receiptCardRef failed:', canvasErr);
-    }
-
-    // Secondary attempt: html-to-image toPng
-    if (!image) {
-      try {
-        const dataUrl = await toPng(targetEl, {
-          pixelRatio: 2.5,
-          quality: 1.0,
-          cacheBust: false,
+      console.warn('Canonical landscape capture failed, using fallback:', canvasErr);
+      if (receiptCardRef.current) {
+        const fallbackCanvas = await html2canvas(receiptCardRef.current, {
+          scale: 2.5,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#FFFDF8',
+          logging: false
         });
-        if (dataUrl && dataUrl.length > 1500) {
-          image = dataUrl;
-        }
-      } catch (toPngErr) {
-        console.warn('html-to-image failed:', toPngErr);
+        return fallbackCanvas.toDataURL('image/png');
+      }
+      return null;
+    } finally {
+      if (container.parentNode) {
+        document.body.removeChild(container);
       }
     }
-
-    return image;
   };
 
   // Download PDF
