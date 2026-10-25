@@ -10,10 +10,10 @@ export const ProgramsPage = ({ onOpenHelpModal, onOpenVolunteerModal }) => {
   const { lang, t } = useLanguage();
 
   usePageMeta(
-    lang === 'hi' ? 'सेवा प्रकल्प एवं योजनाएं • कार्यक्रम' : 'Programs & Initiatives',
+    lang === 'hi' ? '१६ वैदिक संस्कार व सेवा प्रकल्प • सनातन धर्म न्यास' : '16 Vedic Sanskars & Welfare Programs • Sanatan Dharma Trust',
     lang === 'hi'
-      ? 'श्रमिक कल्याण, 16 वैदिक संस्कार सुलभ विधान, गौ सेवा, योग एवं कानूनी व सामाजिक मार्गदर्शन प्रकल्प।'
-      : 'Explore our core programs: labor welfare, Vedic sanskars facilitation, cow care, and community guidance.'
+      ? '१६ वैदिक षोडश संस्कार (गर्भाधान से अंत्येष्टि), सनातन धर्म जागरण, गौ सेवा, वेद-गीता स्वाध्याय एवं असंगठित श्रमिक कल्याण प्रकल्प।'
+      : 'Comprehensive facilitation of 16 Vedic Sanskars, sacred scriptural education, Gau Seva (cow care), and grassroots labor welfare across India.'
   );
 
   return (

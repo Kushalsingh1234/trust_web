@@ -1,63 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- 1. Homepage -->
   <url>
     <loc>https://rashtriyasanatantrust.in/</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/gallery/trust_manifesto_advisor.jpg</image:loc>
+      <image:title>Rashtriya Sanatan Sanskar Seva Sansthan Emblem and Manifesto</image:title>
+      <image:caption>Premier Hindu Sanatan Dharma and 16 Vedic Sanskars Trust Emblem</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/avatars/logo_rsssst.jpg</image:loc>
+      <image:title>Official Logo of Rashtriya Sanatan Sanskar Seva Sansthan</image:title>
+    </image:image>
   </url>
+
+  <!-- 2. About Trust, Vision & Leadership -->
   <url>
     <loc>https://rashtriyasanatantrust.in/about</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/avatars/bajrangi_dubey.jpg</image:loc>
+      <image:title>Shri Bajrangi Dubey - National General Secretary</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/avatars/kusumlata_dubey.jpg</image:loc>
+      <image:title>Smt. Kusumlata Dubey - National President</image:title>
+    </image:image>
   </url>
+
+  <!-- 3. 16 Vedic Sanskars & Welfare Programs -->
   <url>
     <loc>https://rashtriyasanatantrust.in/programs</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://rashtriyasanatantrust.in/membership</loc>
-    <lastmod>2026-10-21</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/gallery/trust_manifesto_advisor.jpg</image:loc>
+      <image:title>16 Vedic Sanskars Facilitation Program</image:title>
+    </image:image>
   </url>
+
+  <!-- 4. Donation, Samarpan Nidhi & 80G Receipts -->
   <url>
     <loc>https://rashtriyasanatantrust.in/donate</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://rashtriyasanatantrust.in/images/qr/trust_official_qr.png</image:loc>
+      <image:title>Official Trust Bank of India Donation QR Code</image:title>
+    </image:image>
+  </url>
+
+  <!-- 5. Annual Membership & Volunteer Registration -->
+  <url>
+    <loc>https://rashtriyasanatantrust.in/membership</loc>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- 6. Transparency, Governance & Legal Certifications -->
+  <url>
+    <loc>https://rashtriyasanatantrust.in/transparency</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 7. News, Rallies & Field Events -->
   <url>
     <loc>https://rashtriyasanatantrust.in/events</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- 8. Visual Gallery & Field Action -->
   <url>
     <loc>https://rashtriyasanatantrust.in/gallery</loc>
-    <lastmod>2026-10-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://rashtriyasanatantrust.in/transparency</loc>
-    <lastmod>2026-10-21</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- 9. Contact & Headquarters Helpline -->
   <url>
     <loc>https://rashtriyasanatantrust.in/contact</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- 10. Member & Trustee Login -->
   <url>
     <loc>https://rashtriyasanatantrust.in/login</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
 </urlset>

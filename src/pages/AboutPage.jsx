@@ -13,21 +13,21 @@ export const AboutPage = ({ onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
 
   usePageMeta(
-    lang === 'hi' ? 'हमारे विषय में • परिचय, दृष्टि व नेतृत्व' : 'About Us • Vision & Leadership',
+    lang === 'hi' ? 'हमारे विषय में • सनातन धर्म न्यास, दृष्टि व नेतृत्व' : 'About Us • National Hindu Sanatan Dharma Trust & Vision',
     lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान का परिचय, प्रबंधकारिणी समिति, ट्रस्टीगण, 16 वैदिक संस्कार एवं पारिवारिक द्वादश सूत्र।'
-      : 'Learn about Rashtriya Sanatan Sanskar Seva Sansthan, executive trustees, 16 Vedic Sanskars, and guiding principles.'
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) का परिचय, प्रबंधकारिणी समिति, पूज्य ट्रस्टीगण, 16 वैदिक संस्कार, गौ संवर्धन एवं पारिवारिक द्वादश सूत्र।'
+      : 'Learn about Rashtriya Sanatan Sanskar Seva Sansthan (Trust), our national executive trustees, 16 Vedic Sanskars mission, and founding principles.'
   );
 
   return (
     <div className="flex flex-col">
       {/* Page Header */}
       <PageHeader
-        badge={lang === 'hi' ? 'संस्था परिचय एवं दर्शन' : 'Trust Heritage & Vision'}
+        badge={lang === 'hi' ? 'सनातन धर्म न्यास परिचय' : 'National Trust Heritage & Vision'}
         title={lang === 'hi' ? 'हमारे विषय में: संकल्प, नेतृत्व एवं वैदिक संस्कार' : 'About Us: Mission, Leadership & Vedic Rites'}
         subtitle={lang === 'hi' 
-          ? 'राष्ट्र हित, सनातन हित और परिवार हित को समर्पित गोरखपुर में पंजीकृत लोक धर्मार्थ न्यास।'
-          : 'A registered public charitable trust in Gorakhpur dedicated to nation, culture, and family harmony.'}
+          ? 'राष्ट्र हित, सनातन हित और परिवार हित को समर्पित भारत का अग्रणी सनातन धर्म व वैदिक संस्कार न्यास।'
+          : 'A premier national Hindu Sanatan Dharma and Vedic Sanskar trust dedicated to cultural revival, nation building, and family harmony.'}
         breadcrumb={lang === 'hi' ? 'परिचय' : 'About'}
       />
 

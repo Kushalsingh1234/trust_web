@@ -332,7 +332,7 @@ export const TrustLogo = ({
           </span>
           <span className="text-xs text-primary font-bold flex items-center gap-1.5 mt-0.5">
             <span className="bg-[#FFF8EF] text-[#C65D13] border border-[#E9B44C]/50 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider shadow-xs">
-              {lang === 'hi' ? 'ट्रस्ट • गोरखपुर' : 'Trust • Gorakhpur'}
+              {lang === 'hi' ? 'सनातन धर्म न्यास' : 'Sanatan Dharma Trust'}
             </span>
           </span>
         </div>

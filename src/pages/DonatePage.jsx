@@ -8,10 +8,10 @@ export const DonatePage = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
   const { lang, t } = useLanguage();
 
   usePageMeta(
-    lang === 'hi' ? 'समर्पण निधि एवं दान • आधिकारिक बैंक खाता' : 'Donate & Support • Bank of India',
+    lang === 'hi' ? 'समर्पण निधि एवं दान • आधिकारिक बैंक खाता व 80G रसीद' : 'Donate & Samarpan Nidhi • Bank of India & 80G Receipt',
     lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान के अधिकृत बैंक ऑफ इंडिया खाते एवं UPI में समर्पण निधि दान करें। डिजिटल रसीद प्राप्त करें।'
-      : 'Support our charitable activities. Direct transfer to Bank of India trust account or UPI. Instant receipt generation.'
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) के आधिकारिक बैंक ऑफ इंडिया खाते या UPI द्वारा सनातन धर्म प्रचार, गौ सेवा व संस्कार जागरण हेतु दान करें। डिजिटल रसीद प्राप्त करें।'
+      : 'Support our national Sanatan Dharma mission, 16 Vedic Sanskars, and Gau Seva. Official Bank of India account transfer & instant digital trust receipts.'
   );
 
   return (

@@ -13,10 +13,10 @@ export const MembershipPage = ({ onOpenJoinModal, onOpenVolunteerModal, onOpenRe
   const isMember = Boolean(userProfile?.isMember === true);
 
   usePageMeta(
-    lang === 'hi' ? 'ट्रस्ट सदस्यता • वार्षिक सदस्यता एवं अधिकार' : 'Trust Membership • Annual Registration',
+    lang === 'hi' ? 'सनातन धर्म न्यास सदस्यता • वार्षिक सदस्यता व पहचान पत्र' : 'Sanatan Dharma Trust Membership • Annual Registration & Digital ID',
     lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान की ₹200 वार्षिक सदस्यता लें। डिजिटल परिचय पत्र, कैलेंडर एवं संस्थागत अधिकार प्राप्त करें।'
-      : 'Become an annual member of Rashtriya Sanatan Sanskar Seva Sansthan (₹200/yr). Get digital ID card and participate in trust activities.'
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) के वार्षिक सदस्य या स्वयंसेवक बनें। डिजिटल परिचय पत्र, संगठनात्मक अधिकार एवं संस्कार जागरण में भागीदारी।'
+      : 'Become an annual member or volunteer of Rashtriya Sanatan Sanskar Seva Sansthan (Trust). Receive official digital ID card and lead Sanatan Dharma initiatives.'
   );
 
   const memberBenefits = [

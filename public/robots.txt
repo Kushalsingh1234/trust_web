@@ -1,4 +1,51 @@
+# Rashtriya Sanatan Sanskar Seva Sansthan (Trust)
+# Official Website: https://rashtriyasanatantrust.in/
+# Robots & AI Agent Directives
+
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /member-dashboard
+Disallow: /member-dashboard/*
 
+# AI Search Engines & LLM Web Crawlers (Full Crawl Permission for Knowledge Graph & Generative Search)
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+
+# Sitemaps and Knowledge Manifests
 Sitemap: https://rashtriyasanatantrust.in/sitemap.xml
+# LLM Knowledge Graph: https://rashtriyasanatantrust.in/llms.txt
+# Full Reference: https://rashtriyasanatantrust.in/llms-full.txt

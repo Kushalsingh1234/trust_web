@@ -9,10 +9,10 @@ export const EventsPage = () => {
   const { lang, t } = useLanguage();
 
   usePageMeta(
-    lang === 'hi' ? 'समाचार एवं कार्यक्रम • गतिविधियां' : 'News & Events • Trust Updates',
+    lang === 'hi' ? 'समाचार, गतिविधियां व कार्यक्रम • सनातन धर्म न्यास' : 'News & Activities • Sanatan Dharma Trust Events',
     lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान के आगामी व विगत कार्यक्रम, श्रमिक जागरूकता शिविर, बैठकें एवं महत्वपूर्ण सूचनाएं।'
-      : 'Stay updated with ground action, labor welfare camps, community meetings, and official announcements.'
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान के राष्ट्रव्यापी कार्यक्रम, 16 वैदिक संस्कार उत्सव, श्रमिक जागरूकता शिविर एवं आधिकारिक घोषणाएं।'
+      : 'Stay updated with national Sanatan initiatives, Vedic Sanskar celebrations, labor welfare camps, and official trust declarations.'
   );
 
   return (
@@ -21,8 +21,8 @@ export const EventsPage = () => {
         badge={lang === 'hi' ? 'जमीनी गतिविधियां' : 'Field Activities'}
         title={lang === 'hi' ? 'समाचार, सूचनाएं एवं आगामी कार्यक्रम' : 'News, Announcements & Field Events'}
         subtitle={lang === 'hi'
-          ? 'गोरखपुर एवं पूर्वांचल में आयोजित शिविरों, बैठकों एवं ट्रस्ट के आधिकारिक संदेशों की अद्यतन जानकारी।'
-          : 'Latest updates on ground camps, community meetings, and official trust declarations.'}
+          ? 'ट्रस्ट द्वारा आयोजित राष्ट्रव्यापी कार्यक्रमों, वैदिक संस्कार आयोजनों, बैठकों एवं आधिकारिक संदेशों की अद्यतन जानकारी।'
+          : 'Latest updates on national awareness camps, Vedic Sanskar initiatives, and official declarations.'}
         breadcrumb={lang === 'hi' ? 'कार्यक्रम / सूचनाएं' : 'Events'}
       />
 

@@ -229,10 +229,10 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                   <div className="min-w-0 w-full">
                     <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
-                      {lang === 'hi' ? 'पंजीकृत ट्रस्ट' : 'Regd. Trust'}
+                      {lang === 'hi' ? 'पंजीकृत न्यास' : 'Registered Trust'}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-[#666666] font-medium block leading-tight mt-0.5 truncate">
-                      Gorakhpur, UP
+                      {lang === 'hi' ? 'भारतीय न्यास अधिनियम' : 'Govt. Registered'}
                     </span>
                   </div>
                 </div>
@@ -241,10 +241,10 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <Award className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="min-w-0 w-full">
                     <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
-                      80G / 12A
+                      12A & 80G
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-amber-700 font-bold block leading-tight mt-0.5 truncate">
-                      {lang === 'hi' ? 'प्रक्रियाधीन' : 'In Process'}
+                      {lang === 'hi' ? 'कर छूट अनुमन्य' : 'Tax Exempt Eligible'}
                     </span>
                   </div>
                 </div>
@@ -253,10 +253,10 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   <MapPin className="w-4 h-4 text-accent flex-shrink-0" />
                   <div className="min-w-0 w-full">
                     <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
-                      {lang === 'hi' ? 'रूस्तमपुर' : 'Rustampur'}
+                      {lang === 'hi' ? 'सनातन धर्म न्यास' : 'Pan-India Reach'}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-[#666666] font-semibold block leading-tight mt-0.5 truncate">
-                      Gorakhpur 273016
+                      {lang === 'hi' ? 'अखिल भारतीय प्रकल्प' : 'All-India Mission'}
                     </span>
                   </div>
                 </div>

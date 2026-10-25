@@ -27,10 +27,12 @@ export const HomePage = ({
   const isMember = Boolean(userProfile?.isMember === true);
 
   usePageMeta(
-    lang === 'hi' ? 'मुख्य पृष्ठ • राष्ट्र हित, सनातन हित, परिवार हित' : 'Home • Sanatan Sanskar Seva Sansthan',
     lang === 'hi' 
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट), गोरखपुर। सनातन धर्म के 16 संस्कारों, श्रमिक कल्याण एवं गौ सेवा हेतु समर्पित।'
-      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust), Gorakhpur. Dedicated to Vedic Sanskars, labor welfare, and social service.'
+      ? 'सनातन धर्म न्यास • राष्ट्र हित, सनातन हित, परिवार हित' 
+      : 'Premier Hindu Sanatan Dharma & Vedic Sanskar Trust',
+    lang === 'hi' 
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)। 16 वैदिक षोडश संस्कार, सनातन धर्म ग्रंथ अध्ययन, गौ सेवा एवं सामाजिक समरसता हेतु समर्पित अखिल भारतीय न्यास।'
+      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) - A premier national Hindu Sanatan Dharma Trust dedicated to 16 Vedic Sanskars, scriptural wisdom, Gau Seva, and grassroots social upliftment.'
   );
 
   // 3 Featured Programs for Lean Landing Page
@@ -115,8 +117,8 @@ export const HomePage = ({
           </h2>
           <p className="mt-4 text-sm sm:text-base text-[#454545] leading-relaxed max-w-2xl mx-auto">
             {lang === 'hi'
-              ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट), गोरखपुर में पंजीकृत एक सार्वजनिक धर्मार्थ न्यास है। हमारा उद्देश्य सनातन धर्म के १६ संस्कारों को प्रत्येक परिवार के लिए सुलभ कराना और असंगठित श्रमिकों के अधिकारों की रक्षा करना है।'
-              : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) is an officially registered public charitable trust based in Gorakhpur, dedicated to facilitating the 16 Vedic life rites and empowering unorganized labor.'}
+              ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) सनातन धर्म, राष्ट्र निर्माण एवं मानव कल्याण को समर्पित एक प्रतिष्ठित पंजीकृत न्यास है। हमारा पावन संकल्प सनातन धर्म के १६ संस्कारों को प्रत्येक सनातनी परिवार हेतु सुलभ कराना, वैदिक ग्रंथों का प्रचार-प्रसार और असंगठित समाज को सशक्त बनाना है।'
+              : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) is a premier registered Hindu Sanatan Dharma Trust dedicated to facilitating the sacred 16 Vedic life rites, advancing scriptural wisdom, and uplifting grassroots communities across India.'}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">

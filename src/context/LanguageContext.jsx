@@ -19,8 +19,8 @@ export const LanguageProvider = ({ children }) => {
     localStorage.setItem('rsssst_lang', lang);
     document.documentElement.lang = lang;
     document.title = lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) | Gorakhpur'
-      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) | Gorakhpur';
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) | सनातन धर्म न्यास • वैदिक १६ संस्कार'
+      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) | Premier Hindu Sanatan Dharma & Vedic Sanskar Trust';
   }, [lang]);
 
   const toggleLanguage = () => {
