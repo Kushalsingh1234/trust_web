@@ -23,7 +23,7 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
           
           {/* Col 1: Trust Identity & Motto */}
           <div className="lg:col-span-4 space-y-4">
-            <Link to="/" className="bg-[#FFF8EF]/10 p-3 rounded-2xl inline-block hover:bg-[#FFF8EF]/15 transition-colors">
+            <Link to="/" className="inline-block p-1 rounded-full hover:bg-white/10 transition-colors">
               <TrustLogo className="w-12 h-12" showText={false} lang={lang} />
             </Link>
             <div>
@@ -45,6 +45,11 @@ export const Footer = ({ onOpenReceiptModal, onOpenJoinModal, onNavigateMember, 
               <li>
                 <Link to="/about" className="hover:text-[#E9B44C] transition-colors py-1 block">
                   {t.nav.about}
+                </Link>
+              </li>
+              <li>
+                <Link to="/about#objectives" className="hover:text-[#E9B44C] transition-colors py-1 block">
+                  {t.nav.objectives || (lang === 'hi' ? 'हमारा उद्देश्य' : 'Our Objectives')}
                 </Link>
               </li>
               <li>

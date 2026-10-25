@@ -118,11 +118,13 @@ export const Contact = () => {
                 </a>
               </div>
 
-              {/* Email Line */}
-              <div className="pt-2.5 border-t border-[#E9B44C]/25 flex flex-wrap items-center gap-2 text-xs text-[#454545]">
-                <Mail className="w-4 h-4 text-secondary flex-shrink-0" />
-                <span className="font-bold">{t.contact.emailTitle}:</span>
-                <span className="font-mono text-[#382719] font-bold break-all">{t.contact.email}</span>
+              {/* Direct Helpline Status */}
+              <div className="pt-2.5 border-t border-[#E9B44C]/25 flex flex-wrap items-center justify-between gap-2 text-xs text-[#454545]">
+                <span className="font-bold text-[#382719] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  {lang === 'hi' ? 'व्हाट्सएप एवं फोन सेवा सक्रिय' : 'WhatsApp & Phone Support Active'}
+                </span>
+                <span className="font-bold text-primary font-mono">+91 9794590044</span>
               </div>
             </div>
 

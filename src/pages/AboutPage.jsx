@@ -1,23 +1,45 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import PageHeader from '../components/PageHeader';
 import About from '../sections/About';
+import Objectives from '../sections/Objectives';
 import Trustees from '../sections/Trustees';
 import Sanskars from '../sections/Sanskars';
 import Guidelines from '../sections/Guidelines';
-import { Heart, UserPlus } from 'lucide-react';
+import { Heart, UserPlus, Target, BookOpen, Sparkles, Users, Compass } from 'lucide-react';
 
 export const AboutPage = ({ onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
+  const location = useLocation();
 
   usePageMeta(
-    lang === 'hi' ? 'हमारे विषय में • सनातन धर्म न्यास, दृष्टि व नेतृत्व' : 'About Us • National Hindu Sanatan Dharma Trust & Vision',
+    lang === 'hi' ? 'हमारे विषय में • सनातन धर्म न्यास, उद्देश्य व संकल्प' : 'About Us • National Hindu Sanatan Dharma Trust & Vision',
     lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) का परिचय, प्रबंधकारिणी समिति, पूज्य ट्रस्टीगण, 16 वैदिक संस्कार, गौ संवर्धन एवं पारिवारिक द्वादश सूत्र।'
-      : 'Learn about Rashtriya Sanatan Sanskar Seva Sansthan (Trust), our national executive trustees, 16 Vedic Sanskars mission, and founding principles.'
+      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) का परिचय, 16 पावन उद्देश्य, प्रबंधकारिणी समिति, 16 वैदिक संस्कार एवं पारिवारिक द्वादश सूत्र।'
+      : 'Learn about Rashtriya Sanatan Sanskar Seva Sansthan (Trust), our 16 core objectives, executive trustees, 16 Vedic Sanskars mission, and 12 family guidelines.'
   );
+
+  // Smooth scroll to anchor hash on load or hash change
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    }
+  }, [location.hash]);
+
+  const jumpNav = [
+    { href: '#about', label: lang === 'hi' ? 'संस्थान परिचय' : 'About Us', icon: Compass },
+    { href: '#objectives', label: lang === 'hi' ? 'हमारा उद्देश्य (16 सूत्र)' : 'Our Objectives (16)', icon: Target, highlight: true },
+    { href: '#trustees', label: lang === 'hi' ? 'मार्गदर्शक व न्यासी' : 'Executive Trustees', icon: Users },
+    { href: '#sanskars', label: lang === 'hi' ? '16 वैदिक संस्कार' : '16 Vedic Sanskars', icon: Sparkles },
+    { href: '#guidelines', label: lang === 'hi' ? 'हमारा आग्रह (12 नियम)' : 'Our Guidelines (12)', icon: BookOpen }
+  ];
 
   return (
     <div className="flex flex-col">
@@ -31,16 +53,42 @@ export const AboutPage = ({ onOpenJoinModal }) => {
         breadcrumb={lang === 'hi' ? 'परिचय' : 'About'}
       />
 
+      {/* Quick Jump Bar for Pillars */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-[#FFF8EF]/95 backdrop-blur-md border-b border-[#E9B44C]/30 py-2.5 px-4 shadow-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar">
+          {jumpNav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  item.highlight
+                    ? 'bg-primary text-white shadow-saffron hover:bg-secondary'
+                    : 'bg-white hover:bg-[#FFF8EF] text-[#382719] border border-[#E9B44C]/40 hover:border-primary'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${item.highlight ? 'text-white' : 'text-primary'}`} />
+                <span>{item.label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 1. Full Story, Vision & Mission */}
       <About />
 
-      {/* 2. Executive Council & Trustees */}
+      {/* 2. 16 Core Objectives (हमारा उद्देश्य) from Official Leaflet */}
+      <Objectives onOpenJoinModal={onOpenJoinModal} />
+
+      {/* 3. Executive Council & Trustees */}
       <Trustees />
 
-      {/* 3. 16 Vedic Sanskars Facilitation */}
+      {/* 4. 16 Vedic Sanskars Facilitation */}
       <Sanskars />
 
-      {/* 4. 12 Family Guidelines (हमारा आग्रह) */}
+      {/* 5. 12 Family Guidelines (हमारा आग्रह) */}
       <Guidelines />
 
       {/* Page Bottom CTA */}

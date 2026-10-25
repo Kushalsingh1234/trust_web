@@ -1721,7 +1721,6 @@ export const UserDashboardPage = () => {
                 <div className="text-[11px] text-[#555555] bg-white p-2 rounded-xl border border-[#E9B44C]/30 text-left space-y-0.5 font-mono">
                   <div><strong>Bank:</strong> Bank of India (बैंक ऑफ इंडिया)</div>
                   <div><strong>A/C No:</strong> 135820110000012</div>
-                  <div><strong>IFSC:</strong> BKID0001358</div>
                   <div><strong>A/C Holder:</strong> Rashtriya Sanatan Sanskar Seva Sansthan (Trust)</div>
                 </div>
               </div>

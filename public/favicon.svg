@@ -1,25 +1,208 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-125 -125 250 250" width="100%" height="100%">
   <defs>
-    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+    <!-- Primary Ray Gradients -->
+    <linearGradient id="pRayLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDE6" />
+      <stop offset="25%" stop-color="#FFDE6A" />
+      <stop offset="60%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D96514" />
+    </linearGradient>
+    <linearGradient id="pRayDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC72C" />
+      <stop offset="40%" stop-color="#E87516" />
+      <stop offset="85%" stop-color="#A94406" />
+      <stop offset="100%" stop-color="#782904" />
+    </linearGradient>
+
+    <!-- Secondary Ray Gradients -->
+    <linearGradient id="sRayLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF7C2" />
+      <stop offset="45%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#E87516" />
+    </linearGradient>
+    <linearGradient id="sRayDark" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#F59E0B" />
-      <stop offset="60%" stop-color="#D97706" />
-      <stop offset="100%" stop-color="#B91C1C" />
+      <stop offset="60%" stop-color="#C65D13" />
+      <stop offset="100%" stop-color="#6C2402" />
+    </linearGradient>
+
+    <!-- Gold Rim -->
+    <linearGradient id="goldBevelRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF0" />
+      <stop offset="20%" stop-color="#F3D17A" />
+      <stop offset="40%" stop-color="#C69224" />
+      <stop offset="60%" stop-color="#FFECA0" />
+      <stop offset="80%" stop-color="#B37812" />
+      <stop offset="100%" stop-color="#FFE07A" />
+    </linearGradient>
+
+    <!-- Radiant Core Sun Disc -->
+    <radialGradient id="divineSunOrb" cx="38%" cy="36%" r="65%">
+      <stop offset="0%" stop-color="#FFFEEA" />
+      <stop offset="18%" stop-color="#FDE68A" />
+      <stop offset="38%" stop-color="#F59E0B" />
+      <stop offset="62%" stop-color="#E87516" />
+      <stop offset="84%" stop-color="#C65D13" />
+      <stop offset="100%" stop-color="#7C2402" />
     </radialGradient>
+
+    <!-- Sacred Om Gold Shimmer -->
+    <linearGradient id="sacredOmGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="25%" stop-color="#FFFBEB" />
+      <stop offset="55%" stop-color="#FEEFAD" />
+      <stop offset="85%" stop-color="#F5D061" />
+      <stop offset="100%" stop-color="#E5A82E" />
+    </linearGradient>
+
+    <!-- Pearl Gem -->
+    <radialGradient id="pearlGem" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#FFF4BE" />
+      <stop offset="85%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#92400E" />
+    </radialGradient>
+
+    <!-- Sculpted Primary Ray -->
+    <g id="sculptedPrimaryRay">
+      <path d="M 0 -50 L -8.5 -50 Q -10.5 -74 0 -102 Z" fill="url(#pRayLight)" />
+      <path d="M 0 -50 L 8.5 -50 Q 10.5 -74 0 -102 Z" fill="url(#pRayDark)" />
+      <line x1="0" y1="-50" x2="0" y2="-102" stroke="#FFFBEB" stroke-width="0.6" opacity="0.85" />
+    </g>
+
+    <!-- Sculpted Secondary Ray -->
+    <g id="sculptedSecondaryRay">
+      <path d="M 0 -50 L -5 -50 L 0 -85 Z" fill="url(#sRayLight)" />
+      <path d="M 0 -50 L 5 -50 L 0 -85 Z" fill="url(#sRayDark)" />
+      <line x1="0" y1="-50" x2="0" y2="-85" stroke="#FFFDD0" stroke-width="0.45" opacity="0.75" />
+    </g>
+
+    <!-- Lotus Petal -->
+    <polygon id="discLotusPetal" points="0,-51 -2.8,-47 2.8,-47" fill="url(#goldBevelRim)" />
   </defs>
-  <rect width="100" height="100" rx="20" fill="#991B1B" />
-  <!-- Sunburst Rays -->
-  <g stroke="#FDE68A" stroke-width="2.5" opacity="0.9">
-    <line x1="50" y1="12" x2="50" y2="24" />
-    <line x1="50" y1="88" x2="50" y2="76" />
-    <line x1="12" y1="50" x2="24" y2="50" />
-    <line x1="88" y1="50" x2="76" y2="50" />
-    <line x1="23" y1="23" x2="31" y2="31" />
-    <line x1="77" y1="77" x2="69" y2="69" />
-    <line x1="23" y1="77" x2="31" y2="69" />
-    <line x1="77" y1="23" x2="69" y2="31" />
+
+  <!-- 100% Transparent Background - Pure Circular Emblem -->
+
+  <!-- Outer Ambient Sun Halo Glow -->
+  <circle r="82" fill="none" stroke="url(#pRayLight)" stroke-width="8" opacity="0.15" />
+
+  <!-- Background Sacred Celestial Orbit Line -->
+  <circle cx="0" cy="0" r="114" fill="none" stroke="#E9B44C" stroke-width="0.85" stroke-dasharray="3.5 4.5" opacity="0.55" />
+
+  <!-- Radiating Sun Rays (Chakra) -->
+  <g>
+    <!-- 16 Secondary Intermediate Rays -->
+    <use href="#sculptedSecondaryRay" transform="rotate(11.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(33.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(56.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(78.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(101.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(123.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(146.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(168.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(191.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(213.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(236.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(258.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(281.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(303.75)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(326.25)" />
+    <use href="#sculptedSecondaryRay" transform="rotate(348.75)" />
+
+    <!-- 16 Primary Sculpted Flame Rays -->
+    <use href="#sculptedPrimaryRay" transform="rotate(0)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(22.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(45)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(67.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(90)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(112.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(135)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(157.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(180)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(202.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(225)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(247.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(270)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(292.5)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(315)" />
+    <use href="#sculptedPrimaryRay" transform="rotate(337.5)" />
+
+    <!-- Outer Ring Orbit -->
+    <circle r="52.5" fill="none" stroke="#FFDF73" stroke-width="0.8" opacity="0.5" />
+
+    <!-- 16 Sacred Pearl Beads -->
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(0)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(22.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(45)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(67.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(90)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(112.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(135)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(157.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(180)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(202.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(225)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(247.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(270)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(292.5)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(315)" />
+    <circle cx="0" cy="-52.5" r="2.2" fill="url(#pearlGem)" stroke="#92400E" stroke-width="0.4" transform="rotate(337.5)" />
   </g>
-  <!-- Inner Circle -->
-  <circle cx="50" cy="50" r="26" fill="url(#sunGrad)" stroke="#FEF08A" stroke-width="2" />
-  <!-- Devanagari OM Symbol -->
-  <text x="50" y="58" font-family="'Noto Sans Devanagari', sans-serif" font-weight="bold" font-size="24" text-anchor="middle" fill="#FFFFFF">ॐ</text>
+
+  <!-- Central Circular Disc Assembly -->
+  <!-- Layer 1: Heavy Beveled Gold Rim -->
+  <circle r="49.5" fill="none" stroke="url(#goldBevelRim)" stroke-width="3.5" />
+
+  <!-- Layer 2: 32 Lotus Petals Framing Disc -->
+  <g>
+    <use href="#discLotusPetal" transform="rotate(0)" />
+    <use href="#discLotusPetal" transform="rotate(11.25)" />
+    <use href="#discLotusPetal" transform="rotate(22.5)" />
+    <use href="#discLotusPetal" transform="rotate(33.75)" />
+    <use href="#discLotusPetal" transform="rotate(45)" />
+    <use href="#discLotusPetal" transform="rotate(56.25)" />
+    <use href="#discLotusPetal" transform="rotate(67.5)" />
+    <use href="#discLotusPetal" transform="rotate(78.75)" />
+    <use href="#discLotusPetal" transform="rotate(90)" />
+    <use href="#discLotusPetal" transform="rotate(101.25)" />
+    <use href="#discLotusPetal" transform="rotate(112.5)" />
+    <use href="#discLotusPetal" transform="rotate(123.75)" />
+    <use href="#discLotusPetal" transform="rotate(135)" />
+    <use href="#discLotusPetal" transform="rotate(146.25)" />
+    <use href="#discLotusPetal" transform="rotate(157.5)" />
+    <use href="#discLotusPetal" transform="rotate(168.75)" />
+    <use href="#discLotusPetal" transform="rotate(180)" />
+    <use href="#discLotusPetal" transform="rotate(191.25)" />
+    <use href="#discLotusPetal" transform="rotate(202.5)" />
+    <use href="#discLotusPetal" transform="rotate(213.75)" />
+    <use href="#discLotusPetal" transform="rotate(225)" />
+    <use href="#discLotusPetal" transform="rotate(236.25)" />
+    <use href="#discLotusPetal" transform="rotate(247.5)" />
+    <use href="#discLotusPetal" transform="rotate(258.75)" />
+    <use href="#discLotusPetal" transform="rotate(270)" />
+    <use href="#discLotusPetal" transform="rotate(281.25)" />
+    <use href="#discLotusPetal" transform="rotate(292.5)" />
+    <use href="#discLotusPetal" transform="rotate(303.75)" />
+    <use href="#discLotusPetal" transform="rotate(315)" />
+    <use href="#discLotusPetal" transform="rotate(326.25)" />
+    <use href="#discLotusPetal" transform="rotate(337.5)" />
+    <use href="#discLotusPetal" transform="rotate(348.75)" />
+  </g>
+
+  <!-- Layer 3: Inner Golden Accent Hairline -->
+  <circle r="46.5" fill="none" stroke="#FFECA0" stroke-width="0.9" opacity="0.85" />
+
+  <!-- Layer 4: Radiant Saffron Core Sun Disc -->
+  <circle r="45" fill="url(#divineSunOrb)" />
+
+  <!-- Layer 5: Top Arc Specular Highlight -->
+  <path d="M -34 -24 A 41 41 0 0 1 34 -24 A 44 44 0 0 0 -34 -24 Z" fill="#FFFFFF" opacity="0.22" />
+
+  <!-- Central Sacred OM (ॐ) -->
+  <g>
+    <!-- Base Shadow -->
+    <text x="0" y="18.5" font-family="'Tiro Devanagari Hindi', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Yatra One', 'Arial Unicode MS', 'Segoe UI', sans-serif" font-weight="900" font-size="52" text-anchor="middle" fill="#3A1000" opacity="0.5">ॐ</text>
+    <!-- Golden OM -->
+    <text x="0" y="17.5" font-family="'Tiro Devanagari Hindi', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Yatra One', 'Arial Unicode MS', 'Segoe UI', sans-serif" font-weight="900" font-size="52" text-anchor="middle" fill="url(#sacredOmGold)" stroke="#FFF8D6" stroke-width="0.75">ॐ</text>
+  </g>
 </svg>

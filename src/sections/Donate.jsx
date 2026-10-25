@@ -121,16 +121,9 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                <div className="p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
-                  <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.ifsc}:</span>
-                  <span className="font-mono text-xs font-bold text-secondary break-all">{t.donate.ifscVal}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25">
-                  <span className="text-[#454545] block text-[11px] font-semibold">{t.donate.branch}:</span>
-                  <span className="text-xs font-bold text-[#382719]">{t.donate.branchVal}</span>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/25 gap-1 sm:gap-2">
+                <span className="text-[#454545] font-semibold">{t.donate.branch}:</span>
+                <span className="font-bold text-[#382719] text-xs sm:text-sm">{t.donate.branchVal}</span>
               </div>
             </div>
 
@@ -146,12 +139,12 @@ export const Donate = ({ onOpenReceiptModal, onOpenPaymentModal }) => {
               </button>
             </div>
 
-            {/* 80G Tax Exemption Transparent Statement */}
+            {/* Public Accountability Statement */}
             <div className="p-4 rounded-xl bg-[#FFF8EF] border border-[#E9B44C]/40 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
+              <ShieldCheck className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
               <div className="text-xs text-[#382719] leading-relaxed font-medium">
-                <span className="font-black block mb-0.5">{t.donate.taxNoteTitle}</span>
-                <p className="text-[#454545]">{t.donate.taxNoteDesc}</p>
+                <span className="font-black block mb-0.5">{t.donate.accountabilityTitle}</span>
+                <p className="text-[#454545]">{t.donate.accountabilityDesc}</p>
               </div>
             </div>
           </div>

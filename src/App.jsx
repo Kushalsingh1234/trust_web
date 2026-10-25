@@ -169,7 +169,7 @@ function AppContent() {
             element={<Navigate to="/login" replace />} 
           />
 
-          {/* 3. Full Dedicated About Page (Story, Vision, Trustees, 16 Sanskars, Guidelines) */}
+          {/* 3. Full Dedicated About Page (Story, Vision, Objectives, Trustees, 16 Sanskars, Guidelines) */}
           <Route
             path="/about"
             element={
@@ -177,6 +177,22 @@ function AppContent() {
                 onOpenJoinModal={() => setJoinModalOpen(true)}
               />
             }
+          />
+          <Route
+            path="/objectives"
+            element={<Navigate to="/about#objectives" replace />}
+          />
+          <Route
+            path="/uddeshya"
+            element={<Navigate to="/about#objectives" replace />}
+          />
+          <Route
+            path="/guidelines"
+            element={<Navigate to="/about#guidelines" replace />}
+          />
+          <Route
+            path="/agrah"
+            element={<Navigate to="/about#guidelines" replace />}
           />
 
           {/* 4. Full Dedicated Programs Page (Labor welfare, Sanskars, Cow care, etc.) */}

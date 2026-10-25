@@ -8,6 +8,7 @@
   "nav": {
     "about": "About Us",
     "sanskars": "16 Sanskars",
+    "objectives": "Our Objectives",
     "programs": "Our Work",
     "guidelines": "12 Guidelines",
     "gallery": "Gallery",
@@ -29,8 +30,7 @@
     "askHelpBtn": "Ask for Help (सहायता मांगें)",
     "badges": {
       "reg": "Registered Public Trust",
-      "regNo": "Reg: [ADD TRUST REGISTRATION NO.]",
-      "taxStatus": "80G / 12A Filing: In Process",
+      "regNo": "Registered under Indian Trust Act",
       "location": "Rustampur, Gorakhpur (U.P.)"
     }
   },
@@ -226,6 +226,98 @@
       }
     ]
   },
+  "objectives": {
+    "tag": "Sacred Mission",
+    "motto": "National Welfare ! Sanatan Welfare !! Family Welfare !!!",
+    "title": "Our Objectives — 16 Founding Pillars",
+    "subtitle": "The 16 core institutional objectives guiding our national mission for Vedic heritage, grassroots self-reliance, and family welfare:",
+    "letterTitle": "Dear Respected Well-Wishers",
+    "letterBody": "In light of the adverse cultural impact of modern consumerism affecting Sanatan families and societal bonds, Rashtriya Sanatan Sanskar Seva Sansthan (Trust) was established to awaken awareness of the 16 Vedic Sanskars and facilitate their practice at minimal expense. Our mission is to make the Sanatan community self-reliant, morally strong, and to restore Bharat's pride. Operated with the suggestions and active cooperation of the community, this nationalist multipurpose institution strives to unite families and build a dignified society. We invite your wholehearted cooperation with body, mind, and resources. Vande Mataram.",
+    "items": [
+      {
+        "no": "01",
+        "title": "National & Sanatan Interest Paramount",
+        "desc": "Working multipurpose welfare initiatives while keeping national integrity and Sanatan cultural resurgence paramount."
+      },
+      {
+        "no": "02",
+        "title": "16 Vedic Sanskars at Minimal Expense",
+        "desc": "Spreading wide awareness of the 16 Vedic life rites and providing hands-on facilitation to conduct them with dignity at low cost."
+      },
+      {
+        "no": "03",
+        "title": "Education, Health, Security & Livelihood",
+        "desc": "Extending steadfast support to all community members in quality education, healthcare, protection, self-employment, and social security."
+      },
+      {
+        "no": "04",
+        "title": "Study & Teaching of Sacred Scriptures",
+        "desc": "Encouraging regular study and recitation of Ramcharitmanas, Bhagavad Gita, Vedas, Puranas, and Upanishads in homes and schools."
+      },
+      {
+        "no": "05",
+        "title": "Temples as Vibrant Community Hubs",
+        "desc": "Developing local temples in every village and neighborhood into vibrant spiritual, cultural, and community assembly hubs."
+      },
+      {
+        "no": "06",
+        "title": "Rights of Laborers & Scheme Workers",
+        "desc": "Advocating for the rights, dignity, and entitlements of organized, unorganized, contractual, and grassroots scheme workers."
+      },
+      {
+        "no": "07",
+        "title": "Facilitating Government Welfare Schemes",
+        "desc": "Disseminating Central and State welfare programs, grants, and subsidies to ensure benefits reach eligible grassroots families."
+      },
+      {
+        "no": "08",
+        "title": "Celebration of Sanatan Festivals",
+        "desc": "Educating families on the sacred significance of Hindu festivals and assisting in their grand, united community celebrations."
+      },
+      {
+        "no": "09",
+        "title": "Folk Songs Archive & Cultural Competitions",
+        "desc": "Compiling authentic traditional devotional hymns, preserving cultural folklore, and hosting youth talent competitions."
+      },
+      {
+        "no": "10",
+        "title": "Vigilance, Awareness & Administrative Aid",
+        "desc": "Empowering communities through legal and administrative coordination against threats, radicalization, and exploitation."
+      },
+      {
+        "no": "11",
+        "title": "Joint Family Harmony & Zero Old-Age Homes",
+        "desc": "Fostering mutual affection, family dialogue, and joint-family bonds to eliminate the need for old-age homes and orphanages."
+      },
+      {
+        "no": "12",
+        "title": "Freedom from Debt & Extravagance",
+        "desc": "Promoting simplicity and discouraging wasteful competitive ostentation so families remain completely free of debt traps."
+      },
+      {
+        "no": "13",
+        "title": "De-Addiction & Health Preservation",
+        "desc": "Conducting mass anti-tobacco and de-addiction campaigns to safeguard physical health, vitality, and prevent untimely deaths."
+      },
+      {
+        "no": "14",
+        "title": "Unified Sanatan Platform for Nation Pride",
+        "desc": "Striving to bring all Sanatan followers together onto a shared national platform to restore Bharat's historic pride."
+      },
+      {
+        "no": "15",
+        "title": "Matrimonial Support for Underprivileged",
+        "desc": "Providing practical support and community sponsorship for the dignified wedding ceremonies of underprivileged youths."
+      },
+      {
+        "no": "16",
+        "title": "Holistic Upliftment of Marginalized",
+        "desc": "Ensuring sustainable assistance in education, healthcare, safety, and entrepreneurship for marginalized citizens."
+      }
+    ],
+    "appealTitle": "Sincere Appeal",
+    "appealDesc": "To advance Vedic Sanskars and extend compassionate support to underprivileged Sanatan families, connect with Rashtriya Sanatan Sanskar Seva Sansthan (Trust) and become an active member."
+  },
   "programs": {
     "tag": "Ground Action",
     "title": "Our Key Programs & Service Pillars",
@@ -297,7 +389,7 @@
         "value": 1000,
         "suffix": "+",
         "label": "Families Reached in Campaigns",
-        "sub": "Estimated [ADD VERIFIED FIELD METRIC]"
+        "sub": "Grassroots outreach across Gorakhpur region"
       }
     ]
   },
@@ -465,8 +557,6 @@
     "accNoVal": "135820110000012",
     "accType": "Account Type",
     "accTypeVal": "Public Trust Savings Account",
-    "ifsc": "IFSC Code",
-    "ifscVal": "[ADD BOI IFSC CODE - GORAKHPUR BRANCH]",
     "branch": "Branch",
     "branchVal": "Rustampur / Gorakhpur Branch, Uttar Pradesh",
     "upiId": "UPI ID",
@@ -475,8 +565,8 @@
     "copyUpi": "Copy UPI ID",
     "copied": "Copied to Clipboard!",
     "scanQr": "Scan & Pay via any UPI App (GPay, PhonePe, Paytm, BHIM)",
-    "taxNoteTitle": "Tax Exemption Status (80G / 12A)",
-    "taxNoteDesc": "As stated by trust management: The complete executive team is being nominated, and the official 80G tax exemption filing is underway. We maintain complete transparency and public accountability for every rupee received.",
+    "accountabilityTitle": "Complete Public Integrity & Accountability",
+    "accountabilityDesc": "We maintain 100% transparency and public accountability for every rupee received, directly deposited into the official Bank of India account with verified digital receipts.",
     "fundUsageTitle": "How Funds are Utilized",
     "fundUsage": [
       "Assisting impoverished families with ritual Sanskars and daughter marriages",
@@ -521,30 +611,30 @@
       {
         "title": "Trust Registration",
         "status": "Registered",
-        "detail": "Public Charitable Trust registered under Indian Trusts Act, Gorakhpur.",
-        "placeholder": "[ADD TRUST REGISTRATION CERTIFICATE LINK / NO.]",
+        "detail": "Public Charitable Trust registered under Indian Trusts Act, Gorakhpur Sub-Registrar.",
+        "badge": "Gorakhpur Sub-Registrar Office",
         "icon": "FileCheck"
-      },
-      {
-        "title": "80G / 12A Status",
-        "status": "In Process",
-        "detail": "Application under process pursuant to finalization of all executive trustees.",
-        "placeholder": "[ADD 80G APPROVAL NO. WHEN ISSUED]",
-        "icon": "Clock"
       },
       {
         "title": "Bank Account Verification",
         "status": "Active & Verified",
-        "detail": "Bank of India A/C 135820110000012 dedicated for institutional donations.",
-        "placeholder": "Bank of India Account Certified",
+        "detail": "Bank of India A/C 135820110000012 dedicated for institutional donations and membership fees.",
+        "badge": "Bank of India Account Certified",
         "icon": "ShieldCheck"
       },
       {
         "title": "Annual Audits & Accounts",
-        "status": "Audited Annually",
-        "detail": "Maintained by authorized Chartered Accountants in Gorakhpur.",
-        "placeholder": "[ADD AUDIT REPORT DOWNLOAD LINK]",
+        "status": "Financial Integrity",
+        "detail": "Complete ledger book maintained for every rupee received and presented in the Annual General Body meeting.",
+        "badge": "Reported to General Body",
         "icon": "FileSpreadsheet"
+      },
+      {
+        "title": "Digital Receipt & Watermark",
+        "status": "100% Transparent",
+        "detail": "Instant authorized digital receipts generated with official trust stamp, watermark, UTR, and Bank of India records.",
+        "badge": "Instant Receipt Verification",
+        "icon": "FileCheck"
       }
     ]
   },
@@ -582,8 +672,6 @@
     "contactOfficeTitle": "Contact & Support Office (सम्पर्क एवं सहयोग कार्यस्थल)",
     "contactOffice": "Saket Nagar, (In front of Madhur Shehnai Lawn), Rustampur, Gorakhpur, Uttar Pradesh",
     "phonesTitle": "Direct Contact Numbers",
-    "emailTitle": "Official Email",
-    "email": "[ADD TRUST OFFICIAL EMAIL]",
     "formTitle": "Send a Message / Join Inquiry",
     "name": "Your Full Name",
     "phone": "Mobile (WhatsApp) Number",
@@ -594,9 +682,9 @@
     "interestOpt4": "Labor / Government Scheme Guidance",
     "interestOpt5": "Volunteering & General Query",
     "message": "Your Message",
-    "sendBtn": "Send Message via WhatsApp / Email",
+    "sendBtn": "Send Message via WhatsApp",
     "mapPlaceholder": "Gorakhpur, Uttar Pradesh Location Map",
-    "mapNotice": "[Map coordinates: Rustampur, Gorakhpur - 273016]"
+    "mapNotice": "Saket Nagar (In front of Madhur Shehnai Lawn), Rustampur, Gorakhpur - 273016"
   },
   "footer": {
     "desc": "A dedicated public charitable trust working for Vedic cultural preservation, moral family values, and social welfare in India.",

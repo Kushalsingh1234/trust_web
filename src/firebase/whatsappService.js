@@ -214,7 +214,7 @@ export const formatDonationReceiptWhatsAppMessage = (donation, adminName = 'ट�
   const utr = donation.paymentId || donation.utrNumber || 'UPI-REF';
 
   let msg = `*🕉️ राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)*\n`;
-  msg += `_पंजीकृत धर्मार्थ न्यास • 12A/80G पंजीकृत • गोरखपुर, उ.प्र._\n\n`;
+  msg += `_पंजीकृत धर्मार्थ न्यास • गोरखपुर, उ.प्र._\n\n`;
   msg += `*🧾 आधिकारिक ई-दान रसीद (Official Donation Receipt)*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `👤 *दानदाता:* ${donorName}\n`;

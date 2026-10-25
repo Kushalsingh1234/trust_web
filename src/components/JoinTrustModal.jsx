@@ -39,7 +39,6 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
   const [paymentSettings, setPaymentSettings] = useState(DEFAULT_PAYMENT_SETTINGS);
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
-  const [copiedIfsc, setCopiedIfsc] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: currentUser ? (userProfile?.fullName || userProfile?.displayName || '') : '',
@@ -149,9 +148,6 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
     } else if (type === 'acc') {
       setCopiedAcc(true);
       setTimeout(() => setCopiedAcc(false), 2000);
-    } else if (type === 'ifsc') {
-      setCopiedIfsc(true);
-      setTimeout(() => setCopiedIfsc(false), 2000);
     }
   };
 
@@ -742,21 +738,6 @@ export const JoinTrustModal = ({ isOpen, onClose, defaultCategory = 'catB', init
                         >
                           {copiedAcc ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                           <span>{copiedAcc ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFF8EF] p-2 rounded-lg border border-[#E9B44C]/30">
-                        <div>
-                          <span className="text-gray-500 block">{lang === 'hi' ? 'IFSC कोड:' : 'IFSC Code:'}</span>
-                          <span className="font-mono font-bold text-[#382719] text-xs">{paymentSettings.ifsc}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(paymentSettings.ifsc, 'ifsc')}
-                          className="px-2 py-1 text-[10px] rounded bg-white border border-gray-200 font-bold hover:bg-gray-50 flex items-center gap-1"
-                        >
-                          {copiedIfsc ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedIfsc ? 'Copied' : 'Copy'}</span>
                         </button>
                       </div>
                     </div>

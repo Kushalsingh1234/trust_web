@@ -237,17 +237,20 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 shadow-xs">
-                  <Award className="w-4 h-4 text-primary flex-shrink-0" />
+                <Link
+                  to="/objectives"
+                  className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 hover:bg-white p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 hover:border-primary shadow-xs transition-all group"
+                >
+                  <Award className="w-4 h-4 text-primary flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div className="min-w-0 w-full">
-                    <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight">
-                      12A & 80G
+                    <span className="font-extrabold block text-[#382719] text-[11px] sm:text-xs leading-tight group-hover:text-primary transition-colors">
+                      {lang === 'hi' ? '१६ पावन उद्देश्य' : '16 Core Objectives'}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-amber-700 font-bold block leading-tight mt-0.5 truncate">
-                      {lang === 'hi' ? 'कर छूट अनुमन्य' : 'Tax Exempt Eligible'}
+                      {lang === 'hi' ? 'राष्ट्र व सनातन हित' : 'Sanatan Welfare'}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-1 sm:gap-2 text-xs bg-white/95 p-2 sm:p-2.5 rounded-xl border border-[#E9B44C]/30 shadow-xs">
                   <MapPin className="w-4 h-4 text-accent flex-shrink-0" />
@@ -273,7 +276,7 @@ export const Hero = ({ onOpenReceiptModal, onOpenHelpModal, onOpenJoinModal }) =
                       {lang === 'hi' ? 'मार्गदर्शन एवं सहायता हेल्पलाइन' : 'Helpline & Inquiries'}
                     </p>
                     <p className="text-xs font-mono font-black text-[#382719] leading-tight mt-0.5 truncate">
-                      +91 9794590044 • 9135218839
+                      +91 9794590044 • 9026734887
                     </p>
                   </div>
                 </div>

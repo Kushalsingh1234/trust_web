@@ -59,9 +59,9 @@ export const Transparency = () => {
                 </div>
 
                 <div className="pt-3.5 sm:pt-4 border-t border-[#E9B44C]/30">
-                  <div className="p-2.5 rounded-xl bg-white border border-dashed border-[#E9B44C]/50 text-[11px] font-mono font-bold text-[#382719] flex items-center justify-between gap-1">
-                    <span className="truncate">{card.placeholder}</span>
-                    <Download className="w-3.5 h-3.5 flex-shrink-0 text-secondary" />
+                  <div className="p-2.5 rounded-xl bg-white border border-[#E9B44C]/40 text-[11px] font-bold text-[#382719] flex items-center justify-between gap-1 shadow-xs">
+                    <span className="truncate">{card.badge || card.placeholder}</span>
+                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
                   </div>
                 </div>
               </div>
