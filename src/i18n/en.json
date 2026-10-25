@@ -311,6 +311,48 @@
     "documents": "Receipts & Letters",
     "items": [
       {
+        "src": "/images/gallery/kanya_pujan_navratri_1.jpg",
+        "title": "Kanya Pujan & Sacred Feast • Holy Navratri",
+        "caption": "Kanya Pujan and Feast program organized by the Trust on the sacred occasion of Navratri on 19 October 2026 — Vedic worship, blessing rituals, and serving traditional festive feast (halwa, puri, kheer) to young girls.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/kanya_pujan_navratri_2.jpg",
+        "title": "Children & Kanya Feast Service • Navratri Festival",
+        "caption": "Kanya Pujan and Feast program organized by the Trust on the sacred occasion of Navratri on 19 October 2026 — Devotional distribution of festive prasad to children and kanyas with deep reverence.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_rudrabhishek_puja.jpg",
+        "title": "Rudrabhishek Puja • Baba Munjeshwar Nath Temple",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — National President Kusumlata Dubey and General Secretary Bajrangi Dubey performing sacred Vedic rituals.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_shivling_darshan.jpg",
+        "title": "Shivalinga Jalabhishek & Darshan • Munjeshwar Dham",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Sacred holy water offering, bilva leaves decoration, and prayers for global well-being inside the sanctum.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_bhandara_children.jpg",
+        "title": "Bhandara Prasad Distribution to Children & Devotees",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — General Secretary Bajrangi Dubey and trust volunteers distributing sacred feast to children and devotees.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_bhandara_seva.jpg",
+        "title": "Bhandara Community Feast Service Counter",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Community volunteers serving warm sacred feast to visiting devotees and local families in the temple premises.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_temple_prasad_counter.jpg",
+        "title": "Temple Premises Prasad Distribution Team",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Trust volunteer team systematically managing fruit and prasad distribution at the temple gate.",
+        "category": "events"
+      },
+      {
         "src": "/images/gallery/shramik_camp_collage.jpg",
         "title": "Labor Awareness Camp (Collage)",
         "caption": "All India General Secretary Bajrangi Dubey addressing the unorganized labor gathering on government welfare boards in Gorakhpur.",
@@ -329,9 +371,15 @@
         "category": "banners"
       },
       {
+        "src": "/images/gallery/trust_objectives.jpg",
+        "title": "Our Mission • 16 Core Objectives Charter",
+        "caption": "Official charter documenting 16 institutional goals: Sanatan revival, 16 Sanskars, education, healthcare, and economic self-reliance.",
+        "category": "documents"
+      },
+      {
         "src": "/images/gallery/trust_manifesto_advisor.jpg",
-        "title": "12 Guidelines & Advisor Manifesto",
-        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform resolutions.",
+        "title": "Our Appeal • 12 Social Resolutions Charter",
+        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform & family guidelines.",
         "category": "documents"
       },
       {
