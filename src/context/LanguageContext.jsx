@@ -11,16 +11,25 @@ const translations = {
 
 export const LanguageProvider = ({ children }) => {
   const [lang, setLang] = useState(() => {
-    const saved = localStorage.getItem('rsssst_lang');
-    return saved === 'en' ? 'en' : 'hi'; // default to Hindi for authentic Gorakhpur Sanatan Trust
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('rsssst_lang');
+        if (saved === 'hi') return 'hi';
+        if (saved === 'en') return 'en';
+      } catch (e) {}
+    }
+    // Default to English so global search crawlers (Google, Bing) index English title & description
+    return 'en';
   });
 
   useEffect(() => {
-    localStorage.setItem('rsssst_lang', lang);
+    try {
+      localStorage.setItem('rsssst_lang', lang);
+    } catch (e) {}
     document.documentElement.lang = lang;
     document.title = lang === 'hi'
-      ? 'राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट) | सनातन धर्म न्यास • वैदिक १६ संस्कार'
-      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) | Premier Hindu Sanatan Dharma & Vedic Sanskar Trust';
+      ? 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) | राष्ट्रीय सनातन संस्कार सेवा संस्थान (ट्रस्ट)'
+      : 'Rashtriya Sanatan Sanskar Seva Sansthan (Trust) | Official Website';
   }, [lang]);
 
   const toggleLanguage = () => {
