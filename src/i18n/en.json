@@ -52,6 +52,87 @@
     "presidentName": "Kusumlata Dubey",
     "presidentRole": "National President / Trustee"
   },
+  "socialVision": {
+    "badge": "Our Vision • Social Reformation",
+    "title": "Our Vision: Comprehensive Social Reformation & Cultural Revival",
+    "subtitle": "Building a self-reliant, ethical, and united society free from social ostentation, debt traps, substance abuse, and neglect of elders.",
+    "quote": "\"Dharma is not confined to private prayer—it is a living commitment to social justice, domestic simplicity, mutual enterprise, and uplifting every underprivileged brother and sister.\"",
+    "quoteAuthor": "— Rashtriya Sanatan Sanskar Seva Sansthan (Trust)",
+    "pillarsTitle": "8 Core Pillars of Social Reformation",
+    "pillarsSubtitle": "Through these 8 dedicated pillars, our Trust drives tangible, positive transformation into the everyday lives of families and communities:",
+    "pillars": [
+      {
+        "id": "debt-free",
+        "title": "Eradication of Ostentation & Debt Traps",
+        "tag": "Financial Freedom",
+        "desc": "Stopping lavish societal show-offs, dowry pressure, and unmanageable expenses in weddings and rites. Protecting middle-class and daily-wage families from usurious loans by championing dignified, low-cost Vedic ceremonies as the true hallmark of prestige.",
+        "impact": "Debt-free & dignified Vedic rites",
+        "icon": "coins"
+      },
+      {
+        "id": "joint-family",
+        "title": "Revival of Joint Families & Dignity for Elders",
+        "tag": "Family Harmony",
+        "desc": "Revitalizing the traditional joint family structure through weekly dialogue, filial respect, and intergenerational bonding. Creating a society with such deep family warmth that old-age homes and orphanages become unnecessary.",
+        "impact": "Elder care & domestic harmony",
+        "icon": "users"
+      },
+      {
+        "id": "deaddiction",
+        "title": "Substance De-Addiction & Youth Empowerment",
+        "tag": "Healthy Society",
+        "desc": "Active ground campaigns against alcoholism, gutkha, and tobacco. Preventing premature deaths among youth by channeling their vitality into Yoga, physical fitness, scriptural study, and national service.",
+        "impact": "Addiction-free communities & youth awakening",
+        "icon": "heartPulse"
+      },
+      {
+        "id": "self-reliance",
+        "title": "Hereditary Trades & Economic Self-Reliance",
+        "tag": "Local Enterprise",
+        "desc": "Supporting traditional crafts, indigenous occupations, and small cottage businesses. Encouraging community mutual commerce so that youth become proud micro-entrepreneurs rather than migrating in distress.",
+        "impact": "Self-employment training & local commerce",
+        "icon": "hammer"
+      },
+      {
+        "id": "temple-centers",
+        "title": "Temple-Centric Community Empowerment",
+        "tag": "Community Hubs",
+        "desc": "Transforming neighborhood and village temples beyond prayer into active hubs for weekly civic assemblies, health counseling, educational classes, and community problem-solving.",
+        "impact": "Weekly civic temple conclaves",
+        "icon": "landmark"
+      },
+      {
+        "id": "women-kanya",
+        "title": "Women's Honor, Kanya Pujan & Marriage Aid",
+        "tag": "Motherhood Reverence",
+        "desc": "Ensuring utmost reverence for daughters and mothers. Celebrating sacred Kanya Pujan on festivals while extending financial and logistical support for the dignified weddings of daughters from underprivileged families.",
+        "impact": "Daughter marriage & welfare support",
+        "icon": "sparkles"
+      },
+      {
+        "id": "labor-welfare",
+        "title": "Unorganized Labor Welfare & Social Justice",
+        "tag": "Labor Welfare",
+        "desc": "Enrolling construction workers, cart vendors, and daily wagers into government social security (e-Shram, PM-SYM pensions, educational scholarships, maternity aid) through dedicated on-ground camps.",
+        "impact": "Thousands of workers registered",
+        "icon": "shieldCheck"
+      },
+      {
+        "id": "dashansh-seva",
+        "title": "Culture of Tithe (Dashansh) for Public Welfare",
+        "tag": "Giving Culture",
+        "desc": "Promoting the Vedic principle of Dashansh (dedicating 10% of earnings, skills, or time to societal good). Channeling voluntary donations transparently into medical aid, emergency relief, cow protection, and student support.",
+        "impact": "Direct relief through transparent funds",
+        "icon": "heartHandshake"
+      }
+    ],
+    "manifestoCallout": {
+      "title": "Our Guiding Maxim: Nation First, Sanatan Values, Family Harmony",
+      "desc": "When the family is strong, society becomes resilient; when society is united, the nation regains its preeminent cultural leadership. Social reformation is our pathway to collective prosperity and universal peace.",
+      "ctaCharter": "View 16 Objectives Charter",
+      "ctaGuidelines": "Read 12 Family Guidelines"
+    }
+  },
   "sanskars": {
     "tag": "Vedic Foundation",
     "title": "The 16 Sacred Sanskars (षोडश संस्कार)",
@@ -403,6 +484,48 @@
     "documents": "Receipts & Letters",
     "items": [
       {
+        "src": "/images/gallery/kanya_pujan_navratri_1.jpg",
+        "title": "Kanya Pujan & Sacred Feast • Holy Navratri",
+        "caption": "Kanya Pujan and Feast program organized by the Trust on the sacred occasion of Navratri on 19 October 2026 — Vedic worship, blessing rituals, and serving traditional festive feast (halwa, puri, kheer) to young girls.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/kanya_pujan_navratri_2.jpg",
+        "title": "Children & Kanya Feast Service • Navratri Festival",
+        "caption": "Kanya Pujan and Feast program organized by the Trust on the sacred occasion of Navratri on 19 October 2026 — Devotional distribution of festive prasad to children and kanyas with deep reverence.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_rudrabhishek_puja.jpg",
+        "title": "Rudrabhishek Puja • Baba Munjeshwar Nath Temple",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — National President Kusumlata Dubey and General Secretary Bajrangi Dubey performing sacred Vedic rituals.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_shivling_darshan.jpg",
+        "title": "Shivalinga Jalabhishek & Darshan • Munjeshwar Dham",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Sacred holy water offering, bilva leaves decoration, and prayers for global well-being inside the sanctum.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_bhandara_children.jpg",
+        "title": "Bhandara Prasad Distribution to Children & Devotees",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — General Secretary Bajrangi Dubey and trust volunteers distributing sacred feast to children and devotees.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_bhandara_seva.jpg",
+        "title": "Bhandara Community Feast Service Counter",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Community volunteers serving warm sacred feast to visiting devotees and local families in the temple premises.",
+        "category": "events"
+      },
+      {
+        "src": "/images/gallery/munjeshwar_temple_prasad_counter.jpg",
+        "title": "Temple Premises Prasad Distribution Team",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Trust volunteer team systematically managing fruit and prasad distribution at the temple gate.",
+        "category": "events"
+      },
+      {
         "src": "/images/gallery/shramik_camp_collage.jpg",
         "title": "Labor Awareness Camp (Collage)",
         "caption": "All India General Secretary Bajrangi Dubey addressing the unorganized labor gathering on government welfare boards in Gorakhpur.",
@@ -421,9 +544,15 @@
         "category": "banners"
       },
       {
+        "src": "/images/gallery/trust_objectives.jpg",
+        "title": "Our Mission • 16 Core Objectives Charter",
+        "caption": "Official charter documenting 16 institutional goals: Sanatan revival, 16 Sanskars, education, healthcare, and economic self-reliance.",
+        "category": "documents"
+      },
+      {
         "src": "/images/gallery/trust_manifesto_advisor.jpg",
-        "title": "12 Guidelines & Advisor Manifesto",
-        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform resolutions.",
+        "title": "Our Appeal • 12 Social Resolutions Charter",
+        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform & family guidelines.",
         "category": "documents"
       },
       {

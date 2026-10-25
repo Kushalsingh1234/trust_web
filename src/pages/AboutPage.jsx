@@ -5,10 +5,11 @@ import { usePageMeta } from '../hooks/usePageMeta';
 import PageHeader from '../components/PageHeader';
 import About from '../sections/About';
 import Objectives from '../sections/Objectives';
+import VisionSocialReformation from '../sections/VisionSocialReformation';
 import Trustees from '../sections/Trustees';
 import Sanskars from '../sections/Sanskars';
 import Guidelines from '../sections/Guidelines';
-import { Heart, UserPlus, Target, BookOpen, Sparkles, Users, Compass } from 'lucide-react';
+import { Heart, UserPlus, Target, BookOpen, Sparkles, Users, Compass, Eye } from 'lucide-react';
 
 export const AboutPage = ({ onOpenJoinModal }) => {
   const { lang, t } = useLanguage();
@@ -36,6 +37,7 @@ export const AboutPage = ({ onOpenJoinModal }) => {
   const jumpNav = [
     { href: '#about', label: lang === 'hi' ? 'संस्थान परिचय' : 'About Us', icon: Compass },
     { href: '#objectives', label: lang === 'hi' ? 'हमारा उद्देश्य (16 सूत्र)' : 'Our Objectives (16)', icon: Target, highlight: true },
+    { href: '#social-vision', label: lang === 'hi' ? 'सामाजिक पुनर्जागरण' : 'Social Vision', icon: Eye },
     { href: '#trustees', label: lang === 'hi' ? 'मार्गदर्शक व न्यासी' : 'Executive Trustees', icon: Users },
     { href: '#sanskars', label: lang === 'hi' ? '16 वैदिक संस्कार' : '16 Vedic Sanskars', icon: Sparkles },
     { href: '#guidelines', label: lang === 'hi' ? 'हमारा आग्रह (12 नियम)' : 'Our Guidelines (12)', icon: BookOpen }
@@ -76,19 +78,22 @@ export const AboutPage = ({ onOpenJoinModal }) => {
         </div>
       </div>
 
-      {/* 1. Full Story, Vision & Mission */}
+      {/* 1. Full Story, Vision & Mission Overview */}
       <About />
 
       {/* 2. 16 Core Objectives (हमारा उद्देश्य) from Official Leaflet */}
       <Objectives onOpenJoinModal={onOpenJoinModal} />
 
-      {/* 3. Executive Council & Trustees */}
+      {/* 3. Detailed Vision: Social Reformation & Cultural Revival */}
+      <VisionSocialReformation />
+
+      {/* 4. Executive Council & Trustees */}
       <Trustees />
 
-      {/* 4. 16 Vedic Sanskars Facilitation */}
+      {/* 5. 16 Vedic Sanskars Facilitation */}
       <Sanskars />
 
-      {/* 5. 12 Family Guidelines (हमारा आग्रह) */}
+      {/* 6. 12 Family Guidelines (हमारा आग्रह) */}
       <Guidelines />
 
       {/* Page Bottom CTA */}

@@ -70,7 +70,7 @@ export const Gallery = ({ onSelectImage }) => {
                     <img
                       src={img.src}
                       alt={img.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = img.src;

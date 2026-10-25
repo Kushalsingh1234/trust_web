@@ -46,20 +46,40 @@ export const About = () => {
                 <p className="text-xs sm:text-sm text-[#454545] leading-relaxed">
                   {t.about.missionDesc}
                 </p>
+                <div className="mt-3 pt-2.5 border-t border-[#E9B44C]/25 flex items-center justify-between">
+                  <a
+                    href="#guidelines"
+                    className="text-[11px] font-bold text-primary hover:text-secondary flex items-center gap-1 transition-colors"
+                  >
+                    <span>{lang === 'hi' ? '१२ पारिवारिक नियम देखें' : 'View 12 Guidelines'}</span>
+                    <span>↓</span>
+                  </a>
+                </div>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/35 shadow-card hover:shadow-card-hover transition-all">
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="p-2 rounded-xl bg-accent/20 text-secondary flex-shrink-0">
-                    <Eye className="w-5 h-5" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#FFF8EF] border border-[#E9B44C]/35 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <div className="p-2 rounded-xl bg-accent/20 text-secondary flex-shrink-0">
+                      <Eye className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-extrabold text-[#382719] text-base font-hindi-heading">
+                      {t.about.visionTitle}
+                    </h3>
                   </div>
-                  <h3 className="font-extrabold text-[#382719] text-base font-hindi-heading">
-                    {t.about.visionTitle}
-                  </h3>
+                  <p className="text-xs sm:text-sm text-[#454545] leading-relaxed">
+                    {t.about.visionDesc}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-[#454545] leading-relaxed">
-                  {t.about.visionDesc}
-                </p>
+                <div className="mt-3 pt-2.5 border-t border-[#E9B44C]/25 flex items-center justify-between">
+                  <a
+                    href="#social-vision"
+                    className="text-[11px] font-bold text-primary hover:text-secondary flex items-center gap-1 transition-colors"
+                  >
+                    <span>{lang === 'hi' ? 'विस्तृत सामाजिक सुधार विज़न' : 'Detailed Social Vision'}</span>
+                    <span>↓</span>
+                  </a>
+                </div>
               </div>
             </div>
 
