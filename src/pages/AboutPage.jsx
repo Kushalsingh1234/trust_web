@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import PageHeader from '../components/PageHeader';
 import About from '../sections/About';
+import VisionSocialReformation from '../sections/VisionSocialReformation';
 import Trustees from '../sections/Trustees';
 import Sanskars from '../sections/Sanskars';
 import Guidelines from '../sections/Guidelines';
@@ -31,10 +32,13 @@ export const AboutPage = ({ onOpenJoinModal }) => {
         breadcrumb={lang === 'hi' ? 'परिचय' : 'About'}
       />
 
-      {/* 1. Full Story, Vision & Mission */}
+      {/* 1. Full Story, Vision & Mission Overview */}
       <About />
 
-      {/* 2. Executive Council & Trustees */}
+      {/* 2. Detailed Vision: Social Reformation & Cultural Revival */}
+      <VisionSocialReformation />
+
+      {/* 3. Executive Council & Trustees */}
       <Trustees />
 
       {/* 3. 16 Vedic Sanskars Facilitation */}
