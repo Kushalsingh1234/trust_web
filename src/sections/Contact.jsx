@@ -92,29 +92,19 @@ export const Contact = () => {
                   href="tel:+919794590044"
                   className="p-3 rounded-xl bg-white hover:bg-white/80 text-[#454545] font-bold flex items-center justify-between border border-[#E9B44C]/35 transition-all hover:border-primary min-h-[44px]"
                 >
-                  <span className="truncate mr-2">बजरंगी दूबे (महामंत्री)</span>
+                  <span className="truncate mr-2">
+                    {lang === 'hi' ? 'बजरंगी दूबे (राष्ट्रीय मंत्री/प्रबन्धक)' : 'Bajrangi Dubey (Rashtriya Mantri / Prabandhak)'}
+                  </span>
                   <span className="font-mono text-primary font-black flex-shrink-0">9794590044</span>
                 </a>
                 <a
                   href="tel:+919026734887"
                   className="p-3 rounded-xl bg-white hover:bg-white/80 text-[#454545] font-bold flex items-center justify-between border border-[#E9B44C]/35 transition-all hover:border-primary min-h-[44px]"
                 >
-                  <span className="truncate mr-2">के. एन. शर्मा (सलाहकार)</span>
+                  <span className="truncate mr-2">
+                    {lang === 'hi' ? 'के. एन. शर्मा (राष्ट्रीय सलाहकार)' : 'K. N. Sharma (Rashtriya Salahkar)'}
+                  </span>
                   <span className="font-mono text-primary font-black flex-shrink-0">9026734887</span>
-                </a>
-                <a
-                  href="tel:+919336378327"
-                  className="p-3 rounded-xl bg-white hover:bg-white/80 text-[#454545] font-bold flex items-center justify-between border border-[#E9B44C]/35 transition-all hover:border-primary min-h-[44px]"
-                >
-                  <span className="truncate mr-2">कुसुमलता दूबे (अध्यक्ष)</span>
-                  <span className="font-mono text-primary font-black flex-shrink-0">9336378327</span>
-                </a>
-                <a
-                  href="tel:+919935218839"
-                  className="p-3 rounded-xl bg-white hover:bg-white/80 text-[#454545] font-bold flex items-center justify-between border border-[#E9B44C]/35 transition-all hover:border-primary min-h-[44px]"
-                >
-                  <span className="truncate mr-2">डी. बी. पाण्डेय</span>
-                  <span className="font-mono text-primary font-black flex-shrink-0">9935218839</span>
                 </a>
               </div>
 

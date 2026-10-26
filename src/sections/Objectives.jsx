@@ -166,16 +166,25 @@ export const Objectives = ({ onOpenJoinModal }) => {
                 {objData.appealDesc}
               </p>
               
-              {/* Official Helplines from Leaflet */}
-              <div className="mt-4 pt-3 border-t border-[#E9B44C]/30 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#555555]">
+              {/* Official Helplines */}
+              <div className="mt-4 pt-3 border-t border-[#E9B44C]/30 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#555555]">
                 <span className="font-bold text-[#382719] flex items-center gap-1">
                   <Phone className="w-3.5 h-3.5 text-primary" />
-                  {lang === 'hi' ? 'प्रमुख संपर्क सूत्र:' : 'Key Helplines:'}
+                  {lang === 'hi' ? 'प्रमुख संपर्क सूत्र:' : 'Key Contacts:'}
                 </span>
-                <span className="font-mono font-bold text-primary">9794590044</span>
-                <span className="font-mono font-bold text-[#382719]">9026734887</span>
-                <span className="font-mono font-bold text-[#382719]">9794342292</span>
-                <span className="font-mono font-bold text-[#382719]">8126739211</span>
+                <a href="tel:+919794590044" className="hover:underline flex items-center gap-1">
+                  <span className="font-bold text-[#382719]">
+                    {lang === 'hi' ? 'बजरंगी दूबे (राष्ट्रीय मंत्री/प्रबन्धक):' : 'Bajrangi Dubey (Rashtriya Mantri / Prabandhak):'}
+                  </span>
+                  <span className="font-mono font-bold text-primary">9794590044</span>
+                </a>
+                <span className="text-[#E9B44C] hidden sm:inline">•</span>
+                <a href="tel:+919026734887" className="hover:underline flex items-center gap-1">
+                  <span className="font-bold text-[#382719]">
+                    {lang === 'hi' ? 'के. एन. शर्मा (राष्ट्रीय सलाहकार):' : 'K. N. Sharma (Rashtriya Salahkar):'}
+                  </span>
+                  <span className="font-mono font-bold text-primary">9026734887</span>
+                </a>
               </div>
             </div>
 

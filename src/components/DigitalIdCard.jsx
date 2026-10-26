@@ -487,10 +487,10 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <span className="block text-[8px] sm:text-[9px] font-black text-[#1C1917] leading-tight whitespace-nowrap">
-              {lang === 'hi' ? 'बजरंगी दूबे / कुसुमलता दूबे' : 'Bajrangi Dubey / Kusumlata Dubey'}
+              {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
             </span>
             <span className="block text-[7px] sm:text-[8px] text-[#78716C] leading-tight whitespace-nowrap">
-              {lang === 'hi' ? 'अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)' : 'Authorized Signatory (Executive)'}
+              {lang === 'hi' ? 'राष्ट्रीय मंत्री/प्रबन्धक (अधिकृत हस्ताक्षरकर्ता)' : 'Rashtriya Mantri / Prabandhak (Signatory)'}
             </span>
           </div>
         </div>
@@ -885,10 +885,10 @@ export const DigitalIdCard = ({ member, onClose }) => {
 
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontWeight: 800, color: '#1C1917', display: 'block', lineHeight: 1.2 }}>
-                {lang === 'hi' ? 'बजरंगी दूबे / कुसुमलता दूबे' : 'Bajrangi Dubey / Kusumlata Dubey'}
+                {lang === 'hi' ? 'बजरंगी दूबे' : 'Bajrangi Dubey'}
               </span>
               <span style={{ fontSize: '8px', color: '#78716C', display: 'block', lineHeight: 1.2 }}>
-                {lang === 'hi' ? 'अधिकृत हस्ताक्षरकर्ता (प्रबंधकारिणी)' : 'Authorized Signatory (Executive)'}
+                {lang === 'hi' ? 'राष्ट्रीय मंत्री/प्रबन्धक (अधिकृत हस्ताक्षरकर्ता)' : 'Rashtriya Mantri / Prabandhak (Signatory)'}
               </span>
             </div>
           </div>

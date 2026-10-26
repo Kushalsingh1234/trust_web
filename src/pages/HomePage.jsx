@@ -83,8 +83,8 @@ export const HomePage = ({
       src: '/images/gallery/munjeshwar_rudrabhishek_puja.jpg',
       title: lang === 'hi' ? 'रुद्राभिषेक पूजन • बाबा मुंजेश्वर नाथ' : 'Rudrabhishek Puja • Baba Munjeshwar Nath',
       caption: lang === 'hi'
-        ? 'ट्रस्ट द्वारा बाबा मुंजेश्वर नाथ शिव मंदिर भौवापार सेवई बाजार गोरखपुर में रुद्राभिषेक एवं भंडारा का आयोजन दिनांक 18 अगस्त 2026 — राष्ट्रीय अध्यक्ष कुसुमलता दूबे एवं महामंत्री बजरंगी दूबे वैदिक विधान से रक्षा सूत्र व संकल्प पूजन कराते हुए।'
-        : 'Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — National President Kusumlata Dubey and General Secretary Bajrangi Dubey performing sacred Vedic rituals.',
+        ? 'ट्रस्ट द्वारा बाबा मुंजेश्वर नाथ शिव मंदिर भौवापार सेवई बाजार गोरखपुर में रुद्राभिषेक एवं भंडारा का आयोजन दिनांक 18 अगस्त 2026 — राष्ट्रीय मंत्री/प्रबन्धक बजरंगी दूबे वैदिक विधान से रक्षा सूत्र व संकल्प पूजन कराते हुए।'
+        : 'Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Rashtriya Mantri / Prabandhak Bajrangi Dubey performing sacred Vedic rituals.',
       cat: lang === 'hi' ? 'धार्मिक अनुष्ठान' : 'Vedic Ritual'
     },
     {
@@ -99,16 +99,16 @@ export const HomePage = ({
       src: '/images/gallery/trust_manifesto_advisor.jpg',
       title: lang === 'hi' ? 'हमारा आग्रह • 12 सामाजिक एवं पारिवारिक नियम' : 'Our Appeal • 12 Social Resolutions Charter',
       caption: lang === 'hi'
-        ? 'अखिल भारतीय सलाहकार के.एन. शर्मा एवं महामंत्री बजरंगी दूबे के सानिध्य में जारी 12 सामाजिक आचरण, दिखावे से बचाव व संगठन का मूल संकल्प पत्रक।'
-        : 'Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform & family guidelines.',
+        ? 'राष्ट्रीय सलाहकार के. एन. शर्मा एवं राष्ट्रीय मंत्री/प्रबन्धक बजरंगी दूबे के सानिध्य में जारी 12 सामाजिक आचरण, दिखावे से बचाव व संगठन का मूल संकल्प पत्रक।'
+        : 'Official publication presenting Rashtriya Salahkar K. N. Sharma, Rashtriya Mantri / Prabandhak Bajrangi Dubey, and the 12 social reform & family guidelines.',
       cat: lang === 'hi' ? 'आग्रह पत्रक' : 'Manifesto'
     },
     {
       src: '/images/gallery/shramik_camp_collage.jpg',
       title: lang === 'hi' ? 'श्रमिक जागरूकता शिविर • आजाद चौक' : 'Labor Awareness Camp, Azad Chowk',
       caption: lang === 'hi'
-        ? 'महामंत्री बजरंगी दूबे चंद्रशेखर आजाद चौक गोरखपुर पर निर्माण श्रमिकों को ई-श्रम व कल्याणकारी योजनाओं की जानकारी देते हुए।'
-        : 'All India General Secretary Bajrangi Dubey addressing unorganized labor on government welfare schemes in Gorakhpur.',
+        ? 'राष्ट्रीय मंत्री/प्रबन्धक बजरंगी दूबे चंद्रशेखर आजाद चौक गोरखपुर पर निर्माण श्रमिकों को ई-श्रम व कल्याणकारी योजनाओं की जानकारी देते हुए।'
+        : 'Rashtriya Mantri / Prabandhak Bajrangi Dubey addressing unorganized labor on government welfare schemes in Gorakhpur.',
       cat: lang === 'hi' ? 'अभियान' : 'Campaign'
     },
     {

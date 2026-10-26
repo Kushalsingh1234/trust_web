@@ -23,8 +23,8 @@ export const Trustees = () => {
           <div className="w-20 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary mx-auto mt-4 rounded-full"></div>
         </div>
 
-        {/* Trustees Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Trustees Grid: 2 Leaders Centered */}
+        <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6 sm:gap-8">
           {t.team.members.map((member, idx) => (
             <div
               key={idx}
@@ -53,7 +53,7 @@ export const Trustees = () => {
                     <h3 className="font-extrabold text-base sm:text-lg text-[#382719] leading-snug group-hover:text-primary transition-colors font-hindi-heading truncate">
                       {member.name}
                     </h3>
-                    <p className="text-xs font-bold text-secondary mt-0.5 truncate">
+                    <p className="text-xs font-bold text-primary mt-0.5 truncate">
                       {member.role}
                     </p>
                   </div>
@@ -78,17 +78,6 @@ export const Trustees = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Associates & Convenors Box */}
-        <div className="mt-10 p-5 rounded-2xl bg-white border border-[#E9B44C]/35 shadow-card text-left flex items-start gap-3">
-          <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-          <p className="text-xs sm:text-sm text-[#454545] leading-relaxed font-medium">
-            <span className="font-black text-[#382719]">
-              {lang === 'hi' ? 'सहयोगी निवेदक-गण:' : 'Council of Convenors & Associates:'}{' '}
-            </span>
-            {t.team.associatesNote}
-          </p>
         </div>
 
       </div>

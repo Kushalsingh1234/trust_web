@@ -46,11 +46,9 @@
     "leadershipTitle": "Guiding Message from Leadership",
     "leadershipQuote": "\"Our aim is to empower the economically vulnerable, awaken spiritual discipline, and unite every Sanatani on a common platform for nation and dharma. With your dedication of time, mind, and resources, this noble mission touches every home.\"",
     "leaderName": "Bajrangi Dubey",
-    "leaderRole": "National General Secretary / Manager",
+    "leaderRole": "Rashtriya Mantri / Prabandhak",
     "advisorName": "K. N. Sharma",
-    "advisorRole": "All-India Advisor",
-    "presidentName": "Kusumlata Dubey",
-    "presidentRole": "National President / Trustee"
+    "advisorRole": "Rashtriya Salahkar"
   },
   "socialVision": {
     "badge": "Our Vision • Social Reformation",
@@ -498,7 +496,7 @@
       {
         "src": "/images/gallery/munjeshwar_rudrabhishek_puja.jpg",
         "title": "Rudrabhishek Puja • Baba Munjeshwar Nath Temple",
-        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — National President Kusumlata Dubey and General Secretary Bajrangi Dubey performing sacred Vedic rituals.",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Rashtriya Mantri / Prabandhak Bajrangi Dubey performing sacred Vedic rituals.",
         "category": "events"
       },
       {
@@ -510,7 +508,7 @@
       {
         "src": "/images/gallery/munjeshwar_bhandara_children.jpg",
         "title": "Bhandara Prasad Distribution to Children & Devotees",
-        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — General Secretary Bajrangi Dubey and trust volunteers distributing sacred feast to children and devotees.",
+        "caption": "Rudrabhishek and Bhandara organized by the Trust at Baba Munjeshwar Nath Shiv Temple, Bhowapar, Sewai Bazar, Gorakhpur on 18 August 2026 — Rashtriya Mantri / Prabandhak Bajrangi Dubey and trust volunteers distributing sacred feast to children and devotees.",
         "category": "events"
       },
       {
@@ -528,7 +526,7 @@
       {
         "src": "/images/gallery/shramik_camp_collage.jpg",
         "title": "Labor Awareness Camp (Collage)",
-        "caption": "All India General Secretary Bajrangi Dubey addressing the unorganized labor gathering on government welfare boards in Gorakhpur.",
+        "caption": "Rashtriya Mantri / Prabandhak Bajrangi Dubey addressing the unorganized labor gathering on government welfare boards in Gorakhpur.",
         "category": "events"
       },
       {
@@ -552,7 +550,7 @@
       {
         "src": "/images/gallery/trust_manifesto_advisor.jpg",
         "title": "Our Appeal • 12 Social Resolutions Charter",
-        "caption": "Official publication presenting Advisor K. N. Sharma, Manager Bajrangi Dubey, and the 12 social reform & family guidelines.",
+        "caption": "Official publication presenting Rashtriya Salahkar K. N. Sharma, Rashtriya Mantri / Prabandhak Bajrangi Dubey, and the 12 social reform & family guidelines.",
         "category": "documents"
       },
       {
@@ -576,7 +574,7 @@
       {
         "src": "/images/gallery/official_letterhead.jpg",
         "title": "Official Trust Letterhead",
-        "caption": "Official letterhead displaying National President Kusumlata Dubey and Manager Bajrangi Dubey.",
+        "caption": "Official letterhead displaying Rashtriya Mantri / Prabandhak Bajrangi Dubey.",
         "category": "documents"
       },
       {
@@ -607,46 +605,25 @@
   },
   "team": {
     "tag": "Leadership",
-    "title": "Trustees & Executive Council",
+    "title": "Executive Council & Leadership",
     "subtitle": "Dedicated community leaders guiding the mission of Rashtriya Sanatan Sanskar Seva Sansthan.",
     "members": [
       {
-        "name": "Kusumlata Dubey",
-        "role": "National President / Trustee (राष्ट्रीय अध्यक्ष/न्यासी)",
-        "phone": "+91 9336378327",
-        "img": null,
-        "desc": "Leading the institutional governance, women empowerment, and foundational trust administration."
-      },
-      {
         "name": "Bajrangi Dubey",
-        "role": "National General Secretary / Manager (राष्ट्रीय महामंत्री/प्रबन्धक)",
+        "role": "Rashtriya Mantri / Prabandhak",
         "phone": "+91 9794590044",
         "img": "/images/avatars/bajrangi_dubey.jpg",
-        "desc": "Founder organizer, District President of BMS Gorakhpur, driving ground programs, worker rights, and Sanskar propagation."
+        "desc": "National Executive Secretary & Manager, District President of BMS Gorakhpur, driving ground programs, worker rights, and Sanskar propagation."
       },
       {
         "name": "K. N. Sharma",
-        "role": "All-India Advisor (अखिल भारतीय सलाहकार)",
+        "role": "Rashtriya Salahkar",
         "phone": "+91 9026734887",
         "img": "/images/avatars/kn_sharma.jpg",
         "desc": "Senior ideologue and institutional mentor steering cultural vision, 12 family guidelines, and educational strategy."
-      },
-      {
-        "name": "D. B. Pandey",
-        "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
-        "phone": "+91 9935218839",
-        "img": null,
-        "desc": "Coordinating neighborhood temple outreach, field events, and member registration desk."
-      },
-      {
-        "name": "J. N. Upadhyay",
-        "role": "Senior Executive Associate (वरिष्ठ सहयोगी)",
-        "phone": "+91 9044179509",
-        "img": null,
-        "desc": "Overseeing Vedic education workshops, community relations, and public information flow."
       }
     ],
-    "associatesNote": "Supported by the Council of Convenors (निवेदक गण) across Gorakhpur and Purvanchal: 9794342292, 8126739211, 9794359991, 9696356032, 7007181977, 9838594702, +91 94547 47545, +91 98388 95843."
+    "associatesNote": ""
   },
   "howToHelp": {
     "tag": "Get Involved",

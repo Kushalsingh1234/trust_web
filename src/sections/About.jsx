@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Target, Eye, Quote, MapPin, Building, ShieldCheck, User, UserCheck } from 'lucide-react';
+import { Target, Eye, Quote, MapPin, Building, ShieldCheck, Phone } from 'lucide-react';
 
 export const About = () => {
   const { lang, t } = useLanguage();
@@ -115,7 +115,7 @@ export const About = () => {
           </div>
 
           {/* Right Message Card with Real Photos */}
-          <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
+          <div className="lg:col-span-5 space-y-4">
             {/* Bajrangi Dubey Message Card */}
             <div className="bg-[#FFF8EF] p-4 sm:p-6 rounded-3xl border border-[#E9B44C]/50 shadow-card hover:shadow-card-hover transition-all relative text-left">
               <Quote className="w-8 h-8 sm:w-10 sm:h-10 text-accent/40 absolute top-4 right-4 pointer-events-none" />
@@ -139,56 +139,60 @@ export const About = () => {
                 </div>
               </div>
 
-              <blockquote className="text-xs sm:text-sm text-[#454545] italic leading-relaxed border-l-2 border-primary pl-3">
+              <blockquote className="text-xs sm:text-sm text-[#454545] italic leading-relaxed border-l-2 border-primary pl-3 mb-3">
                 {t.about.leadershipQuote}
               </blockquote>
+
+              <div className="pt-3 border-t border-[#E9B44C]/25 flex items-center justify-between">
+                <a
+                  href="tel:+919794590044"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-white transition-colors bg-white hover:bg-primary px-3 py-1.5 rounded-full border border-[#E9B44C]/40 shadow-xs"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>+91 9794590044</span>
+                </a>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">
+                  {lang === 'hi' ? 'सीधा संपर्क' : 'Direct Call'}
+                </span>
+              </div>
             </div>
 
             {/* K. N. Sharma Mentor Card */}
-            <div className="bg-[#FFF8EF] p-4 sm:p-5 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex items-center gap-3 sm:gap-4">
-              <img
-                src="/images/avatars/kn_sharma.jpg"
-                alt="K. N. Sharma"
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-secondary object-cover object-top shadow-sm flex-shrink-0 ring-2 ring-secondary/20 bg-white"
-              />
-              <div className="min-w-0">
-                <h4 className="font-extrabold text-sm sm:text-base text-[#382719] font-hindi-heading truncate">
-                  {t.about.advisorName}
-                </h4>
-                <p className="text-xs font-bold text-primary truncate">
-                  {t.about.advisorRole}
-                </p>
-                <p className="text-[10px] sm:text-[11px] text-[#454545] mt-0.5 sm:mt-1 font-medium leading-normal line-clamp-2">
-                  {lang === 'hi' 
-                    ? '12 सनातनी पारिवारिक नियमों एवं सामाजिक सुधार के वरिष्ठ मार्गदर्शक।' 
-                    : 'Senior institutional ideologue steering the 12 social reform guidelines.'}
-                </p>
-              </div>
-            </div>
-
-            {/* National President Card */}
-            <div className="bg-[#FFF8EF] p-3.5 sm:p-4 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-[#E9B44C]/70 bg-white text-primary flex items-center justify-center shadow-sm flex-shrink-0 ring-2 ring-[#E9B44C]/25">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                </div>
+            <div className="bg-[#FFF8EF] p-4 sm:p-5 rounded-2xl border border-[#E9B44C]/35 shadow-card text-left flex flex-col justify-between">
+              <div className="flex items-center gap-3 sm:gap-4 mb-2">
+                <img
+                  src="/images/avatars/kn_sharma.jpg"
+                  alt="K. N. Sharma"
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-secondary object-cover object-top shadow-sm flex-shrink-0 ring-2 ring-secondary/20 bg-white"
+                />
                 <div className="min-w-0">
-                  <span className="text-[10px] font-extrabold text-secondary uppercase tracking-wider block">
-                    {lang === 'hi' ? 'राष्ट्रीय अध्यक्ष/न्यासी' : 'National President / Trustee'}
-                  </span>
-                  <span className="font-black text-sm sm:text-base text-[#382719] font-hindi-heading truncate block">
-                    {t.about.presidentName}
-                  </span>
+                  <h4 className="font-extrabold text-sm sm:text-base text-[#382719] font-hindi-heading truncate">
+                    {t.about.advisorName}
+                  </h4>
+                  <p className="text-xs font-bold text-primary truncate">
+                    {t.about.advisorRole}
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] text-[#454545] mt-0.5 font-medium leading-normal line-clamp-2">
+                    {lang === 'hi' 
+                      ? '12 सनातनी पारिवारिक नियमों एवं सामाजिक सुधार के वरिष्ठ मार्गदर्शक।' 
+                      : 'Senior institutional ideologue steering the 12 social reform guidelines.'}
+                  </p>
                 </div>
               </div>
-              <a
-                href="tel:9336378327"
-                className="text-center text-xs font-mono font-black text-primary hover:text-white bg-white hover:bg-primary px-3 py-2 sm:py-1.5 rounded-full border border-[#E9B44C]/40 shadow-sm transition-colors flex-shrink-0"
-              >
-                मो. 9336378327
-              </a>
-            </div>
 
+              <div className="pt-2.5 mt-2 border-t border-[#E9B44C]/25 flex items-center justify-between">
+                <a
+                  href="tel:+919026734887"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-white transition-colors bg-white hover:bg-primary px-3 py-1.5 rounded-full border border-[#E9B44C]/40 shadow-xs"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>+91 9026734887</span>
+                </a>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">
+                  {lang === 'hi' ? 'सीधा संपर्क' : 'Direct Call'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
